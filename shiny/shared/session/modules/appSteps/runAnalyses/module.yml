@@ -1,0 +1,26 @@
+
+#----------------------------------------------------------------------
+# ui 
+#----------------------------------------------------------------------
+
+# label shown on dashboard menu 
+shortLabel: "Run Analyses"
+
+# description shown on the Overview page
+shortDescription: "Select data to be analyzed, set analysis parameters and launch work jobs."
+
+# label shown at top of appStep tab  
+longLabel: "Set analysis parameters and launch work jobs"
+
+#----------------------------------------------------------------------
+# server
+#----------------------------------------------------------------------
+
+# names of the type(s) of this module ...
+types:
+    - analyze
+
+# ... and of its dependencies
+sourceTypes:
+    - assign
+

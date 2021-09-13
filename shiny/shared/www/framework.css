@@ -1,0 +1,355 @@
+
+/*  framework.css creates a consistent style for all MAGC Portal apps */
+
+/*  ------------------------------------------------------------------------
+    some generic styles
+    ------------------------------------------------------------------------*/
+.downloadExcel {
+    color: rgb(0,0,200);
+}
+.hidden{
+    display: none;
+}
+.darkred {
+    color: rgb(200,0,0);
+    animation: rotation alternate 
+}
+
+/*  ------------------------------------------------------------------------
+    frivolous rotation of the Portal logo on page load
+    ------------------------------------------------------------------------*/
+@keyframes rotatePortal {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-359deg); }
+}
+
+/*  ------------------------------------------------------------------------
+    page layout and scrolling, shinydashboard overrides
+    ------------------------------------------------------------------------*/
+body, html {
+    height: 100vh !important;
+    min-height: 0px !important;
+    overflow: hidden;
+}
+.skin-blue .main-sidebar, .content-wrapper {
+    overflow: auto;
+    padding: 0;
+}
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+    background-color: #00274C;
+}
+.nav-tabs {
+    font-weight: bold;
+}
+
+/*  ------------------------------------------------------------------------
+    shinydashboard header styles
+    ------------------------------------------------------------------------*/
+.skin-blue .main-header .navbar {
+    background-color: #00274C;
+}
+.skin-blue .main-header .logo {
+    height: 50px;
+    max-height: 50px;
+    width: 175px;    
+    background-color: #00274C;
+    color: #FFCB05;
+    border-bottom: 1px solid #73712c;
+    border-right: 1px solid #73712c;
+    white-space: nowrap;
+    font-size: 1.25em;
+    padding: 0;
+    cursor: pointer;
+}
+.skin-blue .main-header .logo:hover {
+    background-color: #00274C !important;
+}
+.skin-blue .main-header .navbar .sidebar-toggle {
+    color: #F2D384;
+}
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+    color: #F2D384 !important;
+    background: #ffffff11;
+}
+.header-status {
+    float: right;
+    color: #ddd;
+    line-height: 20px;
+    margin: 5px 10px;
+    text-align: right;
+}
+
+/*  ------------------------------------------------------------------------
+    shinydashboard sidebar styles
+    ------------------------------------------------------------------------*/
+.skin-blue  .main-sidebar {
+    padding-top: 50px; #0;
+    background-color: #00274C;
+    border-top: 1px solid #F2D384;
+}
+.skin-blue .sidebar a {
+    color: #F2D384;
+}
+.skin-blue .sidebar-menu > li.active > a,
+.skin-blue .sidebar-menu > li:hover > a {
+    color: #fbf2da;
+    background: #ffffff11;
+}
+.skin-blue .sidebar-menu > li:hover > a {
+    border-left-color: transparent;
+}    
+.skin-blue .sidebar-menu > li.active > a,
+.skin-blue .sidebar-menu > li.active:hover > a{
+    border-left-color: #FFCB05;
+}
+
+/* custom widgets for the sidebar */
+.app-name {
+    color: #FFCB05;
+    padding: 0 20px 0 0;
+    text-align: center;
+    font-size: 1.2em;
+}
+.sidebarBookmarking, .sidebarBookmarking:hover, .sidebarBookmarking:focus {
+    border: transparent;    
+    background-color: transparent;    
+    margin-top: 2em;
+}
+.sidebarBookmarking {
+    color: #dddddd !important;
+}
+.sidebarBookmarking:hover {
+    color: #f2f8fc !important;
+}
+.sidebar-status {
+    color: white;
+    padding: 10px;
+    width: 100%;
+    margin: 0;
+    border-top: 2px solid #334e68;
+    margin-top: 25px;
+}
+.sidebar-status a {
+    color: #aaaaaa !important;
+    margin-left: 0 !important;
+}
+.sidebar-status a:hover {
+    color: #cccccc !important;
+}
+.sidebar-info-box {
+    /*background-color: #113455;*/
+    color: #aaaaaa;
+    padding: 5px;
+    margin: 5px 0;
+    /*border: 1px solid #334e68;*/
+    /*border-radius: 5px;*/
+}
+.sidebar-info-box-supertitle {
+    font-size: 0.9em;
+    font-style: italic;
+}
+.sidebar-info-box-value {
+    margin-left: 10px;
+}
+
+/*  ------------------------------------------------------------------------
+    content panel styles
+    ------------------------------------------------------------------------*/
+/*  globus setup styles */
+#globus-setup > div {
+    padding: 0;
+}
+.file-input-controls {
+    border: 1px solid #aab;
+    padding: 10px 0 5px 0;    
+    margin: 10px 0;
+    border-radius: 10px;
+    background-color: white;
+}
+
+/*  app overview styles */
+.overview-table tr {
+    vertical-align: top;
+}
+.overview-table td {
+    padding: 1em;
+}
+.overview-table td:first-of-type {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* content panel styles */
+h3:first-of-type {
+    margin-top: 0;
+}
+.content-wrapper, .right-side {
+    background-color: #fcfcfc;
+    padding: 0 15px;
+    border-top: 1px solid #73712c;
+    border-left: 1px solid #73712c;
+}
+.form-group, .progress {
+    margin-bottom: 0;
+}
+
+/*  ------------------------------------------------------------------------
+    custom widgets for the body
+    ------------------------------------------------------------------------*/
+.view-code-trigger, a {
+    color: #0174BB;
+}
+.view-code-trigger:hover, a:hover {
+    color: #BA5827;
+}
+.text-block {
+    max-width: 700px;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+.box.box-solid.box-primary>.box-header {
+    background-color: #0174BB;
+}
+.box-header {
+    padding: 5px;
+}
+.box-header .box-title {
+    font-size: 17px;
+}
+.box-body {
+    padding: 5px;
+}
+.margin-5 {
+    margin: 5px;
+}
+table i.fa.fa-circle-notch {
+    color: #0174BB !important;
+}
+table i.fa.fa-check-circle {
+    color: #00a65a !important;
+}
+table i.fa.fa-times-circle {
+    color: rgb(200,0,0) !important;
+}
+table i.fa.fa-check-circle,
+table i.fa.fa-times-circle {
+    font-size: 1.15em;
+}
+.record-actions-link {
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+/*  ------------------------------------------------------------------------
+    DT data tables
+    ------------------------------------------------------------------------*/
+.table-compact-2 th, .table-compact-2 td {
+    padding: 2px !important;
+}
+.table-compact-4 th, .table-compact-4 td {
+    padding: 4px !important;
+}
+table.dataTable tbody tr:hover {
+    background-color: #f8e9c2 !important;
+}
+table.dataTable tbody tr.selected {
+    background-color: #f6e0a9 !important;
+    color: black;
+}
+.DT-edit-box {
+    background-color: #e3eae8;
+}
+
+/*  ------------------------------------------------------------------------
+    sortable, including samples grid
+    ------------------------------------------------------------------------*/
+.default-sortable.rank-list-container {
+    padding: 0 !important;
+    margin: 0;
+}
+.default-sortable .rank-list {
+    min-height: 35px !important;
+}
+.default-sortable .rank-list.rank-list-empty {
+    border: none !important;
+}
+.default-sortable .rank-list-item {
+    padding: 3px !important;
+}
+.rank-list-item.sortable-selected {
+    background-color: #f8e7bb !important;
+}
+.sample-category1-name input{
+    background-color: #e3eae8;
+}
+.sample-category2-name input{
+    background-color: #f8e7bb;
+    margin: 8px 0;    
+}
+.sample-category1-name input,
+.sample-category2-name input {
+    font-weight: bold;
+}
+.samples-category2-names-label {
+    font-weight: bold;
+    text-align: center;
+}
+
+/*  ------------------------------------------------------------------------
+    app loading spinner
+    ------------------------------------------------------------------------*/
+.progress-spinner-div {
+    visibility: hidden;
+    position: absolute;    
+    margin-left: 175px;
+    margin-top: 50px;
+    width: 100vw;
+    max-width: 700px;
+    z-index: 100;
+}
+.progress-spinner {
+    border: 8px solid #67acd6;
+    border-radius: 50%;
+    border-top: 8px solid transparent;
+    width: 80px;
+    height: 80px;
+    -webkit-animation: spin 1.5s linear infinite;
+    animation: spin 1.5s linear infinite;
+    margin: auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/*  ------------------------------------------------------------------------
+    modal popups / dialogs
+    ------------------------------------------------------------------------*/
+.full-screen-modal {
+    padding: 0;
+    height: 85vh;
+}
+.modal-dismiss-button {
+    float: right;
+}
+#modal-dialog-error {
+    color: rgb(200,0,0);
+}
+
+/*  ------------------------------------------------------------------------
+    results widgets
+    ------------------------------------------------------------------------*/
+.results-box-header-p {
+    margin: 0;
+    padding: 0;
+}
+.results-box-header-button {
+    margin-left: 10px;
+    padding: 0;
+    border: none;
+    color: #fbf2da !important;
+}
+.results-box-header-button:hover {
+    color: white !important;
+}
+

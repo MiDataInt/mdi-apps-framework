@@ -1,0 +1,26 @@
+
+#----------------------------------------------------------------------
+# ui 
+#----------------------------------------------------------------------
+
+# label shown on dashboard menu 
+shortLabel: "View Results"
+
+# description shown on the Overview page
+shortDescription: "View analysis results via interactive tables and plots."
+
+# label shown at top of appStep tab  
+longLabel: "View analysis results"
+
+#----------------------------------------------------------------------
+# server
+#----------------------------------------------------------------------
+
+# names of the type(s) of this module ...
+types:
+    - view
+
+# ... and of its dependencies
+sourceTypes:
+    - analyze
+

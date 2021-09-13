@@ -1,0 +1,26 @@
+
+#----------------------------------------------------------------------
+# ui
+#----------------------------------------------------------------------
+
+# label shown on dashboard menu 
+shortLabel: "Assign Samples"
+
+# description shown on the Overview page
+shortDescription: "Drag and drop samples to declare their associations into categories relevant to your study design (e.g. genotypes and treatments)."
+
+# label shown at top of appStep tab  
+longLabel: "Assign samples to categories of your study design"
+
+#----------------------------------------------------------------------
+# server
+#----------------------------------------------------------------------
+
+# names of the type(s) of this module ...
+types:
+    - assign
+    
+# ... and of its dependencies
+sourceTypes:
+    - upload
+

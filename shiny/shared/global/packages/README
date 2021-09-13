@@ -1,0 +1,99 @@
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+TODO: THIS NEEDS TO BE UPDATED!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+version number pattern:
+major.minor.patch, e.g. 3.1.23
+
+a major release of magc-portal-apps:
+might change in the core behavior of the framework itself;
+  scripts necessarily include
+      run_portal.R
+      run_framework.R
+      global.R
+          NOT ui.R and server.R which are re-called in every user session
+  but might by choice include core changes in server.R, bookmarking, etc.
+always advances the minimum required R version in DESCRIPTION to the current release
+advances the R version in Docker containers to that same version
+mirrors all required non-base packages into miniCRAN repository (with binaries built under Rversion)
+updates all packages to the current version
+advances the Bioconductor version to the current release
+similarly updates the miniCRAN repository
+requires a rebuild and hard restart of all servers
+
+a minor release of magc-portal-apps:
+never changes the core behavior of the framework itself
+might change a module or component shared by multiple apps, but not redefine it structurally
+can be incorporated by a rolling update (i.e. git pull)
+might add a new app or major structural feature of an app
+might add a _new_ package to the miniCRAN repository as needed
+never changes R or package versions if already present in the major release
+
+a patch release of magc-portal-apps:
+adds a derivative functionality of an existing app
+incorporates a hot-fix of bugs, etc.
+might fix bugs in a core module or component but never changes its expected functionality
+never changes R or package versions
+never adds a new app or package dependency
+
+a major release of an app or core module:
+demands an _updated_ R or package version
+triggers a major release of magc-portal-apps
+is forced when a different app demands an update of a shared dependency
+  this is a limitation of the shared framework that could break the app (but version rollback is possible)
+
+a minor release of an app or core module:
+adds a major new feature or structural element to the app (not the framework)
+might add a _new_ portal package
+triggers a minor release of magc-portal-apps
+
+a patch release of an app or core module:
+enhances existing features of the app
+incorporates a hot-fix of bugs, etc.
+never changes R or package versions or adds a new package dependency
+
+Thus:
+the magc-portal-apps version advances (typically  either in patch or minor version) when any app/module changes
+app/module versions need not change when the Portal version changes (but at least one will)
+lesser version levels advance implicitly (and are reset to 0) when higher levels advance
+higher and lower level changes may occur at the same time, where the higher level change dictates the release type
+   e.g. a major release might include only bug fixes in some apps (or no changes at all)
+
+The following scripts are called once at server startup from the main framework installation
+changes to them generally demand a restart of the server to take effect
+  run_portal.R
+  run_framework.R
+  global.R (or anything _sourced_ by global.R)
+The following scripts are re-called at every session _by_Shiny_ from the main framework installation
+thus they can be updated live, but cannot have multiple simultaneous versions available
+  ui.R
+  server.R
+ALL other scripts are re-called at every session _by_server.R_
+thus, we can redirect to potentially any version of magc-portal-apps in response a user selection
+as long as the script content lives outside of server.R itself
+  main version never changes, lower versions live in a temp/cache location (per server? per session?)
+
+all releases at any level are tagged in github and can be checked out
+a database (FORM??) correlates magc-portal-apps and app releases
+  e.g. the first portal release that carried an app version
+provides the mechanism for loading an app in an earlier version within the same (later) framework
+is some potential for incompatibility between an app version and a framework version (but minimal)
+
+we host a public miniCRAN repository of all non-base R packages
+base R packages are provided by the minimal version we expect R to have
+repository is organized by major version of magc-portal-apps (i.e. it is multiple repositories)
+minor version releases may _add_ to a major version repository but never modify existing packages
+packages.R carries functions to check and install all packages in the current major version of an app
+installation occurs into magc-portal-library, which contains the SAME major release structure
+thus, app will always have an explicitly controlled set of package versions in addition to portal code
+
+
+QUESTION: also host a repository for magc-portal-apps? try to get on CRAN?
+if not hosted, user must use devtools::install_github
+if we host, we must build source bundles and Windows binaries (not that hard?)
+if CRAN hosts, only two versions will be available, probably other headaches (but familiarity and stability)
+
+C:\Users\wilsonte\Documents\TEST_CRAN\src\contrib
+C:\Users\wilsonte\Documents\TEST_CRAN\bin\windows\contrib\3.6
+

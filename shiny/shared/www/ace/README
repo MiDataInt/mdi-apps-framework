@@ -1,0 +1,8 @@
+
+from https://github.com/ajaxorg/ace-builds
+
+only kept scripts needed for our minimal implementation of the Ace Code Editor
+
+if needed in future, copy additional modes or themes from/to src-min-noconflict
+
+

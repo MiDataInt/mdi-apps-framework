@@ -1,0 +1,16 @@
+#----------------------------------------------------------------------
+# define the two options applied to all analysis schema
+#----------------------------------------------------------------------
+---
+# what data should we act on?
+Sample_Set: 
+    type: selectInput
+    choices: getSampleSetsNamedList    
+    #startWithNull: true
+
+# what should we do to the data?    
+Analysis_Type: 
+    type: selectInput
+    choices: null
+    #startWithNull: true
+

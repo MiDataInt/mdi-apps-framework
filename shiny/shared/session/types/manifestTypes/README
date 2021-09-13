@@ -1,0 +1,21 @@
+
+set the expected manifest file metadata and handling functions
+used by sourceFileUpload and potentially other modules
+
+all manifestTypes must define a list with members:
+
+   patterns = file suffixes for the manifest files
+   
+   load = a function to read the manifest file from disk
+   
+   parse = a function that takes the data frame from 'load' and returns a list of two data frames
+        $manifest = data frame with all input rows, potentially with modified column names/data types
+        $unique   = data frame with one row per unique sample
+        each with:
+            appropriately modified/aggregated sampleValueColumns
+            Project, SampleID and Description columns
+                these three must ALWAYS be present as they create sample UIDs
+                create them and fill with a constant if necesssary
+        $unique may additionally have:
+            Yield and Quality columns, when appropriate (will be set to NA if absent)
+

@@ -1,0 +1,73 @@
+
+# CRAN packages
+R:
+#----------------------------------------------------------------------
+    # pacakages in this section are general to all apps and are attached during page start
+    # therefore, their functions can be called directly (e.g. read_yaml())
+    tools:
+        - digest
+        - knitr
+        - markdown
+        - httr
+        - openssl
+        - jose
+    data:
+        - data.table
+        - dplyr
+        - jsonlite
+        - yaml
+        - storr # key-value storage on disk or via Redis
+        - zoo   # useful rolling value functions
+        #- RSQLite
+        #- DBI
+    graphics:
+        - ggplot2
+        - plotly # client-side interactive plots 
+    framework:
+        - shiny      # shiny itself (already loaded and attached, of course)
+        - shinydashboard # main page layout and boxes
+        - DT         # Shiny interface to JavaScript DataTables library
+        - shinyBS    # enhanced button and other widgets
+        - sortable   # drag and drop capability
+        - tippy      # tooltips
+        - shinyjs
+            #- shinycssloaders
+            #- readxl
+            #- writexl
+    async:
+        - future
+        - promises
+#----------------------------------------------------------------------
+    # prefer NOT to attach developer packaages ...
+    # but some don't work unless you do
+    developer:
+        unattached: null 
+            #- git2r' # deprecated in favor of system2 call to git         
+        attached: 
+            - shinyTree
+            - styler # attach so that developer is prompted to create a cache
+#----------------------------------------------------------------------
+    # installed but not attached unless library() called by an app or module
+    # prefer to not attach Bioconductor but use in full syntax, e.g. GenomicRanges::GRanges
+    bioconductor:
+        - BiocManager            
+        - RMariaDB    # used by function makeTxDbFromUCSC
+        - rtracklayer
+        - Biostrings
+        - SummarizedExperiment
+        - GenomicRanges
+        - GenomicFeatures
+        - GenomeInfoDb
+            #VariantAnnotation
+            #Rsamtools
+            #GenomicAlignments
+            #ShortRead
+            #BiocSet
+            #GSEABase
+            #GSEABase
+            #MultiAssayExperiment
+            #SingleCellExperiment
+    analysis: # like Bioconductor (see above), analysis packages are never attached a priori
+        - HMM
+#----------------------------------------------------------------------
+
