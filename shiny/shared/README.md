@@ -1,4 +1,3 @@
-
 ----------------------------------------------------------------
  Shiny shared modules/components folder organization
 ----------------------------------------------------------------
@@ -12,7 +11,7 @@ documentation for more information. If these scripts need to change,
 servers generally need to be restarted.
 
 The **server folder** has scripts that are sourced by server.R
-to initialize the session and contruct the launch page (they
+to initialize the session and construct the launch page (they
 are broken into pieces in this folder for clarity).
 
 The **global folder** has scripts that define utility functions
@@ -37,7 +36,7 @@ The **optional** folder is similar to **session** except that, unlike
 the latter, scripts in the optional folder are not sourced unless
 specifically requested by an app via a 'require' directive in its
 <code>config.yml</code> files. Thus, scripts in the session folder are 
-generally required for use by the Portal framework, whereas scripts in 
+generally required for use by the MDI framework, whereas scripts in 
 the optional folder might only be used by a subset of apps. Otherwise, 
 the optional and session folders have a similar structure, scope and
 purpose.
@@ -55,18 +54,18 @@ Categories of recurring elements used to support apps
 
 Within the **global**, **session** and **optional** folders:
 
-**classes** are R Shiny S3 classes that define resuable data objects
-for use by developers writing Portal code. Their general purpose
+**classes** are R Shiny S3 classes that define reusable data objects
+for use by developers writing MDI code. Their general purpose
 is to encapsulate methods and other common logics. Classes are
 never used to access or create the UI.
 
-**modules** are R Shiny modules that define resuable UI components
+**modules** are R Shiny modules that define reusable UI components
 and associated server logic for app steps, widgets, etc.
 Specifically:
 
-    appControl      control overall framework bevhavior
+    appControl      control overall framework behavior
     appSteps        common analysis steps used by apps, e.g. to load files
-    developerTools  UI components only added during Portal development
+    developerTools  UI components only added during MDI development
     globus          functions that support user login via the Globus service
     widgets         UI components to embed on pages, e.g. plot boxes
 
@@ -87,4 +86,3 @@ Note that **modules**, **types**, **ui** and **utilities** folders can
 be created within app folders also, to only be loaded with that specific 
 app. However, whenever possible, it is desirable to abstract modules
 and types to be reusable in other/future apps.
-
