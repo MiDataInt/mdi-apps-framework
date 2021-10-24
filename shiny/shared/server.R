@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# server function is called once per user session by run_framework.R > Shiny::runApp
+# server function is called once per user session by run_server.R > Shiny::runApp
 # nearly all other scripts are sourced by the serverFn function
 #----------------------------------------------------------------------
 
@@ -8,7 +8,7 @@ serverFn <- function(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted=FALSE){
     queryString <- parseQueryString(isolate(session$clientData$url_search))
-    if(length(queryString) > 0) updateQueryString("?", mode="push") # clear the url
+    if(length(queryString) > 0) updateQueryString("?", mode = "push") # clear the url
 
     # public servers demand user authentication; ui is redirecting
     if(serverEnv$IS_SERVER &&  # allow all local page loads
@@ -18,14 +18,14 @@ serverFn <- function(input, output, session,
     ) return()
     
     # source the code that defines a session
-    source("server/initializeSession.R", local=TRUE)
+    source("server/initializeSession.R", local = TRUE)
     show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
          CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        
     createSpinner() # create the loading spinner
-    source("server/initializeLaunchPage.R", local=TRUE)
-    source("server/observeLoadRequest.R", local=TRUE)
-    source("server/onSessionEnded.R", local=TRUE)
-    source("server/observeGlobus.R", local=TRUE) # last code acts on login
+    source("server/initializeLaunchPage.R", local = TRUE)
+    source("server/observeLoadRequest.R", local = TRUE)
+    source("server/onSessionEnded.R", local = TRUE)
+    source("server/observeGlobus.R", local = TRUE) # last code acts on login
 }
 
 #----------------------------------------------------------------------
@@ -47,7 +47,7 @@ server <- function(input, output, session){
         # parse information from js
         cookie <- parseCookie(input$initializeSession$cookie)
         priorCookie <- parseCookie(input$initializeSession$priorCookie)
-        sessionKey <- getSessionKeyFromNonce(input$initializeSession$sessionNonce) # cannot rely on having sessionKey if HttpOnly
+        sessionKey <- getSessionKeyFromNonce(input$initializeSession$sessionNonce) # cannot rely on sessionKey if HttpOnly # nolint
         sessionFile <- getGlobusSessionFile('session', sessionKey)
         isLoggedIn <- file.exists(sessionFile)        
         
@@ -57,7 +57,7 @@ server <- function(input, output, session){
            !isLoggedIn) { 
             serverFn(input, output, session,
                      sessionKey, sessionFile,
-                     cookie, restricted=TRUE)
+                     cookie, restricted = TRUE)
             
         # redirect after setting session key in local mode
         } else if(is.null(priorCookie$isSession)){ 
@@ -75,8 +75,7 @@ server <- function(input, output, session){
             )
             serverFn(input, output, session,
                      sessionKey, sessionFile,
-                     cookie, restricted=FALSE) 
+                     cookie, restricted = FALSE) 
         }
     })
 }
-

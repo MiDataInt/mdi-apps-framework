@@ -1,33 +1,32 @@
-
 #----------------------------------------------------------------------
-# set up the MAGC Portal dashboard and launch page (i.e. first file upload)
+# set up the UI dashboard and launch page (i.e. first file upload)
 #----------------------------------------------------------------------
 
 # STYLES AND SCRIPTS, loaded into html <head>
 htmlHeadElements <- tags$head(
-    tags$link(rel="icon", type="image/png", href="logo/favicon-16x16.png"), # favicon
-    tags$link(href="framework.css", rel="stylesheet", type="text/css"), # framework js and css
-    tags$script(src="framework.js", type="text/javascript", charset="utf-8"),
+    tags$link(rel = "icon", type = "image/png", href = "logo/favicon-16x16.png"), # favicon
+    tags$link(href = "framework.css", rel = "stylesheet", type = "text/css"), # framework js and css
+    tags$script(src = "framework.js", type = "text/javascript", charset = "utf-8"),
     if(serverEnv$IS_DEVELOPER){tagList( # enable developer tools
-        tags$script(src="ace/src-min-noconflict/ace.js", type="text/javascript", charset="utf-8"),
-        tags$script(src="summernote-0.8.18-dist/summernote-lite.min.js", type="text/javascript", charset="utf-8"),
-        tags$link(href="summernote-0.8.18-dist/summernote-lite.min.css", rel="stylesheet", type="text/css")
+        tags$script(src = "ace/src-min-noconflict/ace.js", type = "text/javascript", charset = "utf-8"),
+        tags$script(src = "summernote-0.8.18-dist/summernote-lite.min.js", type = "text/javascript", charset = "utf-8"),
+        tags$link(href = "summernote-0.8.18-dist/summernote-lite.min.css", rel = "stylesheet", type = "text/css")
     )} else ""
 )
 
 # LAUNCH PAGE CONTENT: the first items typically seen that support data import
-dataImportTabItem <- tabItem(tabName="dataImport", tags$div(class="text-block",
+dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-block",
     tags$div( # main launch page and file upload
-        id=CONSTANTS$apps$launchPage,
-        style="display: none;", # server.R selects the proper content to show
-        includeMarkdown( file.path('static/portal-intro.md') ),
+        id = CONSTANTS$apps$launchPage,
+        style = "display: none;", # server.R selects the proper content to show
+        includeMarkdown( file.path('static/mdi-intro.md') ),
         uiOutput('mainFileInputUI'),
         includeMarkdown( file.path('static/launch-page.md') ),
         uiOutput('bookmarkHistoryList')
     ),
     tags$div( # server busy page
-        id="server-busy",
-        style="display: none;",
+        id = "server-busy",
+        style = "display: none;",
         includeMarkdown( file.path('static/server-busy.md') )
     ),
     plotlyOutput('nullPlotly', height = "0px", width = "0px") # must do now so plotly.js etc. are loaded  
@@ -36,7 +35,7 @@ dataImportTabItem <- tabItem(tabName="dataImport", tags$div(class="text-block",
 # GLOBUS HELP: the tabset panel with Globus help information
 globusHelpPanels <- function(){
     tags$div( # page to help get Globus access to engage that data import method
-        id="globus-setup",
+        id = "globus-setup",
         tabBox(                          
             title = NULL,
             width = 12,                            
@@ -44,8 +43,8 @@ globusHelpPanels <- function(){
                 title = 'Get a Globus Login',
                 value = 'setupGlobusAccount',
                 includeMarkdown( file.path('static/setup-globus-account.md') ),
-                tags$div(style="font-size: 1.1em; text-align: center; margin-bottom: 15px;",
-                    bsButton('globusLoginButton','Log in to Globus', style="primary") 
+                tags$div(style = "font-size: 1.1em; text-align: center; margin-bottom: 15px;",
+                    bsButton('globusLoginButton', 'Log in to Globus', style = "primary") 
                 )
             ),
             tabPanel(
@@ -54,30 +53,31 @@ globusHelpPanels <- function(){
                 includeMarkdown( file.path('static/receive-agc-data.md') )
             ),
             tabPanel(
-                title = 'Run the Portal Locally',
-                value = 'runPortalLocally',
-                includeMarkdown( file.path('static/run-portal-locally.md') )
+                title = 'Run the MDI Locally',
+                value = 'runMDILocally',
+                includeMarkdown( file.path('static/run-mdi-locally.md') )
             )
         )
     )
 }
 
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
-getLaunchPage <- function(cookie, restricted=FALSE){
+getLaunchPage <- function(cookie, restricted = FALSE){
 
     # enforce content restrictions on first encounter of a new user while providing Globus help
     if(restricted){
         dataImportMenuItem <- ""
-        dataImportTabItem  <- tags$div(class="tab-pane")
+        dataImportTabItem  <- tags$div(class = "tab-pane")
     } else {
-        dataImportMenuItem <- menuItem(tags$div('1 - Import Data',  class="app-step"), tabName="dataImport", selected=!restricted)
+        dataImportMenuItem <- menuItem(tags$div('1 - Import Data',  class = "app-step"), 
+                                       tabName = "dataImport", selected = !restricted)
         dataImportTabItem  <- dataImportTabItem
     }
     
     # assemble the dashboard page style
     dashboardPage(
         dashboardHeader(
-            title = "MAGC Portal",
+            title = "MDI",
             titleWidth = "175px"
             #dropdownMenu(type = "messages", badgeStatus = "success",
             #    messageItem("Support Team", "This is the content of a message.", time = "5 mins")
@@ -91,12 +91,13 @@ getLaunchPage <- function(cookie, restricted=FALSE){
         ),
         dashboardSidebar(
             # the dashboard option selectors, filled dynamically per app after first data load
-            sidebarMenu(id="sidebarMenu",
-                menuItem(tags$div(class="app-step", '0 - Globus Setup'), tabName="globusSetup", selected=restricted),               
+            sidebarMenu(id = "sidebarMenu",
+                menuItem(tags$div(class = "app-step", '0 - Globus Setup'), 
+                         tabName = "globusSetup", selected = restricted),               
                 dataImportMenuItem         
             ),
             htmlHeadElements, # yes, place the <head> content here (even though it seems odd)
-            width="175px" # must be here, not in CSS
+            width = "175px" # must be here, not in CSS
         ),
     
         # body content, i.e. panels associated with each dashboard option
@@ -106,7 +107,7 @@ getLaunchPage <- function(cookie, restricted=FALSE){
                         setSessionKeyNonce(cookie$sessionKey), "' />")),
             tabItems(
                 tabItem(tabName = "globusSetup",
-                        tags$div(class="text-block", globusHelpPanels())),                
+                        tags$div(class = "text-block", globusHelpPanels())),                
                 dataImportTabItem
             )
         )
@@ -120,7 +121,7 @@ ui <- function(request){
     # determine what type of page request this is
     #    public servers demand a valid identity
     #    some local instances might want to use Globus (but never ondemand servers, they use the HPC file system)
-    cookie      <- parseCookie(request$HTTP_COOKIE)       # our function in globusAPI.R
+    cookie <- parseCookie(request$HTTP_COOKIE) # our function in globusAPI.R
     if(!serverEnv$IS_GLOBUS || serverEnv$IS_ONDEMAND) return( getLaunchPage(cookie) )
     queryString <- parseQueryString(request$QUERY_STRING) # httr function
 
@@ -158,7 +159,7 @@ ui <- function(request){
             fluidPage(
                 useShinyjs(), # page just needs the js code at this point
                 HTML(paste0("<input type=hidden id='sessionNonce' value='' />")), # suppress js error
-                tags$head(tags$script(src="framework.js"))
+                tags$head(tags$script(src = "framework.js"))
             )          
         } 
 
@@ -178,4 +179,3 @@ ui <- function(request){
         }
     }
 }
-
