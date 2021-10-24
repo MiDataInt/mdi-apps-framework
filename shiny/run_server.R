@@ -70,7 +70,7 @@ isParentProcess <- TRUE
 source(file.path('global', 'packages', 'packages.R'))
 loadFrameworkPackages(c('httr', 'yaml'))
 globusConfig <- tryCatch({
-    read_yaml(file.path(serverEnv$MDI_DIR, 'config.yml'))
+    read_yaml(file.path(serverEnv$MDI_DIR, 'mdi.yml'))
 }, error = function(e) list(
     client     = list(key = NULL, secret = NULL),
     endpoint   = list(id = NULL),

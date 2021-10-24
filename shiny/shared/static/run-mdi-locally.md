@@ -88,7 +88,7 @@ Great! All that remains is to copy and paste your client id/key,
 secret, and endpoint UUID values into the following file in your
 installation of the MDI:
 
-<code>/path/to/mdi/config.yml</code>
+<code>/path/to/mdi/mdi.yml</code>
 
 Start your web server by calling <code>mdi::run()</code>
 in R and you should have access to Globus login and transfers. 
