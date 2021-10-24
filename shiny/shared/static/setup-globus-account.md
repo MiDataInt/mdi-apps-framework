@@ -5,7 +5,7 @@ Globus is a web-based service for
 <a href="https://www.globus.org/data-transfer" target="_globus">
 fast and reliable data transfer</a>.
 We use it to transfer unprocessed data to you and you can use it
-to import processed files into the Portal.
+to import processed files into the MDI.
 
 **How do I log in / get an account?**
 
@@ -14,6 +14,5 @@ University or organization in the drop down menu. Click
 'Continue' and log in as you normally do.
 
 If it is your first time using Globus, you will be prompted
-to give permissions to the MiData Portal and for additional
+to give permissions to the MDI and for additional
 information to set up your account. That's it!
-

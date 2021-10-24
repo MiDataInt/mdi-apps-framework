@@ -1,4 +1,3 @@
-
 We use
 <a href="https://www.globus.org/data-transfer" target="_globus">
 the Globus file transfer service</a>
@@ -19,7 +18,6 @@ HITS RPC etc.
 
 Instructions
 
-**Step #3 - Grant the AGC staff and the MAGC Portal access to your endpoint**
+**Step #3 - Grant the AGC staff and the MDI access to your endpoint**
 
 Instructions
-

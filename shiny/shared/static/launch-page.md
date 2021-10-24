@@ -1,4 +1,3 @@
-
 To begin, please upload / drop one of the following file types:
 
 * A **project sample manifest** provided by the AGC,
@@ -17,6 +16,5 @@ Click 'Select File on Globus' to
 import a file from Turbo or another server
 (requires login, see 'Globus Setup').
 
-Or, use the list below to set the Portal to a recent
+Or, use the list below to set the MDI to a recent
 bookmarked state.
-

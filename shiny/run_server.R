@@ -1,14 +1,10 @@
-
 #----------------------------------------------------------------------
-# launch the MAGC Portal analysis framework server
-#----------------------------------------------------------------------
-# this script can be called either by magc.portal::run() or directly
-# if required environment variables are set
+# launch the MDI Stage 2 apps server; sourced by mdi::run()
 #----------------------------------------------------------------------
 
 # load environment variables
 serverEnv <- as.list(Sys.getenv()) # thus, can access values as serverEnv$VARIABLE_NAME
-setServerEnv <- function(name, default=NULL, type=as.character){
+setServerEnv <- function(name, default = NULL, type = as.character){
     serverEnv[[name]] <<- if(is.null(serverEnv[[name]])) {
         default
     } else {
@@ -17,9 +13,8 @@ setServerEnv <- function(name, default=NULL, type=as.character){
 }
 
 # set structured environment variables based on mode
-serverEnv$PORT <- 3838 # MAGC Portal always served on port 3838
-serverEnv$IS_SERVER    <- serverEnv$SERVER_MODE == 'server'
-serverEnv$IS_LOCAL     <- serverEnv$SERVER_MODE == 'local'
+serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
+serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
 serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
 if(serverEnv$IS_LOCAL || serverEnv$IS_ONDEMAND){ # e.g., end user desktop or laptop
     serverEnv$HOST <- "127.0.0.1"
@@ -28,8 +23,8 @@ if(serverEnv$IS_LOCAL || serverEnv$IS_ONDEMAND){ # e.g., end user desktop or lap
     setServerEnv('IS_DEVELOPER', FALSE, as.logical)
     setServerEnv('MAX_MB_RAM_BEFORE_START', 1e6, as.integer) # i.e. don't limit local start RAM
     setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
-    serverEnv$SERVER_URL   <- "http://localhost:3838/" # cannot be 127.0.0.1 for Globus OAuth2 callback
-    serverEnv$CALLBACK_URL <- "http://127.0.0.1:3838/" # cannot be localhost for endpoint helper page action
+    serverEnv$SERVER_URL   <- paste0("http://localhost:", serverEnv$SERVER_PORT, "/") # cannot be 127.0.0.1 for Globus OAuth2 callback # nolint
+    serverEnv$CALLBACK_URL <- paste0("http://127.0.0.1:", serverEnv$SERVER_PORT, "/") # cannot be localhost for endpoint helper page action # nolint
     FALSE
 } else if(serverEnv$IS_SERVER) { # public web server mode
     serverEnv$HOST <- "0.0.0.0"
@@ -45,20 +40,19 @@ if(serverEnv$IS_LOCAL || serverEnv$IS_ONDEMAND){ # e.g., end user desktop or lap
 }
 
 # set directories (framework runs from 'shared' directory that carries ui.R and server.R)
-if(!dir.exists(serverEnv$PORTAL_DIR)) stop(paste('unknown directory:', serverEnv$PORTAL_DIR))
-setServerDir <- function(name, parentDir, ..., check=TRUE, create=FALSE){
+if(!dir.exists(serverEnv$MDI_DIR)) stop(paste('unknown directory:', serverEnv$MDI_DIR))
+setServerDir <- function(name, parentDir, ..., check = TRUE, create = FALSE){
     serverEnv[[name]] <<- file.path(parentDir, ...)
     if(check  && !dir.exists(serverEnv[[name]])) stop(paste('missing directory:', serverEnv[[name]]))
     if(create && !dir.exists(serverEnv[[name]])) dir.create(serverEnv[[name]])
 }
-setServerDir('SHINY_DIR', serverEnv$MAGC_PORTAL_APPS_DIR,'shiny')
-setServerDir('SHARED_DIR',serverEnv$SHINY_DIR,           'shared')
-setServerDir('STORR_DIR', serverEnv$DATA_DIR,'storr', check=FALSE, create=TRUE)
-setServerDir('CACHE_DIR', serverEnv$DATA_DIR,'cache', check=FALSE, create=TRUE)
+setServerDir('SHINY_DIR',  serverEnv$APPS_FRAMEWORK_DIR, 'shiny')
+setServerDir('SHARED_DIR', serverEnv$SHINY_DIR, 'shared')
+setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr', check = FALSE, create = TRUE)
+setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache', check = FALSE, create = TRUE)
 setwd(serverEnv$SHARED_DIR)
 
 # declare a version-specific R library from which all packages are loaded
-setServerDir('LIBRARY_DIR', serverEnv$LIBRARY_DIR, serverEnv$BIOCONDUCTOR_RELEASE)
 .libPaths(serverEnv$LIBRARY_DIR)
 if(serverEnv$DEBUG) message(paste("LIBRARY_DIR =", serverEnv$LIBRARY_DIR))
 
@@ -72,21 +66,21 @@ if(serverEnv$DEBUG) message(paste('serverId', serverId))
 isParentProcess <- TRUE
 
 # establish Globus client credentials (order is important)
-source(file.path('global','packages','packages.R'))
-loadFrameworkPackages(c('httr','yaml'))
+source(file.path('global', 'packages', 'packages.R'))
+loadFrameworkPackages(c('httr', 'yaml'))
 globusConfig <- tryCatch({
-    read_yaml(file.path(serverEnv$PORTAL_DIR, 'globus_config.yml'))
+    read_yaml(file.path(serverEnv$MDI_DIR, 'config.yml'))
 }, error = function(e) list(
     client     = list(key = NULL, secret = NULL),
     endpoint   = list(id = NULL),
     usersGroup = NULL
 ))
-serverEnv$IS_GLOBUS <-  !(is.null(globusConfig$client$key) ||
-                          is.null(globusConfig$client$secret) ||
-                          is.null(globusConfig$endpoint$id))
-source(file.path('global','globus','globusAPI.R'))
-source(file.path('global','globus','globusClient.R'))
-source(file.path('global','globus','sessionCache.R'))
+serverEnv$IS_GLOBUS <- !(is.null(globusConfig$client$key) ||
+                         is.null(globusConfig$client$secret) ||
+                         is.null(globusConfig$endpoint$id))
+source(file.path('global', 'globus', 'globusAPI.R'))
+source(file.path('global', 'globus', 'globusClient.R'))
+source(file.path('global', 'globus', 'sessionCache.R'))
 globusClientData <- if(serverEnv$IS_SERVER) {
     if(serverEnv$IS_DEVELOPER) message('getting client credentials')
     list( tokens = getGlobusClientCredentials() )
@@ -100,7 +94,7 @@ serverEnv$STORR <- storr::storr_rds(serverEnv$STORR_DIR)
 loadFrameworkPackages('shiny')
 addResourcePath('sessions', serverEnv$SESSIONS_DIR) # for temporary session files
 invisible(unlink(
-    list.files(serverEnv$SESSIONS_DIR, full.names=TRUE, include.dirs=TRUE),
+    list.files(serverEnv$SESSIONS_DIR, full.names = TRUE, include.dirs = TRUE),
     recursive = TRUE,
     force = TRUE
 ))
@@ -109,18 +103,17 @@ invisible(unlink(
 PRINT_DEBUG_FILE <- 'PRINT_DEBUG.txt'
 PRINT_DEBUG <- function(obj){
     x <- capture.output(print(obj))
-    cat(x, file=PRINT_DEBUG_FILE, append=TRUE, sep="\n")
+    cat(x, file = PRINT_DEBUG_FILE, append = TRUE, sep = "\n")
 }
 
-# start the framework
+# start the server
 # with auto-restart when stopApp is called at session end
 while(TRUE){
     runApp(
         appDir = '.',
         host = serverEnv$HOST,   
-        port = serverEnv$PORT,
+        port = serverEnv$SERVER_PORT,
         launch.browser = serverEnv$LAUNCH_BROWSER
     )
     dbDisconnect(sessionCacheDb)
 }
-
