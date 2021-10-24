@@ -13,6 +13,7 @@ setServerEnv <- function(name, default = NULL, type = as.character){
 }
 
 # set structured environment variables based on mode
+serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
 serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
 serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
