@@ -5,17 +5,12 @@ installing and running a variety of HPC data analysis pipelines
 and interactive R Shiny data visualization applications
 within a standardized design and implementation interface.
 
-## Organization and contents
+## Repository contents
 
-### MDI code stages
-
-Data analysis in the MDI is logically separated
-into 
+Data analysis in the MDI is logically separated into 
 [two stages of code execution](https://midataint.github.io/docs/analysis-flow/) 
 called Stage 1 HPC **pipelines**
 and Stage 2 web applications (i.e., **apps**).
-
-### Repository contents
 
 This is the repository for the **MDI apps
 framework**. It contains R Shiny-based code that
@@ -54,10 +49,10 @@ and managed by the MDI manager utility found here:
 <https://github.com/MiDataInt/mdi-manager>
 
 Please follow the manager installation instructions, being sure
-to update the apps suites you wish to install in 'mdi/config.yml':
+to update the apps suites you wish to install in 'mdi/mdi.yml':
 
 ```
-# mdi/config.yml
+# mdi/mdi.yml
 suites:
     apps:
         - https://github.com/GIT_USER/SUITE_NAME-mdi-apps.git

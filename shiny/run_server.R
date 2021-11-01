@@ -13,6 +13,7 @@ setServerEnv <- function(name, default = NULL, type = as.character){
 }
 
 # set structured environment variables based on mode
+serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
 serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
 serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
@@ -69,7 +70,7 @@ isParentProcess <- TRUE
 source(file.path('global', 'packages', 'packages.R'))
 loadFrameworkPackages(c('httr', 'yaml'))
 globusConfig <- tryCatch({
-    read_yaml(file.path(serverEnv$MDI_DIR, 'config.yml'))
+    read_yaml(file.path(serverEnv$MDI_DIR, 'mdi.yml'))
 }, error = function(e) list(
     client     = list(key = NULL, secret = NULL),
     endpoint   = list(id = NULL),
