@@ -19,21 +19,21 @@ unloadRStudioPackages <- function(){
     # clear an RStudio session of these packages as they may be out of date
     # (these are loaded by RStudio, but not R)
     tryCatch({
-        sapply(c('tinytex','tools','yaml','xfun'), unloadNamespace) # order is important
-    }, error=function(e) NULL)
+        sapply(c('tinytex', 'tools', 'yaml', 'xfun'), unloadNamespace) # order is important
+    }, error = function(e) NULL)
 }
 loadFrameworkPackages <- function(packages){
     suppressWarnings({
         sapply(
             packages,
             library,
-            lib.loc=serverEnv$LIBRARY_DIR,
-            character.only=TRUE
+            lib.loc = serverEnv$LIBRARY_DIR,
+            character.only = TRUE
         )
     })
 }
 loadMainPackages <- function(){
-    for(family in c('tools','data','graphics','framework')){
+    for(family in c('tools', 'data', 'graphics', 'framework')){
         loadFrameworkPackages(  frameworkPackages$R[[family]])
     }
 }
@@ -51,10 +51,10 @@ loadAsyncPackages <- function(session=NULL){
     loadFrameworkPackages(frameworkPackages$R$async)
 
     # switch to effectively synchronous execution if only 1 core available (syntax per future package author)
-    if(availableCores() == 1) plan(cluster, workers="localhost") 
+    if(availableCores() == 1) plan(cluster, workers = "localhost") 
 
     # otherwise use multicore on Linux, fall back to multisession on Windows
-    else if(.Platform$OS.type=="unix") plan(multicore)
+    else if(.Platform$OS.type == "unix") plan(multicore)
     else plan(multisession)
   
     if(!is.null(session)) stopSpinner(session)
@@ -69,8 +69,8 @@ loadAsyncPackages <- function(session=NULL){
 # will fail if BiocManager has not previously been installed as part of the framework
 installAndLoad_Bioconductor <- Vectorize(function(package){
     tryCatch({
-        require(package, lib.loc=serverEnv$LIBRARY_DIR, character.only=TRUE) # if not installed, Bioconductor package is unknown to R
-    }, warning=function(w){
+        require(package, lib.loc=serverEnv$LIBRARY_DIR, character.only=TRUE) # if not installed, Bioconductor package is unknown to R # nolint
+    }, warning = function(w){
 
         # sometimes there are other warnings about installed packages, e.g. regarding R version number
         # only install if the package is truly missing

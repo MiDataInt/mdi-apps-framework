@@ -12,6 +12,11 @@ setServerEnv <- function(name, default = NULL, type = as.character){
     }
 }
 
+# adjust selected environment variables to logical
+for(name in c('DEBUG', 'IS_DEVELOPER', 'IS_HOSTED', 'LAUNCH_BROWSER')) {
+    serverEnv[[name]] <- as.logical(serverEnv[[name]])
+}
+
 # set structured environment variables based on mode
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
 serverEnv$IS_REMOTE   <- serverEnv$SERVER_MODE == 'remote'
