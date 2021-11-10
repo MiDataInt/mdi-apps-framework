@@ -41,7 +41,7 @@ showHtmlModal <- function(file, type, title){
         footer = NULL,
         size = "l", # sets fixed width
         class = 'full-screen-modal', # sets fixed height,
-        fade = !serverEnv$IS_ONDEMAND
+        fade = serverEnv$IS_LOCAL_BROWSER
     ))
     stopSpinner(session)
 }
@@ -73,7 +73,7 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
         easyClose = easyClose, # allow easy dismissal
         footer = footer,
         size = size, # sets fixed width, height auto-adjusts
-        fade = !serverEnv$IS_ONDEMAND
+        fade = serverEnv$IS_LOCAL_BROWSER
     ))
 }
 observeEvent(input$userDialogOk, {

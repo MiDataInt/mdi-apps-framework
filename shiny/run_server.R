@@ -13,32 +13,38 @@ setServerEnv <- function(name, default = NULL, type = as.character){
 }
 
 # set structured environment variables based on mode
-serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
-serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
+serverEnv$IS_REMOTE   <- serverEnv$SERVER_MODE == 'remote'
+serverEnv$IS_NODE     <- serverEnv$SERVER_MODE == 'node'
 serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
-if(serverEnv$IS_LOCAL || serverEnv$IS_ONDEMAND){ # e.g., end user desktop or laptop
-    serverEnv$HOST <- "127.0.0.1"
-    setServerEnv('LAUNCH_BROWSER', TRUE, as.logical)
-    setServerEnv('DEBUG', TRUE, as.logical)
-    setServerEnv('IS_DEVELOPER', FALSE, as.logical)
-    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e6, as.integer) # i.e. don't limit local start RAM
-    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
-    serverEnv$SERVER_URL   <- paste0("http://localhost:", serverEnv$SERVER_PORT, "/") # cannot be 127.0.0.1 for Globus OAuth2 callback # nolint
-    serverEnv$CALLBACK_URL <- paste0("http://127.0.0.1:", serverEnv$SERVER_PORT, "/") # cannot be localhost for endpoint helper page action # nolint
-    FALSE
-} else if(serverEnv$IS_SERVER) { # public web server mode
-    serverEnv$HOST <- "0.0.0.0"
-    serverEnv$LAUNCH_BROWSER <- FALSE
-    setServerEnv('DEBUG', FALSE, as.logical)
-    serverEnv$IS_DEVELOPER <- FALSE # !! never expose developer tools on a public server !!
-    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
-    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
-    serverEnv$CALLBACK_URL <- serverEnv$SERVER_URL
-    TRUE
+serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
+serverEnv$IS_LOCAL_BROWSER <- !serverEnv$IS_ONDEMAND # here, the browser runs on the server
+serverEnv$REQUIRES_AUTHENTICATION <- serverEnv$IS_SERVER # other users already validated themselves via SSH, etc.
+
+# set the interface the server listens to; only select cases listen beyond localhost
+serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
+serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_ONDEMAND){
+    "127.0.0.1"
+} else if(serverEnv$IS_NODE || serverEnv$IS_SERVER) {
+    "0.0.0.0"
 } else {
     stop(paste('unknown server mode:', serverEnv$SERVER_MODE))    
 }
+
+# set properties based on whether server is publicly accessible or restricted access
+if(serverEnv$IS_SERVER) { # public web server mode
+    serverEnv$IS_DEVELOPER <- FALSE # !! never expose developer tools on a public server !!
+    serverEnv$LAUNCH_BROWSER <- FALSE
+    setServerEnv('DEBUG', FALSE, as.logical)
+    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
+    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
+    serverEnv$CALLBACK_URL <- serverEnv$SERVER_URL
+} else { # web server has highly restricted (often single-user) access
+    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e6, as.integer) # i.e. don't limit local start RAM
+    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
+    # serverEnv$SERVER_URL   <- paste0("http://localhost:", serverEnv$SERVER_PORT, "/") # cannot be 127.0.0.1 for Globus OAuth2 callback # nolint
+    # serverEnv$CALLBACK_URL <- paste0("http://127.0.0.1:", serverEnv$SERVER_PORT, "/") # cannot be localhost for endpoint helper page action # nolint
+} 
 
 # set directories (framework runs from 'shared' directory that carries ui.R and server.R)
 if(!dir.exists(serverEnv$MDI_DIR)) stop(paste('unknown directory:', serverEnv$MDI_DIR))

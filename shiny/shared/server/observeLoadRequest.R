@@ -54,9 +54,9 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     }
 
     # enable developer interface in local mode only
-    if(serverEnv$IS_LOCAL && serverEnv$IS_DEVELOPER) {
+    if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
         dir <- file.path('optional', 'modules', 'developerTools')
-        loadAllRScripts(dir, recursive=TRUE)
+        loadAllRScripts(dir, recursive = TRUE)
         addDeveloperMenuItem()
     }
     
