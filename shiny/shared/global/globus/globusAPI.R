@@ -20,7 +20,7 @@ globusHelperPages <- list(
     browseEndpoint = "https://app.globus.org/file-manager/",
     logout = "https://auth.globus.org/v2/web/logout/"
 )
-globusPublicKey <- jose::read_jwk( content(GET("https://auth.globus.org/jwk.json"))[[1]][[1]] )
+globusPublicKey <- if(serverEnv$IS_NODE) NULL else jose::read_jwk( content(GET("https://auth.globus.org/jwk.json"))[[1]][[1]] ) # nolint
 
 #----------------------------------------------------------------------
 # httr helper functions
