@@ -19,9 +19,8 @@ a web server and runs individual data analysis apps
 associated with user data files. The framework thus provides
 a common access point to many data apps.
 
-The apps framework does not encode
-the data analysis apps themselves, which are found in other
-code repositories called 'apps suites'. 
+The apps framework does not encode the data analysis apps themselves, 
+which are found in other code repositories called 'apps suites'. 
 
 ### Related repositories
 
@@ -57,6 +56,5 @@ suites:
 ```
 
 and then running' 'mdi::install()' a second time, or calling 
-'mdi install' on the command line. 
-You will also be able install new apps suites from within the 
-MDI web page.
+'mdi install' on the command line. You will also be able install 
+new apps suites from within the MDI web page.

@@ -1,0 +1,33 @@
+---
+#----------------------------------------------------------------------
+# app name as shown at the top of the dashboard menu
+# description is used when needing to query user for the desired target app
+#----------------------------------------------------------------------
+name: "Pipeline Runner"
+description: "Set parameters and execute a stage 1 data analyis pipeline on raw data"
+
+#----------------------------------------------------------------------
+# project data file type(s) associated with this app
+#   the keys in uploadTypes are matched to key uploadType in incoming package.yml
+#   required files lead to rejection of a project file if missing
+#----------------------------------------------------------------------
+uploadTypes: null
+
+#----------------------------------------------------------------------
+# labels and definitions for all sequential analysis steps shown in sidebar
+#----------------------------------------------------------------------
+# module = the appSteps module used for a sequential step
+#    the keyed name of a step becomes its namespace in the 'app' object
+# shortLabel = as shown on dashboard menu (required if not provided as module default)
+# shortDescription = as shown on the Overview page (required if not provided as module default)
+# options = passed to both <module>UI and <module>Server functions
+#    longLabel = the title for the appStep tabbed page
+#    alwaysVisible = declares that step is NOT sequential and thus always visible
+#    other options are module specific; see module definitions
+#----------------------------------------------------------------------
+appSteps:
+    upload:
+        module: sourceFileUpload
+        shortLabel: "Adjust Data Sources"
+        shortDescription: "Drag and drop additional sample data file(s) and edit sample display names."
+

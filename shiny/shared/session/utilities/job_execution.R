@@ -108,7 +108,7 @@ runJobWithPromise <- function(session, job, statusChange){
             isParentProcess <<- FALSE
             jobErrorType <<- CONSTANTS$jobErrorTypes$scriptLoading            
             childEnv <- environment()
-            output <- list() # allows catch of a Globus UI output definition in base scripts
+            output <- list() # allows catch of a OAuth2 UI output definition in base scripts
     
             # initialize the child process to match the parent process
             reportProgress('loading framework scripts')
@@ -143,15 +143,12 @@ runJobWithPromise <- function(session, job, statusChange){
         #----------------------------------------------------------
 
     # strongly coded declaration of global/session values required by child processes
-    }, seed=TRUE, globals = c(
+    }, seed = TRUE, globals = c(
                    
         # globals
         'reportProgress', # used immediately in child, before scripts are sourced
         'serverEnv',      # used to source scripts
         'CONSTANTS',      # could be used if child dies immediately
-
-        # server level variables
-        'globusConfig',
 
         # variables and functions defined in server function for this session
         'dataDirs', 

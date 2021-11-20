@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# initialize launch page to allow data import from upload file or Globus
+# initialize launch page to allow data import from upload file or host drive
 #----------------------------------------------------------------------
 if(!restricted){
     
@@ -10,7 +10,7 @@ if(!restricted){
         sourceFileInputUI(id)
     })
 
-    # user status, dataDir and Globus logout in navbar / page header
+    # user status, dataDir and logout in navbar / page header
     insertUI(".navbar-static-top",  where = "beforeEnd", immediate = TRUE,   
         ui = {
             id <- 'headerStatus'
@@ -24,13 +24,14 @@ if(!restricted){
     output$bookmarkHistoryList <- renderUI({
         id <- 'bookmarkHistory'
         bookmarkHistory <<- bookmarkHistoryServer(id)
-        # reset page to most recent bookmark when MAGC Portal logo is clicked
-        if(!is.null(queryString$resetPortalPage)) observeEvent(bookmarkHistory$list$table(), {
-            hash <- bookmarkHistory$list$table()[1,hash]
-            bookmark <- bookmarkHistory$list$get(hash=hash)
+
+        # reset page to most recent bookmark when top left logo is clicked
+        if(!is.null(queryString$resetPage)) observeEvent(bookmarkHistory$list$table(), {
+            hash <- bookmarkHistory$list$table()[1, hash]
+            bookmark <- bookmarkHistory$list$get(hash = hash)
             loadBookmarkFromString(bookmark)
-        })           
+        })       
+
         bookmarkHistoryUI(id)
     })
 }
-

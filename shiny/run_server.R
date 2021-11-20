@@ -77,26 +77,37 @@ if(serverEnv$DEBUG) message(paste('serverId', serverId))
 # declare that we are the parent process ('future' child processes override this to FALSE)
 isParentProcess <- TRUE
 
-# establish Globus client credentials (order is important)
+# load the Stage 2 apps config
 source(file.path('global', 'packages', 'packages.R'))
 loadFrameworkPackages(c('httr', 'yaml'))
-globusConfig <- tryCatch({
-    read_yaml(file.path(serverEnv$MDI_DIR, 'mdi.yml'))
-}, error = function(e) list(
-    client     = list(key = NULL, secret = NULL),
-    endpoint   = list(id = NULL),
-    usersGroup = NULL
-))
-serverEnv$IS_GLOBUS <- !(is.null(globusConfig$client$key) ||
-                         is.null(globusConfig$client$secret) ||
-                         is.null(globusConfig$endpoint$id))
-source(file.path('global', 'globus', 'globusAPI.R'))
-source(file.path('global', 'globus', 'globusClient.R'))
-source(file.path('global', 'globus', 'sessionCache.R'))
-globusClientData <- if(serverEnv$IS_SERVER) {
-    if(serverEnv$IS_DEVELOPER) message('getting client credentials')
-    list( tokens = getGlobusClientCredentials() )
-} else NULL
+serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
+
+# ensure that we have required server-level information for user authentication
+serverEnv$IS_GLOBUS <- FALSE
+serverEnv$IS_GOOGLE <- FALSE
+source(file.path('global', 'oauth2', 'oauth2.R'))
+source(file.path('global', 'oauth2', 'sessionCache.R')) 
+if(serverEnv$REQUIRES_AUTHENTICATION){
+    if(is.null(serverConfig$access_control))
+        stop("publicly addressable servers require an access_control declaration in config/stage2-apps.yml")
+    else if(serverConfig$access_control == 'oauth2'){
+        if(is.null(serverConfig$oauth2$host))
+            stop("access_control mode 'oauth2' requires an oauth2$host declaration in config/stage2-apps.yml")
+        if(!(serverConfig$oauth2$host %in% c('globus', 'google')))
+            stop("unknown oauth2$host declaration in config/stage2-apps.yml; must be 'google' or 'globus'")
+        if(is.null(serverConfig$oauth2$client$key) || 
+           is.null(serverConfig$oauth2$client$secret))
+            stop("invalid oauth2$client declaration in config/stage2-apps.yml; expect oauth2$client$key and oauth2$client$secret") # nolint
+        serverEnv$IS_GLOBUS <- serverConfig$oauth2$host == 'globus'
+        serverEnv$IS_GOOGLE <- serverConfig$oauth2$host == 'google'
+    } else if(serverConfig$access_control == 'keys'){
+        if(is.null(serverConfig$keys))
+            stop("access_control mode 'keys' requires key declarations in config/stage2-apps.yml")
+    } else
+        stop(paste("unknown access_control declaration:", serverConfig$access_control))
+}
+if(serverEnv$IS_GLOBUS) source(file.path('global', 'oauth2', 'globusAPI.R'))
+if(serverEnv$IS_GOOGLE) source(file.path('global', 'oauth2', 'googleAPI.R'))
 
 # initialize storr key-value on-disk storage
 loadFrameworkPackages('storr')

@@ -1,15 +1,17 @@
-## Shiny shared modules/components folder organization
+## Shiny apps framework folder organization
 
 This **shiny/shared** folder has the code that creates the app
-framework, with components that can be called by analysis apps.
+UI framework, including pre-app launch components as well as 
+highly standardized components that can be used by all analysis 
+apps.
 
 **global.R**, **ui.R** and **server.R** are called by 
-<code>shiny::runApp()</code>, as for any R Shiny app. If these scripts need to change,
-servers generally need to be restarted.
+<code>shiny::runApp()</code>, as for any R Shiny app. If these 
+scripts need to change, servers generally need to be restarted.
 
 The **server** folder has scripts that are sourced by server.R
-to initialize the session and construct the launch page (they
-are broken into pieces for clarity).
+to initialize the session and construct the launch page, broken  
+into pieces for clarity.
 
 The **global** folder has scripts that define utility functions
 that do not depend on a specific app or any user session data.
@@ -18,25 +20,24 @@ app and must not depend on <code>app</code> or other session
 variables, unless those variables are passed as function arguments.
 
 The **session** folder has scripts that define functions that are
-potentially specific to a user session or only needed to assemble
-and serve a specific app. They are sourced after a user commits to
-a specific app and therefore have <code>app</code> and other session 
-variables in their scope without passing them as arguments.
+potentially specific to a user session or needed to assemble and serve 
+an app. They are sourced after a user commits to a specific app and 
+therefore have <code>app</code> and other session variables in their 
+scope without passing them as arguments. Session components included
+in the framework are very broadly applicable to many potential apps, 
+such as the common interfaces for file upload, plotting, etc.
 
-Scripts in both **global** and **session** folders are sourced at the
-beginning of a user session by <code>server.R</code> so contents are
-renewed in the R environment of every user session, i.e.
+Scripts in both the **global** and **session** folders are sourced at 
+the beginning of a user session by <code>server.R</code> so contents 
+are renewed in the R environment of every user session, i.e.,
 in <code>sessionEnv</code>. This enables hotfixes and rolling updates
-without server restart, just a page reload.
+without server restart, only a page reload.
 
 The **optional** folder is similar to **session** except that, unlike
-the latter, optional scripts are not sourced unless
-specifically requested by an app via a 'require' directive in its
-<code>config.yml</code> files. Thus, scripts in the session folder are 
-generally required for use by the MDI framework, whereas scripts in 
-the optional folder might only be used by a subset of apps. Otherwise, 
-the optional and session folders have a similar structure, scope, and
-purpose.
+the latter, optional scripts are not sourced unless specifically requested 
+by an app via a 'require' directive in its <code>config.yml</code> files. 
+Otherwise, the optional and session folders have a similar structure, scope, 
+and purpose.
 
 The **static** folder has fixed content for populating the main
 framework pages with text, mostly via markdown rendered in R with
@@ -61,7 +62,6 @@ Specifically:
 - **appControl** - control overall framework behavior
 - **appSteps** - common analysis steps used by apps, e.g., to load files
 - **developerTools** - UI components only added during MDI development
-- **globus** - functions that support user login via the Globus service
 - **widgets** - UI components to embed on pages, e.g., plot boxes
 
 **packages** holds files that declare and load the various R packages

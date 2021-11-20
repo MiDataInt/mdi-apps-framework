@@ -1,4 +1,3 @@
-
 /*  shiny.js defines client-side functions */
 
 /*  ------------------------------------------------------------------------
@@ -11,7 +10,7 @@ $(document).ready(function() {
     setCWHeight();
     $(window).resize(setCWHeight);
     $(".main-header .logo").on('click', function(){
-        Shiny.setInputValue('resetPortalPage', true, {priority: "event"}); 
+        Shiny.setInputValue('resetPage', true, {priority: "event"}); 
     });
 });
 
@@ -49,7 +48,7 @@ function setCookie(cname, data, nDays) {
 // user and session keys (use maximum possible security)
 Shiny.addCustomMessageHandler('initializeSession', function(data) { 
     let priorCookie = decodeURIComponent(document.cookie);
-    setCookie('hostKey',    data, 10*365);
+    setCookie('hostKey', data, 10 * 365);
     if (!data.isServerMode){
         setCookie('sessionKey', data); // isSession is a safe flag for the existence of potentially invisible sessionKey
         setCookie('isSession',  {value: 1, force: true, isServerMode: data.isServerMode});
@@ -65,7 +64,7 @@ Shiny.addCustomMessageHandler('initializeSession', function(data) {
     );
 });
 
-// any generic cookie, e.g. app usage history (low security level here)
+// any generic cookie, e.g., app usage history (low security level here)
 Shiny.addCustomMessageHandler('setDocumentCookie', function(cookie) { // Shiny to javascript
     cookie.data.force = true;    
     setCookie(cookie.name, cookie.data, cookie.nDays);
@@ -110,7 +109,7 @@ Shiny.addCustomMessageHandler('setAceCodeContents', function(options) {
 });
 
 /*  ------------------------------------------------------------------------
-    handle Summernote HTML Editor
+    handle Summernote Editor
     ------------------------------------------------------------------------*/
 Shiny.addCustomMessageHandler('getSummernoteCodeContents', function(editorId) {
     let code = $("#" + editorId).summernote('code');
@@ -128,4 +127,3 @@ let handleActionClick = function(parentId, instanceId, confirmMessage){
         Shiny.setInputValue(parentId, instanceId + '__' + Math.floor(Math.random() * 1e6)); // random allows repeat clicks
     }
 };
-

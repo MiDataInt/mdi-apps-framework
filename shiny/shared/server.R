@@ -11,7 +11,7 @@ serverFn <- function(input, output, session,
     if(length(queryString) > 0) updateQueryString("?", mode = "push") # clear the url
 
     # public servers demand user authentication; ui is redirecting
-    if(serverEnv$IS_SERVER &&  # allow all local page loads
+    if(serverEnv$REQUIRES_AUTHENTICATION &&  # allow all local page loads
        is.null(queryString$code) && # user has successfully logged in with Globus, this is an auth response
        !file.exists(sessionFile) && # this is a session with prior auth
        !restricted # this is a user's first encounter, show login help
@@ -25,12 +25,12 @@ serverFn <- function(input, output, session,
     source("server/initializeLaunchPage.R", local = TRUE)
     source("server/observeLoadRequest.R", local = TRUE)
     source("server/onSessionEnded.R", local = TRUE)
-    source("server/observeGlobus.R", local = TRUE) # last code acts on login
+    source("server/observeOauth2.R", local = TRUE) # last code acts on login
 }
 
 #----------------------------------------------------------------------
 # set/get session cookie and act on its values
-# this server function must come last in server.R
+# this server function must come last in server.R, it is the main shiny server function
 #----------------------------------------------------------------------
 server <- function(input, output, session){
 
@@ -39,18 +39,18 @@ server <- function(input, output, session){
         value = nonce(),
         isServerMode = serverEnv$IS_SERVER
     ))
-    
+
     # listen for the response and act accordingly
     initializationObserver <- observeEvent(input$initializeSession, {
         initializationObserver$destroy()
-        
+
         # parse information from js
         cookie <- parseCookie(input$initializeSession$cookie)
         priorCookie <- parseCookie(input$initializeSession$priorCookie)
         sessionKey <- getSessionKeyFromNonce(input$initializeSession$sessionNonce) # cannot rely on sessionKey if HttpOnly # nolint
-        sessionFile <- getGlobusSessionFile('session', sessionKey)
-        isLoggedIn <- file.exists(sessionFile)        
-        
+        sessionFile <- getOauth2SessionFile('session', sessionKey)
+        isLoggedIn <- file.exists(sessionFile)   
+
         # new public user, show the help page only
         if(serverEnv$IS_SERVER && 
            is.null(cookie$hasLoggedIn) &&
@@ -58,11 +58,11 @@ server <- function(input, output, session){
             serverFn(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted = TRUE)
-            
-        # redirect after setting session key in local mode
-        } else if(is.null(priorCookie$isSession)){ 
-            runjs(paste0('window.location.replace("', serverEnv$SERVER_URL, '")'));
-            
+
+        # # redirect after setting session key in local mode
+        # } else if(is.null(priorCookie$isSession)){ 
+        #     runjs(paste0('window.location.replace("', serverEnv$SERVER_URL, '")'));
+      
         # definitive page load
         } else {
             if(isLoggedIn && is.null(cookie$hasLoggedIn)) session$sendCustomMessage(

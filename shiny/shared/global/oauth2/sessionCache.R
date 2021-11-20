@@ -17,11 +17,10 @@ getSessionKeyFromNonce <- function(sessionNonce){
 
 # function called on each session end to purge old cache entries
 purgeSessionCache <- function(){
-    sesionFiles <- list.files(path = serverEnv$SESSIONS_DIR, full.names = TRUE, include.dirs=TRUE)
+    sesionFiles <- list.files(path = serverEnv$SESSIONS_DIR, full.names = TRUE, include.dirs = TRUE)
     for(sessionFile in sesionFiles){
         mtime <- file.info(sessionFile)$mtime
         diffmtime <- difftime(Sys.time(), mtime, units = "days")
-        if(diffmtime > 2) file.remove(sessionFile) # 2 days, same as GLobus access tokens    
+        if(diffmtime > 2) file.remove(sessionFile) # 2 days
     }
 }
-
