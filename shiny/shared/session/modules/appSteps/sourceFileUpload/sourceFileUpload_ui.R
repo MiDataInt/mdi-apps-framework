@@ -1,6 +1,5 @@
-
 #----------------------------------------------------------------------
-# static components for the UI to upload additional sample data files and rename samples
+# static components to upload additional sample data files and rename samples
 # this is typically the first module of all apps
 #----------------------------------------------------------------------
 
@@ -16,17 +15,15 @@ sourceFileUploadUI <- function(id, options) {
     
     # incorporate options text into templates
     leaderText <- tags$p(HTML(paste0(
-        "If desired, upload additional ",
-        appName,
-        "-compatible sample data files."
+        "If desired, upload additional ", appName, "-compatible sample data files."
     )))
 
     # return the UI contents
     standardSequentialTabItem(options$longLabel, leaderText, 
     
         # enable merging additional sample sources into this one
-        tags$div(class="text-block",
-            sourceFileInputUI(ns('fileInput'), appName=appName)
+        tags$div(class = "text-block",
+            sourceFileInputUI(ns('fileInput'), appName = appName)
         ),
 
         # tables of the sample sources and samples that are uploaded and ready
@@ -38,13 +35,12 @@ sourceFileUploadUI <- function(id, options) {
                 status = 'primary',
                 solidHeader = TRUE,
                 width = 4,
-                textInput(ns('analysisSetName'), NULL, paste(appName, Sys.Date(), sep="."))
+                textInput(ns('analysisSetName'), NULL, paste(appName, Sys.Date(), sep = "."))
             )),
             tags$p(HTML("Click to filter the samples table or to remove a sample source from this analysis set.")),    
-            summaryTableUI(ns('sources'), 'Sample Sources', width=12),
+            summaryTableUI(ns('sources'), 'Sample Sources', width = 12),
             tags$p(HTML("If desired, edit samples to provide more human-readable names.")),                         
-            summaryTableUI(ns('samples'), 'Samples',  width=12)
+            summaryTableUI(ns('samples'), 'Samples',  width = 12)
         )                              
     )
 }
-

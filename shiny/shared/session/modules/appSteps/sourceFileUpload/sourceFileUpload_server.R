@@ -1,6 +1,5 @@
-
 #----------------------------------------------------------------------
-# reactive components for the UI to upload additional sample data files and rename samples
+# reactive components to upload additional sample data files and rename samples
 # this is typically the first module of all apps
 #----------------------------------------------------------------------
 
@@ -16,13 +15,13 @@ sourceFileUploadServer <- function(id, options, bookmark, locks) {
 #----------------------------------------------------------------------
 # define session-level and module-level variables
 #----------------------------------------------------------------------
-sourceFileInput  <- sourceFileInputServer('fileInput', appName=app$info$name)
+sourceFileInput  <- sourceFileInputServer('fileInput', appName = app$info$name)
 cft <- CONSTANTS$contentFileTypes
 manifestFileType <- cft$manifestFile
 qcReportFileType <- cft$qcReport
 statusFileType   <- cft$statusFile
 
-# initialize project (parent table)
+# initialize the analysis set (parent table)
 sourceSummaryTemplate <- data.frame(
     Remove      = character(),
     FileName    = character(),    
@@ -59,7 +58,7 @@ sampleTableTemplate <- data.frame(
 )
 sampleSummaryTemplate <- data.frame(
     Name         = character(),
-    Project      = character(), # first three inherited from project
+    Project      = character(), 
     Sample_ID    = character(),
     Description  = character(),
         stringsAsFactors = FALSE
@@ -92,9 +91,9 @@ loadSourceFile <- function(incomingFile){
     sourceId <- tools::md5sum(incomingFile$path) # treat md5 sums as "effectively unique" identifiers
     sourceType <- incomingFile$type
     sft <- CONSTANTS$sourceFileTypes
-    loaded <- if(sourceType == sft$project)   loadProjectFile (incomingFile$path, sourceId)
+    loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId) # nolint
          else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId)
-         else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId)
+         else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId) # nolint
     unlink(incomingFile$path)         
     sources$list[[sourceId]] <- c(
         loaded,
@@ -106,7 +105,7 @@ loadSourceFile <- function(incomingFile){
     stopSpinner(session, 'loadSourceFile')
     sourceFileInput$sendFeedback(paste(loaded$nSamples, "sample(s) loaded"))    
 }
-# validate and merge an _additional_ source data file being uploaded by user via step 1 (not launch page)
+# validate and merge an _additional_ source data file uploaded by user via step 1 (not via the launch page)
 observeEvent(sourceFileInput$file(), {
     x <- sourceFileInput$file()
     req(x)
@@ -117,73 +116,79 @@ observeEvent(sourceFileInput$file(), {
 badSourceFile <- function(filePath, msg=""){
     unlink(filePath)
     stopSpinner(session, '!!!! badSourceFile !!!!')    
-    sourceFileInput$sendFeedback(paste("bad source file:", msg), isError=TRUE)    
+    sourceFileInput$sendFeedback(paste("bad source file:", msg), isError = TRUE)    
 }
 
 #----------------------------------------------------------------------
-# load an incoming pipeline output project file
+# load an incoming Stage 1 pipeline output package file
 #----------------------------------------------------------------------
-loadProjectFile <- function(projectPath, projectId){ # projectPath already validated upstream as a project file usable by app
-    dataDir <- getProjectDir(projectId)
+loadPackageFile <- function(packagePath, packageId){ # packagePath validated upstream as package usable by app
+    dataDir <- getPackageDir(packageId)
 
-    # extract the contents declared to be in the project file
-    projectConfig <- getProjectFileConfig(projectPath, sourceFileInput$sendFeedback)
-    if(is.null(projectConfig$uploadType)) badSourceFile(projectPath, msg="missing upload type in project file")
-    contentFileTypes <- app$info$uploadTypes[[ projectConfig$uploadType ]]$contentFileTypes
-    contentFileTypes[[manifestFileType]] <- list(required = TRUE)
+    # extract the contents declared to be in the package file
+    packageConfig <- getPackageFileConfig(packagePath, sourceFileInput$sendFeedback)
+    if(is.null(packageConfig$uploadType)) badSourceFile(packagePath, msg = "missing upload type in package file")
+    contentFileTypes <- app$info$uploadTypes[[ packageConfig$uploadType ]]$contentFileTypes
+    # contentFileTypes[[manifestFileType]] <- list(required = TRUE)
     contentFileTypeNames <- names(contentFileTypes)
-    projectFileTypeNames <- names(projectConfig$files)
+    packageFileTypeNames <- names(packageConfig$files)
 
-    # check that all required project files are present (before extracting anything)
+    # check that all required package files are present (before extracting anything)
     for(contentFileTypeName in contentFileTypeNames){
         x <- contentFileTypes[[contentFileTypeName]]
         if(is.null(x$required) || !x$required) next # don't worry about optional files
-        matchCount <- sum(contentFileTypeName == projectFileTypeNames)
-        if(matchCount == 0) badSourceFile(projectPath, paste("missing file type in project:", contentFileTypeName))
+        matchCount <- sum(contentFileTypeName == packageFileTypeNames)
+        if(matchCount == 0) badSourceFile(packagePath, paste("missing file type in package:", contentFileTypeName))
     }
 
     # extract the files required by, or compatible with, the app
-    unzip(projectPath, files='package.yml', exdir=dataDir)        
+    unzip(packagePath, files = 'package.yml', exdir = dataDir)        
     for(contentFileTypeName in unique(c(contentFileTypeNames, statusFileType, qcReportFileType))){
-        projectFile <- projectConfig$files[[contentFileTypeName]]
-        if(is.null(projectFile)) next
-        fileName <- projectFile$file
+        packageFile <- packageConfig$files[[contentFileTypeName]]
+        if(is.null(packageFile)) next
+        fileName <- packageFile$file
         tryCatch({
-            unzip(projectPath, files=fileName, exdir=dataDir)        
-        }, error=function(e) badSourceFile(projectPath, paste("could not extract file from project:", fileName)) )
+            unzip(packagePath, files = fileName, exdir = dataDir)        
+        }, error = function(e) badSourceFile(packagePath, paste("could not extract file from package:", fileName)) )
     } 
 
-    # load the manifest file
-    manifestFile <- projectConfig$files[[manifestFileType]]
-    manifestPath <- getProjectFileByName(projectId, manifestFile$file)
-    manifestType <- if(is.null(manifestFile$manifestType)) 'IlluminaDefault' else manifestFile$manifestType # TODO: more intelligent guessing? 
-    if(is.null(manifestTypes[[manifestType]])) badSourceFile(projectPath, paste('unknown manifest type in project:', manifestType) )
-    manifest <- parseManifestFile(manifestPath, manifestType, projectPath)
-    
+    # load the sample manifest file
+    manifestFile <- packageConfig$files[[manifestFileType]]
+    manifest <- if(is.null(manifestFile)) {
+        getNullManifest(packagePath) # some pipeline outputs may not be sample-based
+    } else {  
+        if(is.null(manifestFile$manifestType))
+            badSourceFile(packagePath, 'missing manifest type in package')
+        if(is.null(manifestTypes[[manifestFile$manifestType]])) 
+            badSourceFile(packagePath, 'unknown manifest type in package')
+        manifestPath <- getPackageFileByName(packageId, manifestFile$file)
+        parseManifestFile(manifestPath, manifestFile$manifestType, packagePath)
+    }
+
     # return our results
     c(
         manifest,
         list(
-            dataDir  = dataDir,
-            config = projectConfig 
+            dataDir = dataDir,
+            config = packageConfig 
         )
     )
 }
 
 #----------------------------------------------------------------------
-# load an incoming sequencing or other project sample manifest
+# load an incoming sample manifest
 #----------------------------------------------------------------------
 loadManifestFile <- function(manifestPath, manifestId){
-    manifestType <- 'IlluminaDefault' # TODO: smarter manifest type ID
+    manifestType <- 'IlluminaDefault' # TODO: smarter manifest type declaration, guessing, user input?
     manifest <- parseManifestFile(manifestPath, manifestType)
     c(
         manifest,
         list(
-            config = {} 
+            config = {} # nolint
         )
     )
 }
-parseManifestFile <- function(manifestPath, manifestType, errorPath=NULL){
+parseManifestFile <- function(manifestPath, manifestType, errorPath = NULL){
     manifest <- tryCatch({
         x <- manifestTypes[[manifestType]]$load(manifestPath)
         manifestTypes[[manifestType]]$parse(x)
@@ -192,7 +197,7 @@ parseManifestFile <- function(manifestPath, manifestType, errorPath=NULL){
         if(is.null(errorPath)) errorPath <- manifestPath
         badSourceFile(errorPath, "could not parse manifest file")
     })
-    for(col in c('Yield','Quality')) if(is.null(manifest$unique[[col]])) manifest$unique[[col]] <- NA
+    for(col in c('Yield', 'Quality')) if(is.null(manifest$unique[[col]])) manifest$unique[[col]] <- NA
     list(
         manifestType = manifestType,        
         nSamples = nrow(manifest$unique),
@@ -200,17 +205,34 @@ parseManifestFile <- function(manifestPath, manifestType, errorPath=NULL){
         unique   = manifest$unique       
     )
 }
+getNullManifest <- function(filePath){
+    name <- rev(strsplit(filePath, '/')[[1]])[1]
+    manifest <- data.frame(
+        Project = name,
+        Sample_ID = name,
+        Description = name,
+        Yield = NA,
+        Quality = NA
+    )
+    list(
+        manifestType = 'null',        
+        nSamples = 1,
+        manifest = manifest,
+        unique   = manifest       
+    )
+}
 
 #----------------------------------------------------------------------
 # load an incoming user-constructed data table
+# TODO: implement this
 #----------------------------------------------------------------------
 loadDataTable <- function(dataTablePath, dataTableId){
     badSourceFile(dataTablePath, "data table loading not implemented yet")
 }
 
 #----------------------------------------------------------------------
-# reactively update the aggregated projects and samples tables
-#   the reponse to user action on archetypal pattern inputs
+# reactively update the aggregated sources and samples tables
+#   the response to user action on archetypal pattern inputs
 #----------------------------------------------------------------------
 observe({
     reportProgress('observe sources$list', module)
@@ -218,50 +240,49 @@ observe({
     ss <- sampleSummaryTemplate
     st <- sampleTableTemplate
     
-    # fill the two tables by project
+    # fill the two tables by source
     nSources <- length(sources$list)
-    if(nSources > 0){   
-        for(i in 1:nSources){ # whenever the active projects change
-            sourceId <- names(sources$list)[i]
-            reportProgress(sourceId)    
-            source <- sources$list[[sourceId]]
+    if(nSources > 0) for(i in 1:nSources){ # whenever the active sources change
+        sourceId <- names(sources$list)[i]
+        reportProgress(sourceId)    
+        source <- sources$list[[sourceId]]
 
-            # assume only one project per manifest file
-            qcReport <- source$config$files[[qcReportFileType]]
-            qcReport <- if(!is.null(qcReport)) qcReport$file
-            rs <- rbind(rs, data.frame(
-                Remove      = "",
-                FileName    = source$fileName,
-                Project     = source$unique[1,'Project'], 
-                N_Samples   = source$nSamples,
-                Avg_Yield   = round(mean(source$unique$Yield),   0),
-                Avq_Quality = round(mean(source$unique$Quality), 1),
-                QC_Report   = tableCellActionLinks(ns(qcReportParentId), i, qcReport),
+        # save aggregated projects across the entire package
+        qcReport <- source$config$files[[qcReportFileType]]
+        qcReport <- if(!is.null(qcReport)) qcReport$file
+        projectNames <- unique(source$unique$Project)
+        rs <- rbind(rs, data.frame(
+            Remove      = "",
+            FileName    = source$fileName,
+            Project     = if(length(projectNames) > 1) "various" else projectNames, 
+            N_Samples   = source$nSamples,
+            Avg_Yield   = round(mean(source$unique$Yield),   0),
+            Avq_Quality = round(mean(source$unique$Quality), 1),
+            QC_Report   = tableCellActionLinks(ns(qcReportParentId), i, qcReport),
+                stringsAsFactors = FALSE
+        ))
+
+        # save samples twice, once for UI, once for sharing with other modules
+        for(i in seq_len(nrow(source$unique))){ 
+            sample <- source$unique[i, ]
+            ss <- rbind(ss, data.frame(
+                Name         = "",
+                Project      = sample$Project,
+                Sample_ID    = sample$Sample_ID,
+                Description  = sample$Description,
+                Yield        = sample$Yield,
+                Quality      = sample$Quality,
                     stringsAsFactors = FALSE
             ))
-    
-            # save samples twice, once for UI, once for sharing with other modules
-            for(i in 1:nrow(source$unique)){
-                sample <- source$unique[i,]
-                ss <- rbind(ss, data.frame(
-                    Name         = "",
-                    Project      = sample$Project,
-                    Sample_ID    = sample$Sample_ID,
-                    Description  = sample$Description,
-                    Yield        = sample$Yield,
-                    Quality      = sample$Quality,
-                        stringsAsFactors = FALSE
-                ))
-                st <- rbind(st, data.frame(
-                    Source_ID  = sourceId,
-                    Project     = sample$Project,
-                    Sample_ID   = sample$Sample_ID,
-                    Description = sample$Description,
-                        stringsAsFactors = FALSE
-                ))
-            }
-        }    
-    }
+            st <- rbind(st, data.frame(
+                Source_ID   = sourceId,
+                Project     = sample$Project,
+                Sample_ID   = sample$Sample_ID,
+                Description = sample$Description,
+                    stringsAsFactors = FALSE
+            ))
+        }
+    }    
 
     # update the UI reactives
     sources$summary <- rs
@@ -269,7 +290,7 @@ observe({
     samples$list    <- st
     isolate({
         sources$ids <- names(sources$list)
-        samples$ids <- apply(samples$list[,c('Project','Sample_ID')], 1, paste, collapse=":") 
+        samples$ids <- apply(samples$list[, c('Project', 'Sample_ID')], 1, paste, collapse = ":") 
     })
 })
 
@@ -283,14 +304,14 @@ observeEvent(input[[qcReportParentId]], {
     startSpinner(session, 'input[[qcReportParentId]]')    
     reportProgress('input[[qcReportParentId]]', module)
     ij <- getTableActionLinkRowAndItem(input, qcReportParentId)
-    source <- sources$list[[ ij[1] ]] # only project files have associated QC reports
-    qcFile <- getProjectFileByType(source, qcReportFileType)
+    source <- sources$list[[ ij[1] ]] # only package files have associated QC reports
+    qcFile <- getPackageFileByType(source, qcReportFileType)
 
     # load into a large modal
     showHtmlModal(
         file  = qcFile$path,
         type  = qcReportFileType,
-        title = paste(source$fileName, source$unique[1,'Project'], sep=' / ')
+        title = paste(source$fileName, source$unique[1, 'Project'], sep = ' / ')
     )
 })
 
@@ -325,4 +346,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

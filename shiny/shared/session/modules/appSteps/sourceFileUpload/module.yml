@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # ui
 #----------------------------------------------------------------------
@@ -20,20 +19,18 @@ longLabel: "Adjust sample sources and display names"
 types:
     - upload
     
-# ... and of its dependencies
+# ... and of the modules on which it depends
 sourceTypes: null
 
+#----------------------------------------------------------------------
+# dependencies
+#----------------------------------------------------------------------
 
-# TODO: install() must learn how to read module.yml files!!
+# required R packages, installed by mdi::install()
+packages: 
+   R:  null
+   Bioconductor: null
 
-## required R packages
-## installed by magc.portal::install()
-## NOT automatically attached by framework
-#packages: 
-#    R:  null
-#    Bioconductor: null
-
-    
 ## optional data classes and UI modules this module will use
 ## e.g., might expect to find shared/optional/classes/<classType>/<className>/<className>_*.R
 #classes:
@@ -43,5 +40,3 @@ sourceTypes: null
 #        - nbinomCountsGC
 #        - hmmEPTable
 #modules: null
-
-

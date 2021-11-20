@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # runs jobs on the server with different levels of priority and synchronicity
 #----------------------------------------------------------------------
@@ -45,7 +44,7 @@ addJobLaunchObserver <- function(
 
         # launch the job
         reportProgress(paste('launchJob', jobType), module)
-        setJobStatus(statusChange, schemaId, list(status=CONSTANTS$jobStatuses$running$value))    
+        setJobStatus(statusChange, schemaId, list(status = CONSTANTS$jobStatuses$running$value))    
         launcher <- if(jobType == "immediate")     runJobImmediately
                     else if (jobType == "promise") runJobWithPromise
                     else if (jobType == "hpc")     sendJobToHPC
@@ -71,7 +70,7 @@ addStatusChangeObserver <- function(module, data, statusChange){
 setJobStatus <- function(statusChange, schemaId, jobOutput){
     list <- list()
     list[[schemaId]] <- jobOutput$status
-    write(jobOutput$status, getJobStatusFile(schemaId, create=TRUE), append=FALSE)
+    write(jobOutput$status, getJobStatusFile(schemaId, create = TRUE), append = FALSE)
     statusChange(list)
 }
 getJobDiskStatus <- function(schemaId){
@@ -113,15 +112,17 @@ runJobWithPromise <- function(session, job, statusChange){
             # initialize the child process to match the parent process
             reportProgress('loading framework scripts')
                 setwd(serverEnv$SHARED_DIR) # just in case...
-                source(file.path('global','packages','packages.R'), local=childEnv) # order is important here          
-                source('global.R', local=childEnv)
-                loadAllRScripts('global', recursive=TRUE, local=childEnv)
-                loadAppScriptDirectory('session', local=childEnv)
+                source(file.path('global', 'packages', 'packages.R'), local = childEnv) # order is important          
+                source('global.R', local = childEnv)
+                loadAllRScripts('global', recursive = TRUE, local = childEnv)
+                loadAppScriptDirectory('session', local = childEnv)
             reportProgress('loading app scripts', app$info$name)
-                loadAppScriptDirectory(app$DIRECTORY, local=childEnv)
+                loadAppScriptDirectory(app$DIRECTORY, local = childEnv)
             reportProgress('loading analysis scripts', job$schema$Analysis_Type)
-                analysisTypeDir <- Sys.glob( file.path('optional','types','analysisTypes','*',job$schema$Analysis_Type) )     
-                loadAppScriptDirectory(analysisTypeDir, local=childEnv) 
+                analysisTypeDir <- Sys.glob( 
+                    file.path('optional', 'types', 'analysisTypes', '*', job$schema$Analysis_Type) 
+                )     
+                loadAppScriptDirectory(analysisTypeDir, local = childEnv) 
 
             # run the target job and return its status
             reportProgress('configuring the job', job$schema$Analysis_Type)
@@ -130,7 +131,7 @@ runJobWithPromise <- function(session, job, statusChange){
 
         # catch job errors that arose prior to the call to tryCatchJob
         # errors while executing the job itself are caught and reported by tryCatchJob
-        }, error=function(error){
+        }, error = function(error){
             if(!exists('jobErrorType')) jobErrorType <- CONSTANTS$jobErrorTypes$futureEval
             reportProgress(jobErrorType, 'ERROR')
             reportProgress(error, 'ERROR')
@@ -183,7 +184,7 @@ sendJobToHPC <- function(session, job, statusChange){
 reactiveToStatic_commmon <- function(){
     reportProgress('reactiveToStatic_commmon')
     x <- list()
-    for(stepType in c('upload','assign')){
+    for(stepType in c('upload', 'assign')){
         stepName <- appStepNamesByType[[stepType]]
         outcomes <- app[[stepName]]$outcomes
         for(outcomeName in names(outcomes)){
@@ -228,7 +229,7 @@ tryCatchJob <- function(expr, schemaId){
     #   always use permanent storage so that results can be recalled in future app loads
     reportProgress('saving job results')    
     #save(jobOutput, file=getJobRDataFile(schemaId, create=TRUE))
-    saveRDS(jobOutput, file=getJobRdsFile(schemaId, create=TRUE))
+    saveRDS(jobOutput, file = getJobRdsFile(schemaId, create = TRUE))
     reportProgress('job done')    
     
     # return just the status and any error messages (not the job results)
@@ -236,4 +237,3 @@ tryCatchJob <- function(expr, schemaId){
     jobOutput
     #----------------------------------------------------------
 }
-

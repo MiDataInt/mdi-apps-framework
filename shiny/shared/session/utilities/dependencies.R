@@ -1,9 +1,8 @@
-
 #----------------------------------------------------------------------
 # enforce data integrity as parent-child relationships
 #----------------------------------------------------------------------
 #  this only applies to UI state, not a deeper underlying database or other data structure
-#      e.g. removing a manifest just removes it from the page state
+#      e.g., removing a manifest just removes it from the page state
 #      but does NOT delete it permanently from the disk, etc.
 #----------------------------------------------------------------------
 
@@ -57,4 +56,3 @@ clearRecordLocks <- function(stepLocks, module, childId, parentIds){
         stepLocks[[parentId]] <- stepLocks[[parentId]][keep]
     }
 }
-
