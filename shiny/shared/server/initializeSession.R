@@ -23,7 +23,6 @@ dataDirs <- list() # subdirectories in serverEnv$DATA_DIR
 # instantiate session variables
 app <- list(NAME = CONSTANTS$apps$launchPage) # parameters of the specific application
 manifestTypes <- list()      # parameters of manifest files for different data classes
-uploadTypes <- list()        # upstream pipeline names as declared in project files
 stepModuleInfo <- list()     # metadata about appStep modules, set by module.yml scripts
 appStepNamesByType <- list() # lookup to find an app step name by the type(s) of its module
 #analysisTypes <- list()     # parameters defining different types of data analyses

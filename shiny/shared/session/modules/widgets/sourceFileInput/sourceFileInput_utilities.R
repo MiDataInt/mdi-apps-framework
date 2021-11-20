@@ -2,7 +2,7 @@
 # source data file upload functions
 #----------------------------------------------------------------
 
-# get the list of allowed source file types for an app
+# get the list of allowed incoming file types for a given app
 getAllowedSourceFileTypes <- function(appName = NULL, externalSuffixes = list()){
     fs <- CONSTANTS$fileSuffixes
     
@@ -54,14 +54,14 @@ getPackageFileConfig <- function(packageFile, sendFeedback){
         config <- read_yaml(ymlFile)
         unlink(ymlFile)
         config        
-    }, error = function(e) sendFeedback("improper or corrupt Stage 1 pipeline package", isError = TRUE))
+    }, error = function(e) sendFeedback("missing file 'package.yml' in pipeline package", isError = TRUE))
 }
 
 # get all possible target apps for a given package file
 # might be more than one app for a more generic package data type
 getTargetAppsFromPackageFile <- function(packageFile, sendFeedback){
     uploadType <- getPackageFileConfig(packageFile, sendFeedback)$uploadType
-    if(is.null(uploadType)) sendFeedback("improper or corrupt Stage 1 pipeline package", isError = TRUE)
+    if(is.null(uploadType)) sendFeedback("missing tag 'uploadType' in pipeline package", isError = TRUE)
     apps <- appUploadTypes[[uploadType]]
     if(is.null(apps) || length(apps) == 0){
         sendFeedback(paste0("upload type '", uploadType, "' is not supported by any current apps"), isError = TRUE) 

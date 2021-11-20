@@ -129,6 +129,16 @@ PRINT_DEBUG <- function(obj){
     cat(x, file = PRINT_DEBUG_FILE, append = TRUE, sep = "\n")
 }
 
+# set the list of known apps
+appSuiteDirs <- getAppSuiteDirs()
+appDirs <- getAppDirs(appSuiteDirs)
+appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by installed apps; required prior to app load
+
+###################
+str(appSuiteDirs)
+str(appDirs)
+str(appUploadTypes)
+
 # start the server
 # with auto-restart when stopApp is called at session end
 while(TRUE){
