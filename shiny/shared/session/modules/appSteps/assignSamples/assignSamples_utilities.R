@@ -34,7 +34,7 @@ getSampleSetsNamedList <- function(rows=TRUE){
 # unless invert=TRUE, then names are the user-friendly names and values are Category1...
 getCategoryNames <- function(plural=FALSE, invert=FALSE){
     stepName <- appStepNamesByType$assign
-    categories <- app$info$appSteps[[stepName]]$options$categories
+    categories <- app$config$appSteps[[stepName]]$options$categories
     if(is.null(categories) || length(categories) == 0) return(list())    
     tense <- if(plural) 'plural' else 'singular'    
     friendlyNames <- sapply(categories, function(x) x[[tense]])     

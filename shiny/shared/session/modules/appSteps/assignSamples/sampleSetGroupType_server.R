@@ -18,7 +18,7 @@ sampleSetGroupTypeServer <- function(id, parentId) {
 #----------------------------------------------------------------------
 sampleSetSource <- appStepNamesByType$assign
 source <- app[[sampleSetSource]]
-sourceOptions <- app$info$appSteps[[sampleSetSource]]$options
+sourceOptions <- app$config$appSteps[[sampleSetSource]]$options
 
 #----------------------------------------------------------------------
 # allows values overrides during bookmark loading

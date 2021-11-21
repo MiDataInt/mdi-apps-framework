@@ -116,7 +116,7 @@ runJobWithPromise <- function(session, job, statusChange){
                 source('global.R', local = childEnv)
                 loadAllRScripts('global', recursive = TRUE, local = childEnv)
                 loadAppScriptDirectory('session', local = childEnv)
-            reportProgress('loading app scripts', app$info$name)
+            reportProgress('loading app scripts', app$config$name)
                 loadAppScriptDirectory(app$DIRECTORY, local = childEnv)
             reportProgress('loading analysis scripts', job$schema$Analysis_Type)
                 analysisTypeDir <- Sys.glob( 

@@ -45,7 +45,7 @@ setCachedValues <- function(d){
 } 
 
 # settings template
-template <- stepModuleInfo[[ app$info$appSteps[[parentId]]$module ]]$settings
+template <- stepModuleInfo[[ app$config$appSteps[[parentId]]$module ]]$settings
 if(is.null(template)) template <- list()
 nTabs <- 1
 isTabbed <- FALSE

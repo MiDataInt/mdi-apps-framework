@@ -18,7 +18,7 @@ sampleSetSourceServer <- function(id, parentId) {
 #----------------------------------------------------------------------
 sampleSetSource <- appStepNamesByType$assign
 source <- app[[sampleSetSource]] # i.e. the app step source for sample assignment into sets (not the input data source)
-sourceOptions <- app$info$appSteps[[sampleSetSource]]$options
+sourceOptions <- app$config$appSteps[[sampleSetSource]]$options
 
 #----------------------------------------------------------------------
 # fill the Sample Set and Source selectors

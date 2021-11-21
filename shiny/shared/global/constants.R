@@ -12,8 +12,6 @@ CONSTANTS <- list(
 
     # git constants
     mainBranch      = 'main',
-    developerBranch = 'develop',
-    defaultEditBranch = 'framework',
     originRemote    = 'origin', # the name of the remote parent of the local clone
     upstreamRemote  = 'upstream', # for forks, the name of the grandparent of the local clone, i.e. the definitive repo
 
