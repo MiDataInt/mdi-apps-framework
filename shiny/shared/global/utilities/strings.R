@@ -1,20 +1,20 @@
-
 #----------------------------------------------------------------
 # string functions
 #----------------------------------------------------------------
 
 # load the entirety of a file as a single character string
 loadResourceText <- function(fileName) readChar(fileName, file.info(fileName)$size)
+slurpFile <- loadResourceText
 
 # convert first character in word to upper case
 ucFirst <- function(y) { 
     c <- strsplit(y, " ")[[1]]
-    paste(toupper(substring(c, 1,1)), substring(c, 2), sep="", collapse=" ")
+    paste(toupper(substring(c, 1, 1)), substring(c, 2), sep = "", collapse = " ")
 }
 
 # find the longest common prefix of a string
 # modified from Bioconductor::Biobase::lcPrefix
-longestCommonPrefix <- function (x, ignore.case = FALSE) {
+longestCommonPrefix <- function(x, ignore.case = FALSE) {
     if (ignore.case) x <- toupper(x)
     nc <- nchar(x, type = "char")
     for (i in 1:min(nc)) {
@@ -30,14 +30,14 @@ commonPrefixGroups <- function(x, ignore.case = FALSE) {
     if (ignore.case) x <- toupper(x)
     nc <- nchar(x, type = "char")
     minLength <- min(nc) # i.e. the shortest string
-    uniquePrefixes  <- sapply(1:minLength, function(i) unique(substr(x, 1, i)), simplify=FALSE)
+    uniquePrefixes  <- sapply(1:minLength, function(i) unique(substr(x, 1, i)), simplify = FALSE)
     nUniquePrefixes <- sapply(uniquePrefixes, length)
     list(
         minLength = minLength,
         uniquePrefixes  = uniquePrefixes,
         nUniquePrefixes = nUniquePrefixes,
         lengthAtGroupSize = sapply(1:max(nUniquePrefixes), function(n){
-            matches <- which(nUniquePrefixes==n)
+            matches <- which(nUniquePrefixes == n)
             length <- if(length(matches) > 0) max(matches) else -Inf
             if(length > 0) length else NA
         })
@@ -66,4 +66,3 @@ commonSplitElementGroups <- function(x, split, position, ignore.case = FALSE, re
         nUniquePrefixes = length(uniquePrefixes)
     )
 }
-

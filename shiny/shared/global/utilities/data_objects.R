@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # data frame tools
 #----------------------------------------------------------------------
@@ -6,7 +5,7 @@
 # resolve inconsistencies in data frame column names to restore to an expected file format
 # function restores one column name per call based on a set of suggested likely alternatives
 fixColumnNames <- function(currentNames, correctName, altNames){
-    for(altName in altNames) currentNames[currentNames==altName] <- correctName
+    for(altName in altNames) currentNames[currentNames == altName] <- correctName
     currentNames
 }
 
@@ -29,7 +28,7 @@ fixColumnDataTypes <- function(x, template){ # template is an (empty) data frame
 }
 
 # reduce a data frame to unique rows based on queried columns
-uniqueRows <- function(df, cols) df[!duplicated(df[cols]),] 
+uniqueRows <- function(df, cols) df[!duplicated(df[cols]), ] 
 
 #----------------------------------------------------------------
 # miscellaneous functions
@@ -48,4 +47,3 @@ uniqueRows <- function(df, cols) df[!duplicated(df[cols]),]
 ## load the full text of a resource file stored in the app container
 ## NB: does not work for compressed files!
 #loadResourceText <- function(fileName) readChar(fileName, file.info(fileName)$size)
-

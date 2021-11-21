@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------
 # app code development tools
 #----------------------------------------------------------------
@@ -50,4 +49,3 @@ getVariableScope <- function(varName){
     #    text <- unname(unlist(strsplit(as.character(parse(text = text)), "\n")))
     #    cat( text, sep="\n", file="./TEST.X" )
     #}
-

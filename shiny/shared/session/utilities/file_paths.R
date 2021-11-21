@@ -80,7 +80,7 @@ purgeOutputFiles <- function(schemaId){
     unlink(getAnalysisDir(schemaId), recursive = TRUE, force = FALSE) 
 }
 
-#getProjectFileByParentType <- function(manifest, parentType, type, fileN=TRUE){
+#getPackageFileByParentType <- function(manifest, parentType, type, fileN=TRUE){
 #    if(is.null(fileN)) fileN <- TRUE
 #    name <- manifest$contentFiles[[parentType]][[type]][fileN]
 #    list(
@@ -88,16 +88,16 @@ purgeOutputFiles <- function(schemaId){
 #        path = file.path(manifest$dataDir, name)
 #    )
 #}
-#getProjectFileByContentType <- function(manifest, type, fileN=TRUE){
-#    getProjectFileByParentType(manifest, 'byContentType', type, fileN)
+#getPackageFileByContentType <- function(manifest, type, fileN=TRUE){
+#    getPackageFileByParentType(manifest, 'byContentType', type, fileN)
 #}
-#getProjectFileByFileType <- function(manifest, type, fileN=TRUE){
-#    getProjectFileByParentType(manifest, 'byFileType',    type, fileN)
+#getPackageFileByFileType <- function(manifest, type, fileN=TRUE){
+#    getPackageFileByParentType(manifest, 'byFileType',    type, fileN)
 #}
-#getProjectFile <- function(options){
+#getPackageFile <- function(options){
 #    if(!is.null(options$filename)){ # exactly named files
 #        filePathsToList(
-#            getProjectFileByName(options$manifestId, options$filename)
+#            getPackageFileByName(options$manifestId, options$filename)
 #        , options$fileN)
 #    } else if(!is.null(options$pattern)){ # by regex pattern matching
 #        filePathsToList(
@@ -105,10 +105,10 @@ purgeOutputFiles <- function(schemaId){
 #        , options$fileN)
 #    } else if(!is.null(options$contentType)){ # by content type
 #        manifest <- getManifestFromId(options$manifestId)
-#        getProjectFileByContentType(manifest, options$contentType, options$fileN) 
+#        getPackageFileByContentType(manifest, options$contentType, options$fileN) 
 #    } else if(!is.null(options$fileType)){ # by file type
 #        manifest <- getManifestFromId(options$manifestId)
-#        getProjectFileByFileType(   manifest, options$fileType,    options$fileN) 
+#        getPackageFileByFileType(   manifest, options$fileType,    options$fileN) 
 #    } else { # bad request
 #        NULL
 #    }

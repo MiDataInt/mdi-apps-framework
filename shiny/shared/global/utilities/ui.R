@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # options list tools
 #----------------------------------------------------------------------
@@ -18,13 +17,13 @@ setDefaultOptions <- function(options, defaults){
 # spinner control
 #----------------------------------------------------------------
 createSpinner <- function(session){ # insertUI needed due to shinydashboard limitations
-    insertUI("body", where = 'afterBegin', immediate=TRUE,        
+    insertUI("body", where = 'afterBegin', immediate = TRUE,        
         ui = tags$div(
-            class="progress-spinner-div",
+            class = "progress-spinner-div",
             tags$div(
-                class="progress-spinner",
-                role="status",
-                tags$span(class="sr-only", "Loading...")
+                class = "progress-spinner",
+                role = "status",
+                tags$span(class = "sr-only", "Loading...")
             )   
         )
     )
@@ -45,14 +44,14 @@ stopSpinner <- function(session, caller=NULL){
 #----------------------------------------------------------------
 
 # Shiny does not have hidden inputs(?)
-hiddenDiv <- function(...) tags$div(class="hidden", ...)
+hiddenDiv <- function(...) tags$div(class = "hidden", ...)
 
 #----------------------------------------------------------------
 # provide feedback text that can be modified from multiple sources, with error coloring
 #----------------------------------------------------------------
 recordFeedbackFunction <- function(output, outputId){
-    noMargin="margin: 0 8px;"
-    nullMessage <- tags$p(style=noMargin, HTML("&nbsp;"))
+    noMargin <- "margin: 0 8px;"
+    nullMessage <- tags$p(style = noMargin, HTML("&nbsp;"))
     feedback <- reactiveVal("")
     output[[outputId]] <- renderUI({
         f <- feedback()
@@ -61,8 +60,8 @@ recordFeedbackFunction <- function(output, outputId){
     })
     function(message, isError=FALSE){
         style <- if(isError) "color: rgb(200,0,0);" else ""
-        if(is.null(message)) message = "&nbsp;"
-        feedback(tags$p(style=paste(noMargin, style), HTML(message)))
+        if(is.null(message)) message <- "&nbsp;"
+        feedback(tags$p(style = paste(noMargin, style), HTML(message)))
         if(isError) req(FALSE) # simple way to generate a silent error
     }
 }
@@ -88,4 +87,3 @@ collapsibleBox <- function(
         collapsed = collapsed
     )
 }
-

@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for loading a user's cached, recent bookmarks
 #----------------------------------------------------------------------
@@ -13,10 +12,9 @@ bookmarkHistoryUI <- function(id) {
     tags$div(
         fluidRow(
             class = "file-input-controls",
-            column(width=12,
+            column(width = 12,
                 historyListUI(ns('list'))
             )
         )
     )                       
 }
-

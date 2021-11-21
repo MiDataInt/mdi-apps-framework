@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components to an interactive density plot using plot_ly
 #----------------------------------------------------------------------
@@ -12,4 +11,3 @@ interactiveDensityPlotUI <- function(id) {
     # return the UI contents
     plotlyOutput(ns('plotly'))
 }
-

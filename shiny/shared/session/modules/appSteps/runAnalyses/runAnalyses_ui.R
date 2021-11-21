@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components used to build executable analyses from sample sets
 # the module is generic and can support any analysis type, as requested in options
@@ -30,26 +29,26 @@ schema, click <strong>Launch Job</strong> to execute it.")),
 
     # return the UI contents
     standardSequentialTabItem(options$longLabel, leaderText,
-        fluidRow( box(width=12,
+        fluidRow( box(width = 12,
             title = textOutput(ns('boxTitle')),
             status = 'primary',
             solidHeader = TRUE,
             fluidRow(
                 # top level options selectors for sampleSetId and analysisType
-                column(width=6,           
+                column(width = 6,           
                     uiOutput(ns('universalOptions')),
                 ),
                 
                 # analysis schema controls and save action
-                column(width=4,           
-                    bsButton(ns("saveRecord"), "Save Analysis Schema", style="success", class="margin-5"),
+                column(width = 4,           
+                    bsButton(ns("saveRecord"), "Save Analysis Schema", style = "success", class = "margin-5"),
                     actionLink(ns("resetEditPanel"), ' Reset Form'),
                     uiOutput(ns('saveRecordFeedback'))
                 )                       
             ),
             fluidRow(
                 # top level options selectors for sampleSetId and analysisType
-                column(width=12,           
+                column(width = 12,           
                     uiOutput(ns('specificOptions')),
                 )
             )
@@ -57,8 +56,7 @@ schema, click <strong>Launch Job</strong> to execute it.")),
 
         # table of analysis schema with Launch Job inputs
         conditionalPanel( paste0("window['", ns('schema-count'), "'] > 0"),
-            summaryTableUI(ns('schema'), 'Analysis Schema', width=12)
+            summaryTableUI(ns('schema'), 'Analysis Schema', width = 12)
         )
     )    
 }
-

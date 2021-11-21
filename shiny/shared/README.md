@@ -33,12 +33,6 @@ are renewed in the R environment of every user session, i.e.,
 in <code>sessionEnv</code>. This enables hotfixes and rolling updates
 without server restart, only a page reload.
 
-The **optional** folder is similar to **session** except that, unlike
-the latter, optional scripts are not sourced unless specifically requested 
-by an app via a 'require' directive in its <code>config.yml</code> files. 
-Otherwise, the optional and session folders have a similar structure, scope, 
-and purpose.
-
 The **static** folder has fixed content for populating the main
 framework pages with text, mostly via markdown rendered in R with
 <code>includeMarkdown(file.path('static/xxx.md'))</code>.
@@ -48,7 +42,7 @@ i.e., css and js.
 
 ## Categories of recurring elements used to support apps
 
-Within the **global**, **session** and **optional** folders:
+Within the **global** and **session** folders:
 
 **classes** are R Shiny S3 classes that define reusable data objects
 for use by developers writing MDI code. Their general purpose

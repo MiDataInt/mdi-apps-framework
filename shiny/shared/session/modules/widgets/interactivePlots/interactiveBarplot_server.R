@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components to an interactive horizontal or vertical barplot using plot_ly
 #----------------------------------------------------------------------
@@ -8,7 +7,7 @@
 #----------------------------------------------------------------------
 interactiveBarplotServer <- function(
     id, # identifier for this plot
-    plotData, # a reactive that returns a df/dt with columns 'value', 'group' and 'subgroup', a named vector of values, or a named list of such objects
+    plotData, # a reactive that returns a df/dt with columns 'value', 'group' and 'subgroup', a named vector of values, or a named list of such objects # nolint
     shareAxis = list(), # x=TRUE or y=TRUE (not both) will cause >1 datasets to share that axis
     shareMargin = 0, # space between stacked plots
 #----------------------------------------------------------------------
@@ -20,7 +19,7 @@ interactiveBarplotServer <- function(
 #----------------------------------------------------------------------
     subgroupColors = NULL, #'grey', # a color name or color palette used to color the subgroupings within each group
 #----------------------------------------------------------------------
-    lines = NULL, # a function, reactive or vector of axis values on the numeric axis where rules are drawn, or "mean" or "median"
+    lines = NULL, # a function, reactive or vector of axis values on the numeric axis where rules are drawn, or "mean" or "median" # nolint
     lineWidth = 2,
 #----------------------------------------------------------------------
     clickable  = FALSE # whether plot should react to bar clicks
@@ -41,8 +40,8 @@ clicked <- reactiveVal()
 #----------------------------------------------------------------------
 source <- if(clickable) plotId else NULL
 modeBarButtons <- list( # tools available to the user
-    list('zoom2d','pan2d'), 
-    list('autoScale2d','resetScale2d'),
+    list('zoom2d', 'pan2d'), 
+    list('autoScale2d', 'resetScale2d'),
     list('toggleSpikelines'),
     list('toImage')       
 )
@@ -65,9 +64,9 @@ renderExpr <- quote({
             getBasePlot(name, d[[name]], isMultiPlot, shareX, shareY)
         })
         nPlots <- length(d)
-        dims <- rep(1/nPlots, nPlots)
-        if(shareY) subplot(plotList, ncols=nPlots, shareY=TRUE, margin = shareMargin, widths=dims)
-              else subplot(plotList, nrows=nPlots, shareX=TRUE, margin = shareMargin, heights=dims)
+        dims <- rep(1 / nPlots, nPlots)
+        if(shareY) subplot(plotList, ncols = nPlots, shareY = TRUE, margin = shareMargin, widths = dims)
+              else subplot(plotList, nrows = nPlots, shareX = TRUE, margin = shareMargin, heights = dims)
     } else {
         getBasePlot(NULL, d, isMultiPlot)
     }
@@ -102,7 +101,7 @@ renderExpr <- quote({
 #----------------------------------------------------------------------
 # manage the plot cache to return the plot
 #----------------------------------------------------------------------
-output$plotly <- renderPlotly(renderExpr, quoted=TRUE) #%>% bindCache(id, cacheReactive(), cache="session")
+output$plotly <- renderPlotly(renderExpr, quoted = TRUE) #%>% bindCache(id, cacheReactive(), cache="session")
 #if(is.null(cacheReactive)) renderPlotly(renderExpr, quoted=TRUE) else
 
 #----------------------------------------------------------------------
@@ -131,7 +130,8 @@ getBasePlot <- function(name, d, isMultiPlot, shareX=NULL, shareY=NULL){
             #gridcolor = if(is.logical(grid$y)) NULL else grid$y,
             #zeroline = yzeroline
         ) 
-    ) %>% addLines(d)
+    ) %>% 
+    addLines(d)
 }
 getRange <- function(d){
     if(is.reactive(range)) range()
@@ -190,17 +190,17 @@ getBasePlot_data_frame <- function(name, d){ # groups + subgroups, caller provid
 # rule(s) overplotted on top of data
 getLines <- function(lines, d) {
     if(is.null(lines)) NULL
-    else if(is.character(lines)) get(lines)(d, na.rm=TRUE)
+    else if(is.character(lines)) get(lines)(d, na.rm = TRUE)
     else if(is.reactive(lines)) lines()
     else if(is.function(lines)) lines(d)
     else lines
 }
-addLines<- function(p, d){
+addLines <- function(p, d){
     if(is.list(d)) d <- d$value
     Ls <- getLines(lines, d)
     if(is.null(Ls)) return(p)
     color <- if(is.null(attributes(Ls)$color)) 'black' else attributes(Ls)$color
-    for(i in 1:length(Ls)) p <- {
+    for(i in seq_along(Ls)) p <- {
         if(orientation == "vertical"){
             x    <- names(d)[1]
             xend <- names(d)[length(d)]
@@ -219,7 +219,7 @@ addLines<- function(p, d){
             y = y,
             yend = yend,
             opacity = 0.75,
-            line = list(color=color[i], width=lineWidth, dash='solid'),
+            line = list(color = color[i], width = lineWidth, dash = 'solid'),
             showlegend = FALSE
         )
     }
@@ -230,8 +230,8 @@ addLines<- function(p, d){
 # respond to a point click by passing the event on to our caller
 #----------------------------------------------------------------------
 if(clickable) observe({
-    req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022
-    d <- event_data("plotly_click", source=plotId)
+    req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022 # nolint
+    d <- event_data("plotly_click", source = plotId)
     req(d)
     clicked(d)
 })
@@ -248,4 +248,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

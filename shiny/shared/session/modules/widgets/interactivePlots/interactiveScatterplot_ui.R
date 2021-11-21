@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components to an interactive XY scatter plot using plot_ly
 #----------------------------------------------------------------------
@@ -10,6 +9,5 @@ interactiveScatterplotUI <- function(id, height='300px') {
     ns <- NS(id)
 
     # return the UI contents
-    plotlyOutput(ns('plotly'), height=height)
+    plotlyOutput(ns('plotly'), height = height)
 }
-

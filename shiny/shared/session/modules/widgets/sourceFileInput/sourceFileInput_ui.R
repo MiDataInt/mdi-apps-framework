@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------
 # static components for sample source file upload
-# handles all types including manifests, project zips, bookmarks and data tables
+# handles all types including manifests, package zips, bookmarks and data tables
 # used on launch page and in sourceFileUpload module
 #----------------------------------------------------------------------
 

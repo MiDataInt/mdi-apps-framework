@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for a single input to select a SampleSet
 #----------------------------------------------------------------------
@@ -11,7 +10,6 @@ sampleSetUI <- function(id) {
     
     # return the UI contents
     fluidRow( # fill whatever container we are in
-        column(width=12, bookmarkInput('selectInput', ns('sampleSet'), 'Sample Set', ""))
+        column(width = 12, bookmarkInput('selectInput', ns('sampleSet'), 'Sample Set', ""))
     )
 }
-

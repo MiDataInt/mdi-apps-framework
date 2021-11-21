@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # utility functions to help apply standard statisical functions
 #----------------------------------------------------------------------
@@ -30,12 +29,12 @@ fitTrendline <- function(d, method='loess', forceOrigin=FALSE){
     )
 }
 
-# the Portal uses functions from the zoo package for rolling value (e.g. zoo::rollmean)
+# use functions from the zoo package for rolling values (e.g. zoo::rollmean)
 # however, we extend them here to include an option for circular permutation
 circular_permute_vector <- function(x, k){
     nSide <- floor(as.integer(k) / 2)
     len <- length(x)
-    c(x[(len-nSide+1):len], x, x[1:nSide])    
+    c(x[(len - nSide + 1):len], x, x[1:nSide])    
 }
 rollmean_permute <- function(x, k, ...) {
     rollmean( circular_permute_vector(x, k), k, ... ) # already trims the NA bins on the flanks
@@ -50,7 +49,6 @@ rollsum_permute <- function(x, k, ...) {
 # identify outliers based on inter-quartile range method
 outliers_IQR <- function(x, foldIQR=1.5){ # x is a vector of values
     padding <- foldIQR * IQR(x)
-    x < quantile(x,0.25) - padding | # return boolean where TRUE = outlier
-    x > quantile(x,0.75) + padding
+    x < quantile(x, 0.25) - padding | # return boolean where TRUE = outlier
+    x > quantile(x, 0.75) + padding
 }
-

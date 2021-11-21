@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # handlers for specific types of modal popups
 #----------------------------------------------------------------------
@@ -8,7 +7,7 @@ addRemoveModalObserver <- function(input){
     observeEvent(input$removeModal, {
         removeModal() # a naive Shiny function
         if(!is.null(modalTmpFile)) { # remove and tmp files called by URL (e.g. an HTML report)
-            unlink(modalTmpFile, force=TRUE)
+            unlink(modalTmpFile, force = TRUE)
             modalTmpFile <<- NULL
         }
     }) 
@@ -19,16 +18,16 @@ showHtmlModal <- function(file, type, title){
 
     # copy to www/tmp for direct access via URL
     startSpinner(session, 'showHtmlModal')
-    tmpName <- paste(type, 'html', sep=".")
+    tmpName <- paste(type, 'html', sep = ".")
     modalTmpFile <<- file.path(sessionDirectory, tmpName)
-    file.copy(file, modalTmpFile, overwrite=TRUE)
-    src <- paste(sessionUrlBase, tmpName, sep='/')
+    file.copy(file, modalTmpFile, overwrite = TRUE)
+    src <- paste(sessionUrlBase, tmpName, sep = '/')
 
     # open the report in an iframe, in a modal, as big as possible
     showModal(modalDialog(
         title = tagList(
             tags$span(title),
-            bsButton('removeModal', "Dismiss", style="primary", class="modal-dismiss-button")
+            bsButton('removeModal', "Dismiss", style = "primary", class = "modal-dismiss-button")
         ),
         tags$iframe(
             src = src,
@@ -69,7 +68,7 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
     showModal(modalDialog(
         title = tags$strong(title),
         ...,
-        tags$div(id='modal-dialog-error', ''),
+        tags$div(id = 'modal-dialog-error', ''),
         easyClose = easyClose, # allow easy dismissal
         footer = footer,
         size = size, # sets fixed width, height auto-adjusts
@@ -90,8 +89,6 @@ showPendingDialog <- function(){
    showUserDialog(
         'Pending',
         'action/item is under development',
-        type='okOnly'
+        type = 'okOnly'
     )
 }
-
-    

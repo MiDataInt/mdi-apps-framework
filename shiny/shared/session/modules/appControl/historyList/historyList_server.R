@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for creating a cached, ordered list of historical items
 #----------------------------------------------------------------------
@@ -10,7 +9,7 @@ historyListServer <- function(id, parentId, namespace, dataTable, maxN,
                               action, actionFn, uniqueByContents=TRUE, uniqueFn=NULL) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id)
-        parentNs <- function(x) paste(parentId, ns(x), sep="-")
+        parentNs <- function(x) paste(parentId, ns(x), sep = "-")
         module <- ns('historyList') # for reportProgress tracing
 
 #----------------------------------------------------------------------
@@ -30,7 +29,7 @@ dataTable[, ':='(
 actionId <- "doAction"
 
 # function for parsing item keys
-getItemKey <- function(i) paste(userKey(), 'item', i, sep='__')
+getItemKey <- function(i) paste(userKey(), 'item', i, sep = '__')
 indices <- 1:maxN
 
 #----------------------------------------------------------------------
@@ -49,7 +48,7 @@ table <- reactiveVal(NULL)
 observeEvent(userKey(), {
     userKey <- userKey()
     if(is.null(userKey)) return(table(NULL)) # can't track history for anonymous user on a public server
-    if(!serverEnv$STORR$exists(userKey, namespace)) serverEnv$STORR$set(userKey, dataTable, namespace=namespace)
+    if(!serverEnv$STORR$exists(userKey, namespace)) serverEnv$STORR$set(userKey, dataTable, namespace = namespace)
     table( serverEnv$STORR$get(userKey, namespace) )
 })    
         
@@ -62,7 +61,7 @@ output$table <- renderDT(
         req(dt)
         dt <- dt[TRUE] # force a copy prior to Action modification
         dt[, Action := tableActionLinks(parentNs(actionId), nrow(dt), action)]
-        dt[, .SD, .SDcols=displayCols]
+        dt[, .SD, .SDcols = displayCols]
     },
     class = "display table-compact-4",
     escape = FALSE, 
@@ -76,7 +75,7 @@ output$table <- renderDT(
 #----------------------------------------------------------------------
 observeEvent(input[[actionId]], {
     row <- getTableActionLinkRow(input, actionId)
-    x <- get(index = table()[row,index])
+    x <- get(index = table()[row, index])
     actionFn(x)
 })
 
@@ -91,13 +90,13 @@ set <- function(item, data){
     item$hash <- ""
     item$index <- 1e9
     h <- rbind(item, dt)[order(-Saved_On)] # add the new item and reverse sort by date
-    if(uniqueByContents) h <- unique(h, by='key') # enforce uniqueness by purging duplicates for all requested keyBys
+    if(uniqueByContents) h <- unique(h, by = 'key') # enforce uniqueness by purging duplicates for all requested keyBys
     if(!is.null(uniqueFn)) h <- uniqueFn(h)       # the oldest records are the ones that are deleted
     if(nrow(h) > maxN) h <- h[1:maxN] # enforce a storage limit
-    i <- min(indices[indices %notin% h[,index]]) # fill the numeric slot index for the new item
+    i <- min(indices[indices %notin% h[, index]]) # fill the numeric slot index for the new item
     h[1, index := i]
-    h[1, hash := serverEnv$STORR$set(getItemKey(i), data, namespace=namespace)] # store the item itself
-    serverEnv$STORR$set(userKey(), h, namespace=namespace) # and record the new item in the history table
+    h[1, hash := serverEnv$STORR$set(getItemKey(i), data, namespace = namespace)] # store the item itself
+    serverEnv$STORR$set(userKey(), h, namespace = namespace) # and record the new item in the history table
     table(h)   
 }
 
@@ -125,4 +124,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

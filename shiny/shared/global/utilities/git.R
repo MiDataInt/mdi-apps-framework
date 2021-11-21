@@ -1,19 +1,19 @@
 
 #----------------------------------------------------------------------
-# manipulate the magc-portal-apps git repository
+# manipulate an MDI git repository
 #----------------------------------------------------------------------
 # this version uses system calls to git, instead of git2r
 # system git gives nicer output (and git2r had some less-than-optimal behavior)
 #----------------------------------------------------------------------
 # some commands require that user be known to git to associate with the commit
-# magc.portal::develop() ensures that user info is present in --local (i.e. in git repo)
+# mdi::develop() ensures that user info is present in --local (i.e. in git repo)
 # that info can be changed by developer as needed with:
 #       git config --local user.name  "xx xx"
 #       git config --local user.email "xx@xx.xx"
 #----------------------------------------------------------------------
 
 # discourage typical developers from committing to branches intended
-# for use by project managers only
+# for use by MDI managers only
 immutableGitBranches <- list(
     main    = TRUE,
     hotfix  = TRUE
@@ -110,7 +110,7 @@ showGitMergeConflicts <- function(){
         'Merge conflicts must be resolved',
         if(gitMergeInProgress$continue) tags$p('Merge conflicts are still present.') else "",
         tags$p(HTML(paste(
-            'Other developers made code changes that must be merged into your project fork.',
+            'Other developers made code changes that must be merged into your repository fork.',
             paste('However, conflicts between branches',
                   tags$strong(gitMergeInProgress$recipientBranch),
                   'and',
@@ -239,7 +239,7 @@ showGitRepoConfig <- function(eval=FALSE){
     if(eval) eval(expr) else expr
 }
 
-# get branches in the project, with a label on HEAD
+# get branches, with a label on HEAD
 listGitBranches <- function(localOnly=TRUE, eval=FALSE){
     reportProgress('branch', 'git')
     expr <- substitute(

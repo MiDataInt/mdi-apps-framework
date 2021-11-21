@@ -111,7 +111,7 @@ addRemoveObserver <- function(input, inputId, module, data, sendFeedback=NULL, r
             callback = function(parentInput) {
                 reportProgress(paste(selectedRow, '=', id))
                 if(!is.null(data$clearLocks)) data$clearLocks(id) # only caller knows how to do lock clearing 
-                if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory
+                if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory # nolint
                 data$selected(NA)
                 data$list[[id]]  <- NULL # cascades to update data$ids via dataListObserver
                 data$names[[id]] <- NULL

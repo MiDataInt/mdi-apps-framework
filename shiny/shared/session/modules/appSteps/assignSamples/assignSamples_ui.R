@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for a sample assignment grid with up to two category levels
 #       e.g. category1=group/source and category2=condition/type etc.
@@ -16,7 +15,7 @@ assignSamplesUI <- function(id, options) {
 
     # customize based on the number of requested groups and conditions
     parseNLevels <- function(nLevels){
-        if(is.character(nLevels)) eval(parse(text=nLevels)) else nLevels
+        if(is.character(nLevels)) eval(parse(text = nLevels)) else nLevels
     }
     isCategory <- c(FALSE, FALSE)
     nLevelChoices <- c(1, 1)
@@ -31,7 +30,7 @@ assignSamplesUI <- function(id, options) {
     }
 
     # override missing options to defaults
-    leaderTail <- "is up to you and your experimental design; examples might include genotypes, treatment conditions, or tissue sources."
+    leaderTail <- "is up to you and your experimental design; examples might include genotypes, treatment conditions, or tissue sources." # nolint
     stepModuleInfo$assignSamples$defaultLeaderText <- if(isLevelsSelector[2]) paste(
             "Please <strong>drag and drop</strong> your samples as needed to create a table of <strong>",
             options$categories[[1]]$plural, "</strong> and <strong>",
@@ -43,7 +42,7 @@ assignSamplesUI <- function(id, options) {
             options$categories[[1]]$plural, "</strong>. What comprises a",
             options$categories[[1]]$singular, leaderTail
         ) else
-            "Please <strong>drag and drop</strong> your samples to select those you would like to include in your analysis."
+            "Please <strong>drag and drop</strong> your samples to select those you would like to include in your analysis." # nolint
     options <- setDefaultOptions(options, stepModuleInfo$assignSamples)
 
     # incorporate options text into templates
@@ -67,7 +66,7 @@ assignSamplesUI <- function(id, options) {
         if(is.null(opt$default)) opt$default <- min(opt$nLevels)
         if(is.null(opt$step))    opt$step <- 1
         numericInput(id, label, opt$default,
-                     min=min(opt$nLevels), max=max(opt$nLevels), step=opt$step)   
+                     min = min(opt$nLevels), max = max(opt$nLevels), step = opt$step)   
     }
     
     # return the UI contents
@@ -76,33 +75,33 @@ assignSamplesUI <- function(id, options) {
 
         # sample grid controls and save/reset/fill actions
         fluidRow( if(isLevelsSelector[1]){
-            box(width=if(isLevelsSelector[2]) 6 else 4, 
+            box(width = if(isLevelsSelector[2]) 6 else 4, 
                 fluidRow(
-                    column(width=controlColWidth, nLevelsSelector(1)),
-                    if(isLevelsSelector[2]){ column(width=controlColWidth, nLevelsSelector(2)) } else "",
-                    column(width=controlColWidth, selectInput(ns("autofillDelimiter"), label='Name Delimiter',
-                            c('fixed width','- (dash)','_ (underscore)',': (colon)',' (whitespace)')))
+                    column(width = controlColWidth, nLevelsSelector(1)),
+                    if(isLevelsSelector[2]) column(width = controlColWidth, nLevelsSelector(2)) else "",
+                    column(width = controlColWidth, selectInput(ns("autofillDelimiter"), label = 'Name Delimiter',
+                            c('fixed width', '- (dash)', '_ (underscore)', ': (colon)', ' (whitespace)')))
                 ) 
             )} else "",
-            box(width=5,
-                bsButton(ns("saveRecord"), "Save Sample Set", style="success", class="margin-5"),
-                actionLink(ns("resetEditPanel"), 'Reset Grid',    class="record-actions-link"),
-                actionLink(ns("autofillGrid"),   'Autofill Grid', class="record-actions-link"),
+            box(width = 5,
+                bsButton(ns("saveRecord"), "Save Sample Set", style = "success", class = "margin-5"),
+                actionLink(ns("resetEditPanel"), 'Reset Grid',    class = "record-actions-link"),
+                actionLink(ns("autofillGrid"),   'Autofill Grid', class = "record-actions-link"),
                 uiOutput(ns('saveRecordFeedback'))
             )
         ),
-        fluidRow(column(width=12, conditionalPanel( paste0("window['", ns('sampleSets-count'), "'] > 0"),
-            summaryTableUI(ns('sampleSets'), 'Sample Sets', width=12)
+        fluidRow(column(width = 12, conditionalPanel( paste0("window['", ns('sampleSets-count'), "'] > 0"),
+            summaryTableUI(ns('sampleSets'), 'Sample Sets', width = 12)
         ))),
 
         # sample selection inputs and sample sets summary table
         fluidRow(
             column(
-                width=3,
-                style="padding: 0;",
+                width = 3,
+                style = "padding: 0;",
                 box(
-                    width=12,
-                    style="padding: 0;",
+                    width = 12,
+                    style = "padding: 0;",
                     title = 'Available Samples',
                     status = 'primary',
                     solidHeader = TRUE,
@@ -110,11 +109,10 @@ assignSamplesUI <- function(id, options) {
                 )                   
             ),
             column(
-                width=9,
-                style="padding: 0;",
+                width = 9,
+                style = "padding: 0;",
                 uiOutput(ns('sampleGrid'))
             )  
         ) 
     )    
 }
-

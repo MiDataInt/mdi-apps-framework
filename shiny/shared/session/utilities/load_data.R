@@ -28,13 +28,13 @@ getSampleCountData <- function(job){
         # get counts from source countMatrix file
         # assumes file has one feature column and multiple sample columns in same order as a manifest
         if(is.null(cache[[sourceId]])) cache[[sourceId]] <<- {
-            file <- getProjectFileByType(job$parameters$sources[[sourceId]], 'countMatrix')
+            file <- getPackageFileByType(job$parameters$sources[[sourceId]], 'countMatrix')
             dt <- fread(file$path, header = TRUE)
             dt <- dt[order(dt[[1]])] # sort by the featureId column
             as.data.frame(dt)
         }
         is <- c(1, which(sampleIds == sampleId) + 1)
-        df <- cache[[sourceId]][,is]
+        df <- cache[[sourceId]][, is]
         
         # validate common order of features across all files and return this sample's counts
         if(is.null(featureList)) {
@@ -59,9 +59,9 @@ getSampleCountData <- function(job){
 ## load (some) samples from a data file with one feature column and multiple sample columns
 ##   expects genes/features in rows, samples in columns, counts in cells
 ##   returns the feature column (column 1) plus requested sample columns
-#loadSampleFeatureCounts_multisample <- function(projectFileOptions, sampleIs=NULL){
+#loadSampleFeatureCounts_multisample <- function(packageFileOptions, sampleIs=NULL){
 #
-#    file <- getProjectFile(projectFileOptions) # must return a single file
+#    file <- getPackageFile(packageFileOptions) # must return a single file
 #
 #    if(is.null(file)) safeError('could not find counts file')
 #    if(length(file) > 1) safeError('too many matching counts files')

@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for app state save-and-recover tools
 # NB: this implementation is better for our environment than native R Shiny bookmarking
@@ -26,7 +25,7 @@ data <- reactiveValues(
 )
 
 #----------------------------------------------------------------------
-# download a MAGC (.magc) bookmark file
+# download a bookmark file
 #----------------------------------------------------------------------
 output[[id]] <- downloadHandler(
     filename = function() {
@@ -34,7 +33,7 @@ output[[id]] <- downloadHandler(
         filename <- app[[firstStepName]]$outcomes$analysisSetName
         filename <- if(is.null(filename)) app$info$name else filename()
         filename <- gsub(' ', '_', filename)
-        paste(filename, "magc", sep = ".")
+        paste(filename, "mdi", sep = ".")
     },
     content = function(file) {
         reportProgress('bookmarking download', module)
@@ -45,7 +44,7 @@ output[[id]] <- downloadHandler(
 )
 
 #----------------------------------------------------------------------
-# upload a MAGC (.magc) bookmark file (data$file set by upload handler)
+# upload a bookmark file (data$file set by upload handler)
 #----------------------------------------------------------------------
 observe({
     req(data$file)    
@@ -71,4 +70,3 @@ data
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

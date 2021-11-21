@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for a tabular view of analysis results, with download link
 # typically in a viewResults module
@@ -13,12 +12,11 @@ resultsTableUI <- function(id, title, width=12) {
     # box with the table
     collapsibleBox(
         title = tags$p(
-            class="results-box-header-p",
+            class = "results-box-header-p",
             title,
-            downloadButton(ns('download'), label=NULL, class="results-box-header-button")
+            downloadButton(ns('download'), label = NULL, class = "results-box-header-button")
         ),
         width = width,
         DTOutput(ns('table'))
     )
 }
-

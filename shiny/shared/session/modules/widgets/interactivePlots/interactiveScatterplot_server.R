@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components to an interactive XY scatter plot using plot_ly
 # https://plotly.com/r/
@@ -12,8 +11,8 @@
 interactiveScatterplotServer <- function(
     id, # identifier for this plot
     plotData, # data to plot, a reactive that returns df/dt with $x and $y, or a named list of such df/dt
-    accelerate = FALSE, # if TRUE, use scattergl/WebGL (instead of SVG) to plot large data series much faster (with limitations)
-    shareAxis = list(), # x=TRUE or y=TRUE (not both) will cause >1 datasets to share that axis; incompatible with overplotting or fitting
+    accelerate = FALSE, # if TRUE, use scattergl/WebGL (instead of SVG) to plot large data series much faster (with limitations) # nolint
+    shareAxis = list(), # x=TRUE or y=TRUE (not both) will cause >1 datasets to share that axis; incompatible with overplotting or fitting # nolint
     shareMargin = 0, # space between stacked plots
 #----------------------------------------------------------------------
     mode = "markers", # how to plot; markers, lines, etc.
@@ -22,8 +21,8 @@ interactiveScatterplotServer <- function(
     pointSize = 3,
     lineWidth = 2,
 #----------------------------------------------------------------------
-    overplot = NULL,     # repeated or extra points plotted on top of the original points; if character, column of that name becomes the trace number
-    overplotMode = NULL, #     if plotData is a list of df/dt, overplot must be NULL or an equal length list with the same names
+    overplot = NULL,     # repeated or extra points plotted on top of the original points; if character, column of that name becomes the trace number # nolint
+    overplotMode = NULL, #     if plotData is a list of df/dt, overplot must be NULL or an equal length list with the same names # nolint
     overplotColor = NA,  # defaults to the same mode as the main plot
     overplotPointSize = 3, 
     overplotLineWidth = 2,
@@ -35,27 +34,27 @@ interactiveScatterplotServer <- function(
     yrange = NULL,
     yzeroline = TRUE,
 #----------------------------------------------------------------------
-    ticks = list(x=NULL,y=NULL), # either NULL (default) or list(tick0=#, dtick=#) for the x (vertical) and y (horizontal) grids 
-    grid = list(x=TRUE, y=TRUE), # either TRUE (default), FALSE (omitted), or a color value for the x (vertical) and y (horizontal) grids
+    ticks = list(x = NULL,y = NULL), # either NULL (default) or list(tick0=#, dtick=#) for the x (vertical) and y (horizontal) grids  # nolint
+    grid = list(x = TRUE, y = TRUE), # either TRUE (default), FALSE (omitted), or a color value for the x (vertical) and y (horizontal) grids # nolint
 #----------------------------------------------------------------------
-    selectable = FALSE, # whether point selection is enabled; either FALSE, TRUE (defaults to box select), 'select' (same as TRUE), 'lasso', 'h', or 'v'
+    selectable = FALSE, # whether point selection is enabled; either FALSE, TRUE (defaults to box select), 'select' (same as TRUE), 'lasso', 'h', or 'v' # nolint
     clickable  = FALSE, # whether plot should react to point clicks
-    keyColumn = NULL, # the name of the column in plotData to add as a click/select key; ends up in 'customdata' field of event_data
+    keyColumn = NULL, # the name of the column in plotData to add as a click/select key; ends up in 'customdata' field of event_data # nolint
 #----------------------------------------------------------------------
-    hoverText = NULL, # character vector with hover text, or a function or reactive that returns one; if a 1-length character vector, hoverText taken from that column
-    labelCol = NULL, # the name of a column from which to read the text labels applied to a subset of points (use NA for unlabeled points)
-    labelDirs = list(x=1, y=1), # direction to draw the label arrow relative to x,y; 0=no offset, 1=farther along the axis, -1=opposite of 1 (i.e, to the inside)
+    hoverText = NULL, # character vector with hover text, or a function or reactive that returns one; if a 1-length character vector, hoverText taken from that column # nolint
+    labelCol = NULL, # the name of a column from which to read the text labels applied to a subset of points (use NA for unlabeled points) # nolint
+    labelDirs = list(x = 1, y = 1), # direction to draw the label arrow relative to x,y; 0=no offset, 1=farther along the axis, -1=opposite of 1 (i.e, to the inside) # nolint
 #----------------------------------------------------------------------
-    fitMethod = NULL, # a reactive that supplies a fit, a function(d) that returns a fit, or a method compatible with fitTrendline
+    fitMethod = NULL, # a reactive that supplies a fit, a function(d) that returns a fit, or a method compatible with fitTrendline # nolint
     fitColor = NA,
 #----------------------------------------------------------------------
     unityLine = FALSE, # add a unity line after plotting the points
     hLines = NULL, # a function, reactive or vector of axis values
     vLines = NULL,
 #---------------------------------------------------------------------- 
-    distributions = NULL, # a function that returns a list of df/dt with $x and $y to plot as individual grey, dashed line distribution traces
+    distributions = NULL, # a function that returns a list of df/dt with $x and $y to plot as individual grey, dashed line distribution traces # nolint
 #----------------------------------------------------------------------
-    cacheReactive = NULL # optional reactive with (hopefully simple to parse) values on which the plot depends; passed to bindCache as cache keys
+    cacheReactive = NULL # optional reactive with (hopefully simple to parse) values on which the plot depends; passed to bindCache as cache keys # nolint
 #----------------------------------------------------------------------
 ) { moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -77,7 +76,7 @@ fit <- reactiveVal()
 if(is.logical(selectable)){
     selectmode <- 'select'
     selectdirection <- NULL
-} else if(selectable=='h' || selectable=='v'){
+} else if(selectable == 'h' || selectable == 'v'){
     selectmode <- 'select'
     selectdirection <- selectable    
     selectable <- TRUE
@@ -87,15 +86,15 @@ if(is.logical(selectable)){
     selectable <- TRUE
 }
 source <- if(selectable || clickable) plotId else NULL
-dragmode <- if(selectable) selectmode else 'zoom' # or lasso, pan, https://plotly.com/r/reference/layout/#layout-dragmode
+dragmode <- if(selectable) selectmode else 'zoom' # or lasso, pan, https://plotly.com/r/reference/layout/#layout-dragmode # nolint
 modeBarButtons <- list( # tools available to the user
-    list('zoom2d','pan2d'), 
-    list('autoScale2d','resetScale2d'),
+    list('zoom2d', 'pan2d'), 
+    list('autoScale2d', 'resetScale2d'),
     list('toggleSpikelines'),
     list('toImage')       
 )
 selectButtons <- list(
-    list('select2d','lasso2d')
+    list('select2d', 'lasso2d')
 )
 if(selectable) modeBarButtons <- c(selectButtons, modeBarButtons)
 if(is.null(overplotMode)) overplotMode <- mode
@@ -121,14 +120,14 @@ getOverplot <- function(d, overplot, name=NULL){
     if(is.character(overplot) && is.data.frame(d)){ # split a data frame into groups by column overplot
         traceIs <- unique(d[[overplot]])
         traceIs <- traceIs[traceIs > 0]
-        if(length(traceIs) == 0) return(d[FALSE,])
-        lapply(1:max(traceIs, na.rm=TRUE), function(traceI) { # allows blank traces to control point coloring
+        if(length(traceIs) == 0) return(d[FALSE, ])
+        lapply(1:max(traceIs, na.rm = TRUE), function(traceI) { # allows blank traces to control point coloring
             rows <- d[[overplot]] == traceI
-            d[rows,] # do not use d[d[[overplot]] == traceI,] it fails for data.tables
+            d[rows, ] # do not use d[d[[overplot]] == traceI,] it fails for data.tables
         })
-    } else if(is.reactive(overplot) && is.null(name)) overplot()  # functions and reactives are only applied at the top level, not for each multiplot
+    } else if(is.reactive(overplot) && is.null(name)) overplot()  # functions and reactives are only applied at the top level, not for each multiplot # nolint
       else if(is.function(overplot) && is.null(name)) overplot(d)
-      else if(!is.null(overplot) && !is.null(name)) overplot[[name]] # here, overplot was previously returned by function/reactive above
+      else if(!is.null(overplot) && !is.null(name)) overplot[[name]] # here, overplot was previously returned by function/reactive above # nolint
       else overplot
 }
 
@@ -145,7 +144,7 @@ renderExpr <- quote({
     isMultiPlot <- !is.data.frame(d)
     d <- setHoverText(d)
     overplot_ <- getOverplot(d, overplot)
-    if(is.character(overplot) && !isMultiPlot) d <- d[d[[overplot]] == 0,]      
+    if(is.character(overplot) && !isMultiPlot) d <- d[d[[overplot]] == 0, ]      
 
     # collect the individual plots
     p <- if(isMultiPlot) {
@@ -154,13 +153,13 @@ renderExpr <- quote({
         plotList <- lapply(names(d), function(name) {         
             d_ <- setHoverText(d[[name]])
             overplot__ <- getOverplot(d_, overplot_, name)
-            if(is.character(overplot_)) d_ <- d_[d_[[overplot_]] == 0,] 
+            if(is.character(overplot_)) d_ <- d_[d_[[overplot_]] == 0, ] 
             getBasePlot(name, d_, overplot__, isMultiPlot, shareX, shareY)
         })
         nPlots <- length(d)
-        dims <- rep(1/nPlots, nPlots)
-        if(shareY) subplot(plotList, ncols=nPlots, shareY=TRUE, margin = shareMargin, widths=dims)
-              else subplot(plotList, nrows=nPlots, shareX=TRUE, margin = shareMargin, heights=dims)
+        dims <- rep(1 / nPlots, nPlots)
+        if(shareY) subplot(plotList, ncols = nPlots, shareY = TRUE, margin = shareMargin, widths = dims)
+              else subplot(plotList, nrows = nPlots, shareX = TRUE, margin = shareMargin, heights = dims)
     } else {
         getBasePlot(NULL, d, overplot_, isMultiPlot)
     }
@@ -200,17 +199,17 @@ renderExpr <- quote({
 #----------------------------------------------------------------------
 # manage the plot cache to return the plot
 #----------------------------------------------------------------------
-output$plotly <- if(is.null(cacheReactive)) renderPlotly(renderExpr, quoted=TRUE) 
-                 else renderPlotly(renderExpr, quoted=TRUE) %>% bindCache(id, cacheReactive(), cache="session")
+output$plotly <- if(is.null(cacheReactive)) renderPlotly(renderExpr, quoted = TRUE) 
+                 else renderPlotly(renderExpr, quoted = TRUE) %>% bindCache(id, cacheReactive(), cache = "session")
            
 #----------------------------------------------------------------------
 # render the primary plot
 #----------------------------------------------------------------------
 
 # one plot of one incoming data set
-getBasePlot <- function(name, d, overplot, isMultiPlot, shareX=NULL, shareY=NULL){
+getBasePlot <- function(name, d, overplot, isMultiPlot, shareX = NULL, shareY = NULL){
     d <- d[!is.na(x) & !is.na(y)]
-    if(is.null(overplot)) overplot <- d[FALSE,]
+    if(is.null(overplot)) overplot <- d[FALSE, ]
     
     # one plot of one incoming data set
     p <- plot_ly(
@@ -280,7 +279,7 @@ getBasePlot <- function(name, d, overplot, isMultiPlot, shareX=NULL, shareY=NULL
 
 # add one set of overplot data points
 addOverplot <- function(p, overplot){
-    overplot # do not delete; for unexplained reasons, multiple overplots sometimes depend on accessing overplot like this (??)
+    overplot # do not delete; for unexplained reasons, multiple overplots sometimes depend on accessing overplot like this (??) # nolint
     add_trace(
         p,
         x = ~overplot$x,
@@ -304,7 +303,7 @@ addOverplot <- function(p, overplot){
 # add text labels to user-specified points
 addPointLabels <- function(p, d){
     if(is.null(labelCol)) return(p)
-    labels <- d[!is.na(d[[labelCol]]),]
+    labels <- d[!is.na(d[[labelCol]]), ]
     if(nrow(labels) == 0) return(p)
     signx <- labelDirs$x * sign(labels$x)
     signy <- labelDirs$y * sign(labels$y)
@@ -344,7 +343,7 @@ addFitPoints <- function(p, d, fit){
             text = NA
         )  
     } else {
-        f <- predict(fit, data.frame(x=d$x, x2=d$x^2, x3=d$x^3))
+        f <- predict(fit, data.frame(x = d$x, x2 = d$x^2, x3 = d$x^3))
         add_trace(
             p,
             y = ~f,
@@ -363,8 +362,8 @@ addFitPoints <- function(p, d, fit){
 # a unity line to help identify deviations from identity of two data sets
 addUnityLine <- function(p, d){
     if(!unityLine) return(p)
-    min <- min(d$x, d$y, na.rm=TRUE)
-    max <- max(d$x, d$y, na.rm=TRUE)
+    min <- min(d$x, d$y, na.rm = TRUE)
+    max <- max(d$x, d$y, na.rm = TRUE)
     add_trace(
         p,
         x = c(min, max),
@@ -372,7 +371,7 @@ addUnityLine <- function(p, d){
         type = 'scatter',
         mode = 'lines',
         opacity = 0.75,
-        line = list(color='black', width=lineWidth, dash='solid'),
+        line = list(color = 'black', width = lineWidth, dash = 'solid'),
         showlegend = FALSE,
         text = NA
     )      
@@ -385,21 +384,21 @@ getLines <- function(lines, d) {
     else if(is.function(lines)) lines(d)
     else lines
 }
-addHLines<- function(p, d){
+addHLines <- function(p, d){
     Ls <- getLines(hLines, d)
     if(is.null(Ls)) return(p)
     color <- if(is.null(attributes(Ls)$color)) 'black' else attributes(Ls)$color
-    x <- range(d$x[d$x > -Inf & d$x < Inf], na.rm=TRUE)
+    x <- range(d$x[d$x > -Inf & d$x < Inf], na.rm = TRUE)
     #x <- c(min(-1e9,x[1]), max(1e9,x[2]))
-    for(i in 1:length(Ls)) p <- add_trace(
+    for(i in seq_along(Ls)) p <- add_trace(
         p,
         x = x,
         y = c(Ls[i], Ls[i]),
         type = 'scatter',
         mode = 'lines+markers',
         opacity = 0.75,
-        line = list(color=color[i], width=lineWidth, dash='solid'),
-        marker = list(size=0.1),
+        line = list(color = color[i], width = lineWidth, dash = 'solid'),
+        marker = list(size = 0.1),
         showlegend = FALSE,
         text = NA
     )
@@ -411,17 +410,17 @@ addVLines <- function(p, d){
     Ls <- getLines(vLines, d)
     if(is.null(Ls)) return(p)
     color <- if(is.null(attributes(Ls)$color)) 'black' else attributes(Ls)$color
-    y <- range(d$y[d$y > -Inf & d$y < Inf], na.rm=TRUE)
+    y <- range(d$y[d$y > -Inf & d$y < Inf], na.rm = TRUE)
     #y <- c(min(-1e9,y[1]), max(1e9,y[2]))
-    for(i in 1:length(Ls)) p <- add_trace(
+    for(i in seq_along(Ls)) p <- add_trace(
         p,
         x = c(Ls[i], Ls[i]),
         y = y,
         type = 'scatter',
-        mode = 'lines+markers', # we don't want markers, but plotly give an inappropriate warning if we don't use invisible markers
+        mode = 'lines+markers', # we don't want markers, but plotly give an inappropriate warning if we don't use invisible markers # nolint
         opacity = 0.75,
-        line = list(color=color[i], width=lineWidth, dash='solid'),
-        marker = list(size=0.1),
+        line = list(color = color[i], width = lineWidth, dash = 'solid'),
+        marker = list(size = 0.1),
         showlegend = FALSE,
         text = NA
     )
@@ -432,14 +431,14 @@ addVLines <- function(p, d){
 addDistributions <- function(p, d){
     if(is.null(distributions)) return(p)
     distributions <- distributions(d)
-    if(is.null(distributions) || length(distributions)==0) return(p)
-    for(i in 1:length(distributions)) p <- add_trace(
+    if(is.null(distributions) || length(distributions) == 0) return(p)
+    for(i in seq_along(distributions)) p <- add_trace(
         p,
         x = distributions[[i]]$x,
         y = distributions[[i]]$y,
         type = 'scatter',
         mode = 'lines',
-        line = list(color="grey", dash='dot'),
+        line = list(color = "grey", dash = 'dot'),
         showlegend = FALSE,
         text = NA
     )
@@ -456,11 +455,11 @@ getFit <- function(d){
     else fitTrendline(d, fitMethod)
 }
 if(selectable) observe({
-    req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022
-    d <- event_data("plotly_selected", source=plotId)
+    req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022 # nolint
+    d <- event_data("plotly_selected", source = plotId)
     req(d)
     req(nrow(d) > 0)
-    d <- d[d$curveNumber == 0,] # to avoiding including a prior fit/trendline in the next fit
+    d <- d[d$curveNumber == 0, ] # to avoiding including a prior fit/trendline in the next fit
     selected(d)
     fit( getFit(d) )
 })
@@ -474,8 +473,8 @@ if(selectable) observe({
 # respond to a point click by passing the event on to our caller
 #----------------------------------------------------------------------
 if(clickable) observe({
-    req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022
-    d <- event_data("plotly_click", source=plotId)
+    req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022 # nolint
+    d <- event_data("plotly_click", source = plotId)
     req(d)
     clicked(d)
 })
@@ -543,4 +542,3 @@ list(
 #resetViewMapbox
 #zoomInMapbox
 #zoomOutMapbox
-
