@@ -37,7 +37,7 @@ CONSTANTS <- list(
     apps = list(
         launchPage     = 'launch-page',
         serverBusy     = 'server-busy',
-        pipelineRunner = 'pipeline-runner'
+        pipelineRunner = 'pipelineRunner'
     ),
     
     # the standardized content file types found in project zips

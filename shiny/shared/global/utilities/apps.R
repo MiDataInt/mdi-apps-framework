@@ -3,12 +3,12 @@
 # developer-forks override definitive if present and in developer mode
 #----------------------------------------------------------------
 
-# the working Stage 2 apps suites
+# the working Stage 2 apps suites, including pipelineRunner in apps framework
 getAppSuiteDirs <- function(){
     getForkSuiteDirs <- function(fork) {
         dirs <- list.dirs(file.path(serverEnv$SUITES_DIR, fork), recursive = FALSE, full.names = TRUE)
         isAppsSuite <- sapply(dirs, function(dir) dir.exists(file.path(dir, 'shiny', 'apps')))
-        dirs[isAppsSuite]
+        c(dirs[isAppsSuite], file.path(serverEnv$FRAMEWORKS, fork))
     }
     list(
         definitive = getForkSuiteDirs("definitive"),
