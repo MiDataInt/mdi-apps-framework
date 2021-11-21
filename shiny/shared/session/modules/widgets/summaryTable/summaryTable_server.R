@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a tabular view of data, with standardized special columns
 # in particular, these are the tabular summaries at the bottom of appStep modules
@@ -10,13 +9,15 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-summaryTableServer <- function(id, parentId, stepNumber, stepLocks, sendFeedback,
-                               template, type,
-                               remove=NULL, names=NULL, parent=NULL,
-                               clearLocks=NULL, statusChange=NULL) {
+summaryTableServer <- function(
+    id, parentId, stepNumber, stepLocks, sendFeedback,
+    template, type,
+    remove=NULL, names=NULL, parent=NULL,
+    clearLocks=NULL, statusChange=NULL
+) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNS <- function(id) paste(parentId, ns(id), sep="-")
+        parentNS <- function(id) paste(parentId, ns(id), sep = "-")
         module <- ns('table') # for reportProgress tracing
 #----------------------------------------------------------------------
 
@@ -48,7 +49,7 @@ dtOptions <- list(
         searching = FALSE  
     ),
     longList100 = list(
-        lengthMenu = c(20,100,500),
+        lengthMenu = c(20, 100, 500),
         pageLength = 100
     )
 )
@@ -87,12 +88,12 @@ modifySummary <- function(summary, parentId){
     } else {
         which( data$list[[parent$keyColumn]] == parentId )
     }
-    summary <- summary[rows,]
+    summary <- summary[rows, ]
     nrow <- nrow(summary)
     
     # add custom record removal boxes
     if(isRemove){
-        summary$Remove = tableRemoveActionLinks(
+        summary$Remove <- tableRemoveActionLinks(
             stepLocks = stepLocks,
             parentId = parentNS(removeRowId),
             confirmMessage = NULL,
@@ -137,7 +138,7 @@ if(isNameEdit){
     observe({
         buffer <- buffer_()
         req(buffer)
-        isolate({ replaceData(data$proxy, buffer, resetPaging=FALSE, clearSelection="none") })
+        isolate({ replaceData(data$proxy, buffer, resetPaging = FALSE, clearSelection = "none") })
         #sendFeedback(NULL)
     })    
 }
@@ -162,7 +163,7 @@ observe({
     count <- length(data$ids)
     
     # set javascript variable used to trigger conditional panels
-    session$sendCustomMessage('updateTrigger', list(name=name, value=count))
+    session$sendCustomMessage('updateTrigger', list(name = name, value = count))
 })
 
 #----------------------------------------------------------------------
@@ -175,4 +176,3 @@ data
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

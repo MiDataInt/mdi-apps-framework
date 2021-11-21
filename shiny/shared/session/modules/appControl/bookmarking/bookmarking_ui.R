@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for app state save-and-recover tools
 #----------------------------------------------------------------------
@@ -16,6 +15,5 @@ bookmarkingUI <- function(id, options) {
     ))
     
     # return a single button to initiate download
-    downloadButton(ns(id), options$label, class=options$class)
+    downloadButton(ns(id), options$label, class = options$class)
 }
-

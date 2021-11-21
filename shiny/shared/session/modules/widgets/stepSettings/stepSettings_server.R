@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for caching and only occasionally displaying a set 
 # of input parameters for controlling how an application step behaves
@@ -11,8 +10,11 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-stepSettingsServer <- function(id, parentId, size=NULL,
-                               cacheKey=NULL) { # a reactive/reactiveVal that returns an id for the current settings state
+stepSettingsServer <- function(
+    id, parentId, 
+    size=NULL,
+    cacheKey=NULL # a reactive/reactiveVal that returns an id for the current settings state
+) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         parentNs <- NS(parentId)
@@ -23,7 +25,7 @@ stepSettingsServer <- function(id, parentId, size=NULL,
 # initialize module
 #----------------------------------------------------------------------
 gearId <- 'gearIcon'
-fullGearId <- paste(parentId, id, gearId, sep="-")
+fullGearId <- paste(parentId, id, gearId, sep = "-")
 
 # setting values cache, for pages where settings change in response to calls to 'replace'
 cache <- list()
@@ -106,10 +108,10 @@ getTabInputs <- function(id, tab){
     getOption <- function(name, default=NA) if(is.null(x[[name]])) default else x[[name]]
     div(switch(
         t$type,
-        selectInput = selectInput(id, t$label, choices=t$choices, selected=x$value),
+        selectInput = selectInput(id, t$label, choices = t$choices, selected = x$value),
         numericInput = numericInput(id, t$label, x$value, getOption('min'), getOption('max'), getOption('step')),
         get(x$type)(id, t$label, x$value)
-    ), style="margin-bottom: 5px;")          
+    ), style = "margin-bottom: 5px;")          
 }
 toInputs <- function(){
     if(isTabbed){
@@ -117,16 +119,16 @@ toInputs <- function(){
             lapply(names(settings), function(tab){
                 do.call(tabPanel, c(
                     lapply(names(settings[[tab]]), getTabInputs, tab),
-                    title=gsub('_', ' ', tab)
+                    title = gsub('_', ' ', tab)
                 ))
             }),
-            width=12               
+            width = 12               
         )))        
     } else {
         tab1 <- names(settings)[1]
         fluidRow(do.call(column, c(
             lapply(names(settings[[tab1]]), getTabInputs, tab1),
-            width=12
+            width = 12
         )))
     }
 }
@@ -165,4 +167,3 @@ retval
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

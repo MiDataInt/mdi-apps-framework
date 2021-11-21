@@ -39,7 +39,7 @@ if(isParentProcess){
 
 # load and attach initial Shiny load dependencies of the framework
 # will fail if any package has not previously been installed into R
-# NB: packages are loaded into an R process, i.e. at the server, not session, level
+# NB: packages are loaded into an R process, i.e., at the server, not session, level
 unloadRStudioPackages()
 loadFrameworkPackages('yaml')
 frameworkPackages <- read_yaml( file.path('global', 'packages', 'packages.yml') )
@@ -48,32 +48,3 @@ if(isParentProcess){
     loadAsyncPackages()
     loadDeveloperPackages()    
 }
-
-# # collect the configuration of all apps
-# appConfigs <- list()     # name = appName, value = config
-# appFamilies <- list()    # name = appName, value = familyName
-# appUploadTypes <- list() # name = uploadType, value = vector of appNames
-# for(familyName in list.dirs(path = file.path(serverEnv$SHINY_DIR, 'apps'), full.names = FALSE, recursive = FALSE)){ 
-#     for(appName in list.dirs(path = file.path(serverEnv$SHINY_DIR, 'apps', familyName), full.names = FALSE, recursive = FALSE)){ # nolint
-#         configFile <- file.path(serverEnv$SHINY_DIR, 'apps', familyName, appName, 'config.yml')
-#         if(!file.exists(configFile)) next
-#         tryCatch(
-#             { # tryCatch prevent framework failure on bad config
-#                 appConfig <- read_yaml(configFile)
-#                 appConfigs[[appName]] <- appConfig
-#                 appConfigs[[appName]]$family <- familyName
-#                 appFamilies[appName] <- familyName            
-#                 if(!is.null(appConfig$uploadTypes)){ # again, catch and suppress bad app config
-#                     for(uploadType in names(appConfig$uploadTypes)){ # associate apps with upload types
-#                         if(is.null(appUploadTypes[[uploadType]])){
-#                             appUploadTypes[[uploadType]] <- appName
-#                         } else {
-#                             appUploadTypes[[uploadType]] <- c(appUploadTypes[[uploadType]], appName)
-#                         }
-#                     }                
-#                 }
-#             }, 
-#             error = function(e) print(e) 
-#         )
-#     }    
-# }

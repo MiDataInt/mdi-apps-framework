@@ -1,8 +1,7 @@
-
 #----------------------------------------------------------------------
 # shared/ui/DT_tools.R provides widgets to maximize utility of data tables
 #----------------------------------------------------------------------
-# MAGC Portal uses the R DT package for table rendering
+# the MDI uses the R DT package for table rendering
 # DT is a general R package, not specific to Shiny, but renderDT function wraps DT to Shiny
 # DT manipulates the JavaScript library called DataTables (which it loads for us)
 # see:
@@ -205,4 +204,3 @@ rowSelectionObserver <- function(parentTable, input){
     })
     selected
 }
-

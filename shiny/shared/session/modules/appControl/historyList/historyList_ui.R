@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for creating a cached, ordered list of historical items
 #----------------------------------------------------------------------
@@ -12,4 +11,3 @@ historyListUI <- function(id) {
     # file upload input
     DTOutput(ns('table'))                   
 }
-

@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components to an interactive horizontal or vertical barplot using plot_ly
 #----------------------------------------------------------------------
@@ -10,6 +9,5 @@ interactiveBarplotUI <- function(id, height='300px') {
     ns <- NS(id)
 
     # return the UI contents
-    plotlyOutput(ns('plotly'), height=height)
+    plotlyOutput(ns('plotly'), height = height)
 }
-

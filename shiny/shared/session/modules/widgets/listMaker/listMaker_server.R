@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a widget that enables users to construct an
 # arbitrarily long list of an element class defined by the caller
@@ -17,7 +16,6 @@ listMakerServer <- function(id, parentId, options) {
         listCssId <- paste0("#", listId)
 #----------------------------------------------------------------------
 
-
 #----------------------------------------------------------------------
 # activate sub-modules
 #----------------------------------------------------------------------
@@ -26,12 +24,16 @@ listMakerServer <- function(id, parentId, options) {
 # add an item
 #----------------------------------------------------------------------
 itemI <- 0
-fullNsI <- function(x) fullNs(paste(x, itemI, sep="-"))
+fullNsI <- function(x) fullNs(paste(x, itemI, sep = "-"))
 observeEvent(input$addItem, {
     itemI <<- itemI + 1
-    removeStepButton <- actionLink(fullNsI('removeItem'), 'remove', class="list-maker-remove")
-    insertUI(listCssId, where = "beforeEnd", immediate=TRUE,
-             ui = tags$div(class="rank-list-item", options$newItem(itemI, removeStepButton)))  # let caller place the remove button as desired  
+    removeStepButton <- actionLink(fullNsI('removeItem'), 'remove', class = "list-maker-remove")
+    insertUI(listCssId, where = "beforeEnd", immediate = TRUE,
+        ui = tags$div(
+            class = "rank-list-item", 
+            options$newItem(itemI, removeStepButton)
+        )
+    )  # let caller place the remove button as desired  
 })
 
 #----------------------------------------------------------------------
@@ -44,4 +46,3 @@ NULL
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

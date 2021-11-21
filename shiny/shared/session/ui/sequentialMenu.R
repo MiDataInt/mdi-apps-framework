@@ -1,18 +1,17 @@
-
 #----------------------------------------------------------------------
 # sequential analysis menu tools
 #----------------------------------------------------------------------
 
 # overview of app shown at first user encounter or when the app name is clicked
 getAppOverviewHtml <- function(nAppSteps){
-    list(tabItem(tabName="appName",
-        tags$div(class="text-block",
+    list(tabItem(tabName = "appName",
+        tags$div(class = "text-block",
             tags$h3(paste(app$info$name, "overview")),
             includeMarkdown(file.path(app$DIRECTORY, 'overview.md')),
             tagList(
                 tags$h3("Analysis steps"),
                 tags$p(paste("The", app$info$name, "app will lead you through the following  sequential steps.")),
-                tags$table(class="overview-table",
+                tags$table(class = "overview-table",
                     if(nAppSteps > 0) lapply(app$info$appSteps, function(step){
                         if(step$module == "developerTools") "" else tags$tr(
                             tags$td(getStepOptionValue(step, 'shortLabel')),
@@ -21,9 +20,9 @@ getAppOverviewHtml <- function(nAppSteps){
                     })                          
                 ),
                 tags$h3("Save your work!"),
-                tags$p(HTML("At any time during your work with the app, click <strong>Save Your Work</strong> in the side panel to save a bookmark file with your current settings. Later, you can upload that file to restart where you left off.")),
+                tags$p(HTML("At any time during your work with the app, click <strong>Save Your Work</strong> in the side panel to save a bookmark file with your current settings. Later, you can upload that file to restart where you left off.")), # nolint
             ),                            
-            tags$br(),tags$br(),tags$br()
+            tags$br(), tags$br(), tags$br()
         )
     ))
 }
@@ -37,7 +36,7 @@ getStepOptionValue <- function(step, key){
 sequentialMenuItem <- function(stepI){
     step <- app$info$appSteps[[stepI]]
     name <- names(app$info$appSteps)[stepI]
-    menuItem(paste(stepI, '-', getStepOptionValue(step, 'shortLabel')), tabName=name, selected=step$selected)
+    menuItem(paste(stepI, '-', getStepOptionValue(step, 'shortLabel')), tabName = name, selected = step$selected)
 }
 
 # the pages (tabs) shown as each menu item is clicked
@@ -52,16 +51,19 @@ sequentialTabItem <- function(stepI){
         name,
         # if ready, show the app-specific content
         #conditionalPanel(condition = paste0(alwaysVisible, ' || ', " window.maxVisibleStep >= ", stepI),
-        conditionalPanel(condition = paste0(alwaysVisible, ' || ', " window.stepIsReady['", source, "'] === true"),            
+        conditionalPanel(
+            condition = paste0(alwaysVisible, ' || ', " window.stepIsReady['", source, "'] === true"),            
             get(paste0(step$module, 'UI'))(name, step$options),
-            tags$div("", style="margin-top: 100px;"), # create some padding at the bottom of all app tab pages 
+            tags$div("", style = "margin-top: 100px;"), # create some padding at the bottom of all app tab pages 
         ),
         # if not, show generic "we're not ready yet" feeback
         #conditionalPanel(condition = paste0('!', alwaysVisible, ' && ', " window.maxVisibleStep < ", stepI),
-        conditionalPanel(condition = paste0('!', alwaysVisible, ' && ', " window.stepIsReady['", source, "'] !== true"),            
+        conditionalPanel(
+            condition = paste0('!', alwaysVisible, ' && ', " window.stepIsReady['", source, "'] !== true"),            
             tags$h3('Pending'),
-            tags$div(class="text-block", paste( 
-                getStepOptionValue(step, 'shortLabel'), "will be available when Step #", stepI - 1, "has been completed."
+            tags$div(class = "text-block", paste( 
+                getStepOptionValue(step, 'shortLabel'), 
+                "will be available when Step #", stepI - 1, "has been completed."
             ))
         )
     )
@@ -70,8 +72,8 @@ sequentialTabItem <- function(stepI){
 # define the typical, common, recommended tab item UI layout ( called from step$ui() )
 standardSequentialTabItem <- function(pageTitle, leaderText, ...){
     tagList(
-        tags$h3(pageTitle),# step page title
-        tags$div(class="text-block", leaderText), # top level instructions and hints list 
+        tags$h3(pageTitle), # step page title
+        tags$div(class = "text-block", leaderText), # top level instructions and hints list 
         ... # specific ui content for this module/step
     )   
 }
@@ -106,7 +108,7 @@ addStepReadinessObserver <- function(stepName){
         observeEvent(isReady(), {
             isReady <- isReady()
             stepIsReady[[stepName]] <- isReady # step readiness for use in R code
-            session$sendCustomMessage('updateTriggerArray', # step readiness for use in javascript code, especially conditional triggers
+            session$sendCustomMessage('updateTriggerArray', # step readiness for use in javascript code, especially conditional triggers # nolint
                                       list(name  = 'stepIsReady',
                                            index = stepName,
                                            value = isReady ) )
@@ -128,7 +130,7 @@ initializeAppStepNamesByType <- function(){
         }
         NULL
     }    
-    for(i in 1:length(app$info$appSteps)){
+    for(i in seq_along(app$info$appSteps)){
         appStep <- app$info$appSteps[[i]]
         stepName <- names(app$info$appSteps)[i]        
         if(is.null(appStep$module)) return(paste("missing module for app step:", stepName))
@@ -146,7 +148,7 @@ initializeAppStepNamesByType <- function(){
                 paste(appStep$module, 'depends on earlier module of type', sourceType)
             )
         }
-        if(length(moduleInfo$sourceTypes) == 1) { # set options$source for appStep modules with one direct parent (mostly for legacy modules)
+        if(length(moduleInfo$sourceTypes) == 1) { # set options$source for appStep modules with one direct parent (mostly for legacy modules) # nolint
             app$info$appSteps[[i]]$options$source <<- appStepNamesByType[[moduleInfo$sourceTypes]]
         }
     }
@@ -203,10 +205,9 @@ isVisibleTab <- function(stepOptions){ # the query tab/step is allowed to be acc
 isActiveVisibleTab <- function(stepOptions) {
     isActiveTab(stepOptions) && isVisibleTab(stepOptions)
 }
-isRequiredTab <- function(stepOptions){ # the query tab/step is in the series of steps up to and including the one currently active in UI
+isRequiredTab <- function(stepOptions){ # the query tab/step is in the series of steps up to and including the one currently active in UI # nolint
     stepOptions$stepNumber <= which(names(app$info$appSteps) == input$sidebarMenu)
 }
 isRequiredVisibleTab <- function(stepOptions) {
     isRequiredTab(stepOptions) && isVisibleTab(stepOptions)
 }
-

@@ -6,7 +6,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     req(loadRequest()$app)
     startSpinner(session, 'observeLoadRequest') 
     NAME <- loadRequest()$app
-    DIRECTORY <- paste('..', 'apps', appFamilies[NAME], NAME, sep="/")
+    DIRECTORY <- paste('..', 'apps', appFamilies[NAME], NAME, sep = "/")
 
     # in developer mode only, switch to a (new) branch dedicated to this app
     # never change branches in production, stay on main always
@@ -32,7 +32,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     initializeDescendants()
 
     # load all the optional modules and classes required by the app's modules
-    required <- list(modules=list(), classes=list())
+    required <- list(modules = list(), classes = list())
     loadTypes <- names(required)
     for(appStep in app$info$appSteps){ # ensure that all appStep modules are loaded even if not listed in config.yml
         moduleInfo <- stepModuleInfo[[appStep$module]]
@@ -42,21 +42,21 @@ observeLoadRequest <- observeEvent(loadRequest(), {
                 required[[loadType]][[type]] <- c( required[[loadType]][[type]], moduleInfo[[loadType]][[type]] )
             }            
         }
-        required$modules$appSteps <- c( required$modules$appSteps, appStep$module ) # load optional appSteps modules also
+        required$modules$appSteps <- c( required$modules$appSteps, appStep$module ) # load optional appSteps modules
     }  
     for(loadType in loadTypes){
         for(type in names(required[[loadType]])){ # modules, organized by moduleType
             for(target in unique(required[[loadType]][[type]])){
-                if(type == 'appSteps' && exists(paste0(target, 'UI'))) next # app can override standard modules (module of this name already loaded)
-                loadAllRScripts(file.path('optional', loadType, type, target), recursive=TRUE)
+                if(type == 'appSteps' && exists(paste0(target, 'UI'))) next # app can override standard modules (module of this name already loaded) # nolint
+                loadAllRScripts(file.path('optional', loadType, type, target), recursive = TRUE)
             }        
         }     
     }
 
     # enable developer interface in local mode only
-    if(serverEnv$IS_LOCAL && serverEnv$IS_DEVELOPER) {
+    if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
         dir <- file.path('optional', 'modules', 'developerTools')
-        loadAllRScripts(dir, recursive=TRUE)
+        loadAllRScripts(dir, recursive = TRUE)
         addDeveloperMenuItem()
     }
     
@@ -75,7 +75,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     nAboveFold <- if(selectedStep == splashScreenName) 1 else which(appStepNames == selectedStep)  
     if(length(nAboveFold) == 0) { # failsafe in case bookmark provides a bad step name
         selectedStep <- splashScreenName
-        nAboveFold <- 1 # even if showing splash screen, must immediately load app step 1 so it can handle the incoming source file
+        nAboveFold <- 1 # even if showing splash screen, load app step 1 to handle the incoming source file
     }
 
     # initialize app-specific data paths
@@ -83,12 +83,12 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     
     # initialize the app-specific sidebar menu
     removeUI(".sidebar-menu li, #saveMagcFile-saveMagcFile, .sidebar-status",
-             multiple=TRUE, immediate=TRUE)
+             multiple = TRUE, immediate = TRUE)
     insertUI(".sidebar-menu", where = "beforeEnd", immediate = TRUE,
         ui = tagList(
-            menuItem(tags$div(app$info$name, class="app-name"), tabName="appName"), # app name, links to Overview
+            menuItem(tags$div(app$info$name, class = "app-name"), tabName = "appName"), # app name, links to Overview
             if(nAppSteps > 0) lapply(1:nAppSteps, sequentialMenuItem), # app-specific steps
-            bookmarkingUI('saveMagcFile', list(class="sidebarBookmarking")), # enable bookmarking, i.e. saving app state
+            bookmarkingUI('saveMagcFile', list(class = "sidebarBookmarking")), # enable state bookmarking
             if(serverEnv$IS_DEVELOPER) sibebarStatusUI('frameworkStatus') else ""
         )
     )      
@@ -101,7 +101,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
             if(nAppSteps > 0) for(i in 1:nAppSteps){ # one tab item per app-specific analysis step
                 tabItemsList[[length(tabItemsList) + 1]] <- sequentialTabItem(i)
             }  
-            do.call(tabItems, unname(tabItemsList)) # do.call syntax necessitated by a limitation of shinydashboard          
+            do.call(tabItems, unname(tabItemsList)) # do.call syntax necessitated shinydashboard limitation  
         })
     )
     
@@ -149,7 +149,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     if(loadRequest()$file$type == CONSTANTS$sourceFileTypes$bookmark){
         bookmark$file <- loadRequest()$file$path
         nocache <- loadRequest()$file$nocache
-        if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # ensure loaded bookmark files appear in the cache list
+        if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
         firstStep <- app[[ names(app$info$appSteps)[1] ]]        
         firstStep$loadSourceFile(loadRequest()$file)
@@ -164,4 +164,3 @@ observeLoadRequest <- observeEvent(loadRequest(), {
         nDays = 365
     ))
 })
-

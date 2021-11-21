@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # construct and access the option inputs on the runAnalyses module form UI
 #----------------------------------------------------------------------
@@ -26,10 +25,12 @@ getAnalysisOptionInputs <- function(ns, analysisTypeNames, analysisOption, value
     div(switch(
         t$type,
         empty = "", # honor request for blank positions in 4-columned rows of inputs
-        selectInput = selectInput(id, label, choices=getAnalysisOptionChoices(analysisTypeNames, t), selected=value),
+        selectInput = selectInput(id, label, 
+                                  choices = getAnalysisOptionChoices(analysisTypeNames, t), 
+                                  selected = value),
         numericInput = numericInput(id, label, value, getOption('min'), getOption('max'), getOption('step')),
         get(t$type)(id, label, value)
-    ), style="margin-bottom: 5px;")
+    ), style = "margin-bottom: 5px;")
 }
 
 # get the currently selected option values from the edit panel
@@ -71,10 +72,9 @@ getOptionsUIFromSchema <- function(analysisTypeNames, analysisOptions, schema, a
         t <- analysisOptions[[optionName]]
         if(t$type == 'selectInput') {
             choices <- getAnalysisOptionChoices(analysisTypeNames, t)
-            names(choices)[choices==schema[[optionName]]]
+            names(choices)[choices == schema[[optionName]]]
         }
         else schema[[optionName]]
     })
-    paste(mapply(paste, optionNames, '=', optionValues), collapse="<br>")
+    paste(mapply(paste, optionNames, '=', optionValues), collapse = "<br>")
 }
-

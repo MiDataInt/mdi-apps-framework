@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a tabular view of analysis results, with download link
 # typically in a viewResults module
@@ -7,13 +6,14 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-resultsTableServer <- function(id,
-                               parentId,
-                               type=c('short','long'),
-                               tableData, # reactive (or function with no arguments) that returns the data table to display
-                               getFileName, # function with no argument that returns a file name (not path)
-                               marks = NULL, # a reactiveVal that is an updatable logical outcomes vector whether to mark (not select) rows
-                               parentNS = NULL # required if marks is not null
+resultsTableServer <- function(
+    id,
+    parentId,
+    type=c('short', 'long'),
+    tableData, # reactive (or function with no arguments) that returns the data table to display # nolint
+    getFileName, # function with no argument that returns a file name (not path)
+    marks = NULL, # a reactiveVal that is an updatable logical outcomes vector whether to mark (not select) rows # nolint
+    parentNS = NULL # required if marks is not null
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -50,12 +50,12 @@ output$table <- renderDT(
         req(dt)
         dt <- data.table(dt)
         dt <- if(!is.null(marks)){
-            dt[,':='(
+            dt[, ':='(
                 MARK = tableCheckboxes(getMarkBoxId(), isolate({ marks() }) ),
                 Marked = isolate({ marks() })
             )]
-            markCols <- c('MARK','Marked')
-            dt[,.SD,.SDcols = c(markCols,names(dt)[names(dt) %notin% markCols]) ]
+            markCols <- c('MARK', 'Marked')
+            dt[, .SD, .SDcols = c(markCols, names(dt)[names(dt) %notin% markCols]) ]
         } else dt
         buffer(dt)
         dt
@@ -65,7 +65,7 @@ output$table <- renderDT(
     escape = FALSE,
     selection = 'single',
     editable = FALSE,
-    filter = if(type=="long") "top" else "none"
+    filter = if(type == "long") "top" else "none"
 )
 
 #----------------------------------------------------------------------
@@ -89,7 +89,7 @@ if(!is.null(marks)) observeEvent(input[[markBoxId]], {
 observeEvent(buffer(), {
     buffer <- buffer()
     req(buffer)
-    isolate({ replaceData(proxy, buffer, resetPaging=FALSE, clearSelection="none") })
+    isolate({ replaceData(proxy, buffer, resetPaging = FALSE, clearSelection = "none") })
 })
 
 #----------------------------------------------------------------------
@@ -97,10 +97,10 @@ observeEvent(buffer(), {
 #----------------------------------------------------------------------
 output$download <- downloadHandler(
     filename = function() {
-        paste(gsub(' ','_',getFileName()), "csv", sep = ".")
+        paste(gsub(' ', '_', getFileName()), "csv", sep = ".")
     },
     content = function(file) {
-        write.csv(tableData(), file, row.names=FALSE)
+        write.csv(tableData(), file, row.names = FALSE)
     }
 )
 
@@ -117,4 +117,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

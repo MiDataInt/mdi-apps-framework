@@ -1,17 +1,16 @@
-
 #----------------------------------------------------------------------
-# many modules follow the archetype of an upper edit form + lower summary list
+# many modules follow the archetype of a summary list + item edit form
 # functions here support coordination between the two and construction of modules
 # representative example modules are assignSamples and runAnalyses
 #----------------------------------------------------------------------
 # record sets are lists that carry hashes as UIDs in the list names
-# these hashed ids are used to name any files stored on disk
+# these hashed ids are used to name files stored on disk
 #----------------------------------------------------------------------
-# records can additionally have human-readable names stored outside of record itself
+# records can additionally have human-readable names stored outside of the record itself
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# help handle record save/edit actions (from the upper form)
+# help handle record save/edit actions (from the edit form)
 #   these are generally called by the appStep module itself
 #----------------------------------------------------------------------
 
@@ -20,7 +19,7 @@ initializeRecordEdit <- function(d, workingId, list, nameName, errorName, sendFe
     
     # set the hashed record id
     # it is critical that 'd' has ALL OF but ONLY the values that uniquely define a record
-    id <- digest(d, "md5", serialize=TRUE)
+    id <- digest(d, "md5", serialize = TRUE)
     
     # determine how the pending record relates to existing records
     isKnown <- !is.null(list[[id]])    
@@ -30,7 +29,7 @@ initializeRecordEdit <- function(d, workingId, list, nameName, errorName, sendFe
        (isKnown & !isEdit)) sendFeedback(paste(errorName, 'already exists'), TRUE)
     
     # return our results
-    # caller will continue to add non-defining 'd' values
+    # caller may continue to add non-defining 'd' values
     list(
         id = id,
         isKnown = isKnown,
@@ -60,9 +59,8 @@ saveEditedRecord <- function(d, workingId, data, r){
 
 # create data$summary in reaction to data$list changes
 #   generally called by the appStep module itself
-addDataListObserver <- function(module, template, data, dataFrame){ #session, options,, stepState=NULL
-    #observeEvent(data$list, {   
-    observe({ # was there a reason to use observeEvent?  it prevents table from updating when names are edited
+addDataListObserver <- function(module, template, data, dataFrame){
+    observe({
         reportProgress('observe data$list', module)
         table <- template
         for(id in names(data$list)){
@@ -110,10 +108,10 @@ addRemoveObserver <- function(input, inputId, module, data, sendFeedback=NULL, r
             tags$p(remove$message),
             tags$p(name),
             #size = 'm',
-            callback=function(parentInput) {
+            callback = function(parentInput) {
                 reportProgress(paste(selectedRow, '=', id))
                 if(!is.null(data$clearLocks)) data$clearLocks(id) # only caller knows how to do lock clearing 
-                if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory
+                if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory # nolint
                 data$selected(NA)
                 data$list[[id]]  <- NULL # cascades to update data$ids via dataListObserver
                 data$names[[id]] <- NULL
@@ -136,7 +134,7 @@ addNameEditObserver <- function(input, inputId, module, data, buffer, parentNS, 
     
         # update the table proxy, via the buffer, to ensure continued proper display in UI
         buffer <- buffer()
-        buffer[edit$selectedRow,colI] <- getTableEditBox(
+        buffer[edit$selectedRow, colI] <- getTableEditBox(
             parentNS(inputId),
             edit$selectedRow,
             edit$newValue
@@ -151,7 +149,7 @@ addNameEditObserver <- function(input, inputId, module, data, buffer, parentNS, 
 
 # add a generalized reset observer
 addResetObserver <- function(inputIds, input, module, data, sendFeedback, updateEditPanel){
-    resetEditPanel <- function(message=NULL){
+    resetEditPanel <- function(message = NULL){
         reportProgress('resetEditPanel', module)
         sendFeedback(message)
         if(is.na(data$selected())){ # both of these actions cascade to update the sample selection grid
@@ -168,4 +166,3 @@ addResetObserver <- function(inputIds, input, module, data, sendFeedback, update
     })
     resetEditPanel # return the reset function for use in module-specific actions
 }
-

@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for a shell module for viewing analyis results
 # the module is generic and can support any type of completed analysis
@@ -29,4 +28,3 @@ viewResultsUI <- function(id, options) {
         uiOutput(ns('viewerPanels'))    # one UI set per analysis type (hidden until needed)
     )    
 }
-

@@ -13,7 +13,7 @@
 #     instance <- module()
 #     observe(instance$a, {})  # <<< reactive
 #----------------------------------------------------------------------
-reactiveValuesToListOfReactives <- function(rv){
+reactiveValuesToListOfReactives <- function(rv){ # nolint
     retval <- lapply(names(rv), function(name) reactive({ rv[[name]] }) )
     names(retval) <- names(rv)
     retval

@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components to generate a DT/datatable that uses a buffer
 # to minimize repeated redraws of the table
@@ -7,14 +6,15 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-bufferedTableServer <- function(id,
-                                parentId,
-                                parentInput,
-                                tableData, # reactive, or function with no arguments, that returns the table data
-                                editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), handler=function(d), boxColumn=1, [rawColumn=2]))
-                                selection = 'single',
-                                selectionFn = function(selectedRows) NULL,
-                                options = list() # passed as is to renderDT
+bufferedTableServer <- function(
+    id,
+    parentId,
+    parentInput,
+    tableData, # reactive, or function with no arguments, that returns the table data
+    editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), handler=function(d), boxColumn=1, [rawColumn=2])) # nolint
+    selection = 'single',
+    selectionFn = function(selectedRows) NULL,
+    options = list() # passed as is to renderDT
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -24,7 +24,7 @@ bufferedTableServer <- function(id,
 
 # initialize table proxy and buffer
 tableId <- 'table'
-selectedId <- paste(tableId, 'rows', 'selected', sep='_')
+selectedId <- paste(tableId, 'rows', 'selected', sep = '_')
 proxy <- dataTableProxy(tableId)
 buffer <- reactiveVal()
 
@@ -85,7 +85,7 @@ if(selection != 'none' && !is.null(selectionFn)){
 observeEvent(buffer(), {
     buffer <- buffer()
     req(buffer)
-    isolate({ replaceData(proxy, buffer, resetPaging=FALSE, clearSelection="none") })
+    isolate({ replaceData(proxy, buffer, resetPaging = FALSE, clearSelection = "none") })
 })
 
 # function to help the caller update a single cell in the table
@@ -114,4 +114,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

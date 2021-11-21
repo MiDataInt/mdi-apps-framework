@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# set up the UI dashboard and launch page (i.e. first file upload)
+# set up the UI dashboard and launch page (i.e., the interface for first file upload)
 #----------------------------------------------------------------------
 
 # STYLES AND SCRIPTS, loaded into html <head>
@@ -10,7 +10,7 @@ htmlHeadElements <- tags$head(
     if(serverEnv$IS_DEVELOPER){tagList( # enable developer tools
         tags$script(src = "ace/src-min-noconflict/ace.js", type = "text/javascript", charset = "utf-8"),
         tags$script(src = "summernote-0.8.18-dist/summernote-lite.min.js", type = "text/javascript", charset = "utf-8"),
-        tags$link(href = "summernote-0.8.18-dist/summernote-lite.min.css", rel = "stylesheet", type = "text/css")
+        tags$link(href  = "summernote-0.8.18-dist/summernote-lite.min.css", rel = "stylesheet", type = "text/css")
     )} else ""
 )
 
@@ -32,30 +32,25 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
     plotlyOutput('nullPlotly', height = "0px", width = "0px") # must do now so plotly.js etc. are loaded  
 ))
 
-# GLOBUS HELP: the tabset panel with Globus help information
-globusHelpPanels <- function(){
+# CONFIGURATION: the tabset panel with suite selection and OAuth2 help information
+mdiConfigPanels <- function(){
     tags$div( # page to help get Globus access to engage that data import method
         id = "globus-setup",
         tabBox(                          
             title = NULL,
-            width = 12,                            
+            width = 12, 
+            tabPanel(
+                title = 'Tool Suites',
+                value = 'configureToolSuites',
+                "pending"
+            ),                     
             tabPanel(
                 title = 'Get a Globus Login',
                 value = 'setupGlobusAccount',
                 includeMarkdown( file.path('static/setup-globus-account.md') ),
                 tags$div(style = "font-size: 1.1em; text-align: center; margin-bottom: 15px;",
-                    bsButton('globusLoginButton', 'Log in to Globus', style = "primary") 
+                    bsButton('oauth2LoginButton', 'Log in using Globus', style = "primary") 
                 )
-            ),
-            tabPanel(
-                title = 'Receive Data from AGC',
-                value = 'setupGlobusTransfers',
-                includeMarkdown( file.path('static/receive-agc-data.md') )
-            ),
-            tabPanel(
-                title = 'Run the MDI Locally',
-                value = 'runMDILocally',
-                includeMarkdown( file.path('static/run-mdi-locally.md') )
             )
         )
     )
@@ -64,7 +59,7 @@ globusHelpPanels <- function(){
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
 getLaunchPage <- function(cookie, restricted = FALSE){
 
-    # enforce content restrictions on first encounter of a new user while providing Globus help
+    # enforce content restrictions on first encounter of a new user while providing login help
     if(restricted){
         dataImportMenuItem <- ""
         dataImportTabItem  <- tags$div(class = "tab-pane")
@@ -92,76 +87,50 @@ getLaunchPage <- function(cookie, restricted = FALSE){
         dashboardSidebar(
             # the dashboard option selectors, filled dynamically per app after first data load
             sidebarMenu(id = "sidebarMenu",
-                menuItem(tags$div(class = "app-step", '0 - Globus Setup'), 
-                         tabName = "globusSetup", selected = restricted),               
+                menuItem(tags$div(class = "app-step", '0 - Configure'), 
+                         tabName = "configureMDI", selected = restricted),               
                 dataImportMenuItem         
             ),
             htmlHeadElements, # yes, place the <head> content here (even though it seems odd)
             width = "175px" # must be here, not in CSS
         ),
     
-        # body content, i.e. panels associated with each dashboard option
+        # body content, i.e., panels associated with each dashboard option
         dashboardBody(
             useShinyjs(), # enable shinyjs
             HTML(paste0("<input type=hidden id='sessionNonce' value='",
                         setSessionKeyNonce(cookie$sessionKey), "' />")),
             tabItems(
-                tabItem(tabName = "globusSetup",
-                        tags$div(class = "text-block", globusHelpPanels())),                
+                tabItem(tabName = "configureMDI",
+                        tags$div(class = "text-block", mdiConfigPanels())),                
                 dataImportTabItem
             )
         )
     )    
 }
 
-# LOADING FLOW CONTROL, i.e. page redirects, associated with Globus API interactions
-# this is the function called by Shiny RunApp
-ui <- function(request){
-
-    # determine what type of page request this is
-    #    public servers demand a valid identity
-    #    some local instances might want to use Globus (but never ondemand servers, they use the HPC file system)
-    cookie <- parseCookie(request$HTTP_COOKIE) # our function in globusAPI.R
-    if(!serverEnv$IS_GLOBUS || serverEnv$IS_ONDEMAND) return( getLaunchPage(cookie) )
+# LOADING FLOW CONTROL, i.e., page redirects, associated with Oauth2 API interactions
+parseAuthenticationRequest <- function(request, cookie){
     queryString <- parseQueryString(request$QUERY_STRING) # httr function
 
-    # Globus OAuth2 code response, handle and redirect to page with stripped url
+    # OAuth2 code response, handle and redirect to page with stripped url
     if(!is.null(queryString$code)){
-        success <- handleGlobusOAuth2Response(cookie$sessionKey, queryString) # includes state check
+        success <- handleOauth2Response(cookie$sessionKey, queryString) # includes state check
         if(!success) return( getLaunchPage(cookie, restricted = TRUE) )
         redirect <- sprintf("location.replace(\"%s\");", paste0(serverEnv$SERVER_URL, '?login=1'))
         tags$script(HTML(redirect)) 
         
-    # Globus OAuth2 or other error
+    # OAuth2 or other error
     } else if(!is.null(queryString$error)){
         getLaunchPage(cookie, restricted = TRUE)    
-
-    # Globus endpoint helper response
-    # local redirect due to inconsistent Globus demands for 127.0.0.1 vs. localhost (have different cookies!) 
-    } else if((!is.null(queryString$action) || !is.null(queryString$handler)) &&
-               is.null(queryString$endpointRedirect) && 
-              serverEnv$IS_LOCAL){
-        url <- paste0(serverEnv$SERVER_URL, request$QUERY_STRING, '&endpointRedirect=1')
-        redirect <- sprintf("location.replace(\"%s\");", url)
-        tags$script(HTML(redirect))
  
     # determine whether we have an active session ...
     } else if(is.null(cookie$sessionKey)) { # session is initializing   
     
-        # in server mode, session-initialization service sets the HttpOnly session key (can Shiny do this?)
-        if(serverEnv$IS_SERVER){
-            url <- paste0(serverEnv$SERVER_URL, 'session')
-            redirect <- sprintf("location.replace(\"%s\");", url)
-            tags$script(HTML(redirect))
-            
-        # in local mode, server function sets the session key (this cannot set HttpOnly)    
-        } else {
-            fluidPage(
-                useShinyjs(), # page just needs the js code at this point
-                HTML(paste0("<input type=hidden id='sessionNonce' value='' />")), # suppress js error
-                tags$head(tags$script(src = "framework.js"))
-            )          
-        } 
+        # session-initialization service sets the HttpOnly session key (can Traefik or Shiny do this?)
+        url <- paste0(serverEnv$SERVER_URL, 'session')
+        redirect <- sprintf("location.replace(\"%s\");", url)
+        tags$script(HTML(redirect))
 
     # ... for a known user
     } else if(serverEnv$IS_SERVER && # new public user, show the help page only
@@ -169,13 +138,23 @@ ui <- function(request){
               is.null(queryString$login)){
         getLaunchPage(cookie, restricted = TRUE)  
 
-    # check if we have credentials already, server will know how to handle them
-    # TODO: check for freshness? (NB: session-level access tokens have 48 hour lifetime)    
+    # check if we have credentials already, server will know how to handle them  
     } else {
-        if(file.exists(getGlobusSessionFile('session', cookie$sessionKey))){
+        if(file.exists(getOauth2SessionFile('session', cookie$sessionKey))){
             getLaunchPage(cookie)            
         } else {
-            redirectToGlobusLogin(cookie$sessionKey)
+            redirectToOauth2Login(cookie$sessionKey)
         }
+    }
+}
+
+# determine what type of page request this is and act accordingly
+# this is the function called by Shiny RunApp
+ui <- function(request){
+    cookie <- parseCookie(request$HTTP_COOKIE) # our helper function in oauth2.R
+    if(serverEnv$REQUIRES_AUTHENTICATION){
+        parseAuthenticationRequest(request, cookie) # public servers demand a valid identity
+    } else {
+        return( getLaunchPage(cookie) )
     }
 }

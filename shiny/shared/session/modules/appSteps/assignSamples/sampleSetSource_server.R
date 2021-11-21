@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a set of inputs that help users select
 # a single data source associated with a SampleSet 
@@ -10,7 +9,7 @@
 sampleSetSourceServer <- function(id, parentId) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNs <- function(x) paste(parentId,id,x,sep="-")
+        parentNs <- function(x) paste(parentId, id, x, sep = "-")
         module <- 'sampleSetSource' # for reportProgress tracing
 #----------------------------------------------------------------------
 
@@ -27,7 +26,7 @@ sourceOptions <- app$info$appSteps[[sampleSetSource]]$options
 observeEvent({
     source$outcomes$sampleSets()
     source$outcomes$sampleSetNames()
-},{
+}, {
     x <- getSampleSetNames()
     req(length(x) > 0)
     updateSelectInput(session, 'sampleSet', choices = setNames(names(x), x))
@@ -37,7 +36,7 @@ observeEvent(assignments(), {
     names(dataSources) <- sapply(dataSources, function(sourceId){
         getSourceFromId(sourceId)$unique$Project[1]
     })
-    updateSelectInput(session, 'dataSource', choices=dataSources)
+    updateSelectInput(session, 'dataSource', choices = dataSources)
 })
 
 #----------------------------------------------------------------------
@@ -63,4 +62,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

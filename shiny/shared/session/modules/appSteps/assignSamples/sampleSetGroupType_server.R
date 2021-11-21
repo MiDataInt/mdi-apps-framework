@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a set of inputs that help users select
 # a SampleSet as well as filter for a specific group and/or type of Sample
@@ -10,7 +9,7 @@
 sampleSetGroupTypeServer <- function(id, parentId) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNs <- function(x) paste(parentId,id,x,sep="-")
+        parentNs <- function(x) paste(parentId, id, x, sep = "-")
         module <- 'sampleSetGroupType' # for reportProgress tracing
 #----------------------------------------------------------------------
 
@@ -24,7 +23,7 @@ sourceOptions <- app$info$appSteps[[sampleSetSource]]$options
 #----------------------------------------------------------------------
 # allows values overrides during bookmark loading
 #----------------------------------------------------------------------
-default <- reactiveValues(group=1, type=1)
+default <- reactiveValues(group = 1, type = 1)
 overrideDefault <- function(inputId, value){
     inputId <- rev(strsplit(inputId, '-')[[1]])[1]
     default[[inputId]] <- value
@@ -36,7 +35,7 @@ overrideDefault <- function(inputId, value){
 observeEvent({
     source$outcomes$sampleSets()
     source$outcomes$sampleSetNames()
-},{
+}, {
     x <- getSampleSetNames()
     req(length(x) > 0)
     updateSelectInput(session, 'sampleSet', choices = setNames(names(x), x))
@@ -50,14 +49,14 @@ observeEvent(input$sampleSet, {
     mapply(function(id, i){
         cssId <- paste0('#', parentNs(id))
         x <- sourceOptions$categories[[id]]
-        if(is.null(x)) return( hide(selector=cssId) ) 
+        if(is.null(x)) return( hide(selector = cssId) ) 
         y <- categories[[i]]
-        if(length(y) <= 1) return( hide(selector=cssId) ) 
-        z <- 1:length(y)
+        if(length(y) <= 1) return( hide(selector = cssId) ) 
+        z <- seq_along(y)
         names(z) <- y
-        updateSelectInput(session, id, choices=z, selected=values[[id]])
-        show(selector=cssId)
-    }, c('group','type'), 1:2)
+        updateSelectInput(session, id, choices = z, selected = values[[id]])
+        show(selector = cssId)
+    }, c('group', 'type'), 1:2)
 })
 
 #----------------------------------------------------------------------
@@ -71,7 +70,7 @@ assignments <- reactive({
     if(isType)  req(input$type)
     groupI <- if(isGroup) input$group else 1
     typeI  <- if(isType)  input$type  else 1
-    getSampleSetAssignments(input$sampleSet, category1=groupI, category2=typeI)
+    getSampleSetAssignments(input$sampleSet, category1 = groupI, category2 = typeI)
 })
 allAssignments <- reactive({
     req(input$sampleSet)
@@ -93,4 +92,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

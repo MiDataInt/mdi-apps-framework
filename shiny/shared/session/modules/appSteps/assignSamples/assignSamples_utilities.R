@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # retrieve sample set names and unique identifiers
 #----------------------------------------------------------------------
@@ -39,7 +38,7 @@ getCategoryNames <- function(plural=FALSE, invert=FALSE){
     if(is.null(categories) || length(categories) == 0) return(list())    
     tense <- if(plural) 'plural' else 'singular'    
     friendlyNames <- sapply(categories, function(x) x[[tense]])     
-    categoryN     <- sapply(1:length(categories), function(i) paste0('Category', i) )
+    categoryN     <- sapply(seq_along(categories), function(i) paste0('Category', i) )
     if(invert){
         x <- as.list(categoryN)
         names(x) <- friendlyNames
@@ -49,7 +48,7 @@ getCategoryNames <- function(plural=FALSE, invert=FALSE){
     }
     x
 }
-getInvertedCategoryNames <- function(plural=FALSE) getCategoryNames(plural=plural, invert=TRUE)
+getInvertedCategoryNames <- function(plural=FALSE) getCategoryNames(plural = plural, invert = TRUE)
 
 # retrieve the group/type assignment for a specific Sample Set as a data.table
 # optionally, filter for matching categories
@@ -57,9 +56,9 @@ getSampleSetAssignments <- function(id, category1=NULL, category2=NULL, category
     stepName <- appStepNamesByType$assign
     sampleSet <- app[[stepName]]$outcomes$sampleSets()[[id]]
     assignments <- data.table(sampleSet$assignments)
-    if(!is.null(category1)) assignments <- assignments[Category1==category1]
-    if(!is.null(category2)) assignments <- assignments[Category2==category2]
-    if(categoryNames) assignments[,':='(
+    if(!is.null(category1)) assignments <- assignments[Category1 == category1]
+    if(!is.null(category2)) assignments <- assignments[Category2 == category2]
+    if(categoryNames) assignments[, ':='(
         Category1Name = sampleSet$categoryNames[[1]][Category1],
         Category2Name = sampleSet$categoryNames[[2]][Category2]
     )]
@@ -72,6 +71,5 @@ getAssignedSampleName <- function(sample){ # sample is a one row of the assignme
     samples <- app[[uploadName]]$outcomes$samples()
     rows <- which(samples$Project   == sample$Project &
                   samples$Sample_ID == sample$Sample_ID)
-    getSampleNames(rows=rows)
+    getSampleNames(rows = rows)
 }
-

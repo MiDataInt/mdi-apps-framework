@@ -19,18 +19,15 @@ a web server and runs individual data analysis apps
 associated with user data files. The framework thus provides
 a common access point to many data apps.
 
-For the most part, the apps framework does not encode
-the data analysis apps themselves, which are found in other
-code repositories called 'apps suites'. The main exception
-is that the framework holds the Pipeline Runner app, which allows
-Stage 1 pipelines to be configured and run via the web interface.
+The apps framework does not encode the data analysis apps themselves, 
+which are found in other code repositories called 'apps suites'. 
 
 ### Related repositories
 
 Code developers are directed to this repository for a template to
 **create your own apps suites**:
 
-- <https://github.com/MiDataInt/mdi-apps-suite-template>
+<https://github.com/MiDataInt/mdi-apps-suite-template>
 
 ## Prerequisites
 
@@ -49,16 +46,15 @@ and managed by the MDI manager utility found here:
 <https://github.com/MiDataInt/mdi-manager>
 
 Please follow the manager installation instructions, being sure
-to update the apps suites you wish to install in 'mdi/mdi.yml':
+to update the apps suites you wish to install in 'mdi/config/suites.yml':
 
 ```
-# mdi/mdi.yml
+# mdi/config/suites.yml
 suites:
     apps:
         - https://github.com/GIT_USER/SUITE_NAME-mdi-apps.git
 ```
 
 and then running' 'mdi::install()' a second time, or calling 
-'mdi install' on the command line. 
-You will also be able install new apps suites from within the 
-MDI web page.
+'mdi install' on the command line. You will also be able install 
+new apps suites from within the MDI web page.

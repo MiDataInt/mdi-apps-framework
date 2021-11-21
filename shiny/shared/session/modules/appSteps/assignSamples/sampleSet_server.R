@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a single input to select a SampleSet
 #----------------------------------------------------------------------
@@ -9,7 +8,7 @@
 sampleSetServer <- function(id, parentId) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNs <- function(x) paste(parentId,id,x,sep="-")
+        parentNs <- function(x) paste(parentId, id, x, sep = "-")
         module <- 'sampleSet' # for reportProgress tracing
 #----------------------------------------------------------------------
 
@@ -25,7 +24,7 @@ source <- app[[sampleSetSource]]
 observeEvent({
     source$outcomes$sampleSets()
     source$outcomes$sampleSetNames()
-},{
+}, {
     x <- getSampleSetNames()
     req(length(x) > 0)
     updateSelectInput(session, 'sampleSet', choices = setNames(names(x), x))
@@ -52,4 +51,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

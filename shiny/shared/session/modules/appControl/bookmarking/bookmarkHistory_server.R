@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for loading a user's cached, recent bookmarks
 #----------------------------------------------------------------------
@@ -26,7 +25,7 @@ list <- historyListServer(
     maxN = 100,
     action = "Load",
     actionFn = loadBookmarkFromString,
-    uniqueByContents=TRUE,
+    uniqueByContents = TRUE,
     uniqueFn = function(dt) {
         dt[Analysis_Set != CONSTANTS$autoSavedBookmark | !duplicated(Analysis_Set)]
     }
@@ -56,7 +55,7 @@ set <- function(json=NULL, file=NULL, name=NULL){
 }
 
 #----------------------------------------------------------------------
-# return nothing
+# return values
 #----------------------------------------------------------------------
 list(
     list = list,
@@ -68,4 +67,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

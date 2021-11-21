@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # retrieve sample names and unique identifiers
 #----------------------------------------------------------------------
@@ -15,20 +14,20 @@ getSampleNames <- function(rows=TRUE, sampleIds=NULL, makeUnique=FALSE){
     stepName <- appStepNamesByType$upload
     samples <- app[[stepName]]$outcomes$samples()
     if(!is.null(sampleIds)) rows <- samples$Sample_ID %in% sampleIds
-    samples <- samples[,c('Project','Sample_ID','Description')]
+    samples <- samples[, c('Project', 'Sample_ID', 'Description')]
     names <- app[[stepName]]$outcomes$sampleNames()
     names <- apply(samples, 1, function(v){
-        key <- paste(v[1], v[2], sep=":")
+        key <- paste(v[1], v[2], sep = ":")
         if(is.null(names[[key]])) v[3] else names[[key]]
     })
     x <- if(makeUnique){
         isDup <- duplicated(names) | rev(duplicated(rev(names)))
-        ifelse(isDup, paste(samples$Project, names, sep=":"), names)[rows]
+        ifelse(isDup, paste(samples$Project, names, sep = ":"), names)[rows]
     } else {
         names[rows]    
     }
     if(!is.null(sampleIds)) {
-        names(x) <- samples[rows,'Sample_ID'] # if samples requested by id, return a named vector
+        names(x) <- samples[rows, 'Sample_ID'] # if samples requested by id, return a named vector
         x <- x[sampleIds]
     }
     trimws(x) # remove leading and trailing whitespace for accurate matching later on
@@ -36,8 +35,8 @@ getSampleNames <- function(rows=TRUE, sampleIds=NULL, makeUnique=FALSE){
 getSampleName <- function(sample){ # sample is a one row of the samples() table we wish to match
     stepName <- appStepNamesByType$upload
     names <- app[[stepName]]$outcomes$sampleNames()
-    apply(sample[,c('Project','Sample_ID','Description')], 1, function(v){
-        key <- paste(v[1], v[2], sep=":")
+    apply(sample[, c('Project', 'Sample_ID', 'Description')], 1, function(v){
+        key <- paste(v[1], v[2], sep = ":")
         if(is.null(names[[key]])) v[3] else names[[key]]
     })
 }
@@ -46,9 +45,9 @@ getSampleName <- function(sample){ # sample is a one row of the samples() table 
 getSampleUniqueIds <- function(samples=NULL, rows=TRUE, sourceId=NULL){
     stepName <- appStepNamesByType$upload
     if(is.null(samples)) samples <- app[[stepName]]$outcomes$samples()
-    samples <- samples[rows,c('Source_ID','Project','Sample_ID')]
-    if(!is.null(sourceId)) samples <- samples[samples$Source_ID == sourceId,]
-    apply(samples[,c('Project','Sample_ID')], 1, paste, collapse=":")
+    samples <- samples[rows, c('Source_ID', 'Project', 'Sample_ID')]
+    if(!is.null(sourceId)) samples <- samples[samples$Source_ID == sourceId, ]
+    apply(samples[, c('Project', 'Sample_ID')], 1, paste, collapse = ":")
 }
 
 # get the full source entry from its ID
@@ -65,14 +64,13 @@ getSourceFile <- function(source, fileType){ # just the file name
     source$config$files[[fileType]]
 }
 getSourceFilePath <- function(sourceId, fileType, parentDir=NULL){
-    if(is.null(parentDir)) parentDir <- file.path(serverEnv$DATA_DIR, 'projects')
+    if(is.null(parentDir)) parentDir <- file.path(serverEnv$DATA_DIR, 'packages')
     source <- getSourceFromId(sourceId)
     dir <- getKeyedDir(parentDir, sourceId)
     file <- getSourceFile(source, fileType)
     file.path(dir, file$file)
 }
-getSourceFileProjectName <- Vectorize(function(sourceId){
+getSourceFilePackageName <- Vectorize(function(sourceId){
     source <- getSourceFromId(sourceId)
     source$unique$Project[1]
 })
-

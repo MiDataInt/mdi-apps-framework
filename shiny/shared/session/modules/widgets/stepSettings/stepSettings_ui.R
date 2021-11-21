@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for caching and only occasionally displaying a set 
 # of input parameters for controlling how an application step behaves
@@ -19,4 +18,3 @@ stepSettingsUI <- function(id, isHeader=TRUE) {
         actionLink(ns('gearIcon'), '', icon('gear'))
     )
 }
-

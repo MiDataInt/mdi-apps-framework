@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components for a sample assignment grid with up to two category levels
 #       e.g. category1=group/source and category2=condition/type etc.
@@ -64,15 +63,15 @@ changeLocks <- function(sampleSetId, lockFn){
 #----------------------------------------------------------------------
 
 # each set has one target per category1+category2 ...
-getSortableGridId <- function(parentId, categoryN1, categoryN2, useNS=TRUE) {
+getSortableGridId <- function(parentId, categoryN1, categoryN2, useNS = TRUE) {
     if(useNS) parentId <- ns(parentId)
-    paste(parentId, categoryN1, categoryN2, sep="_")
+    paste(parentId, categoryN1, categoryN2, sep = "_")
 }
 
 # ... provided as a sortable::rank_list
 sampleRankList <- function(parentId, width, categoryN1, categoryN2, initVals){ 
     rankListId <- getSortableGridId(parentId, categoryN1, categoryN2)
-    column(width=width, rank_list( 
+    column(width = width, rank_list( 
         "",
         initVals, # non-null when loading a known set to edit it
         rankListId,
@@ -88,14 +87,14 @@ sampleRankList <- function(parentId, width, categoryN1, categoryN2, initVals){
 # support for naming category1 and category2 levels via edit boxes
 getSampleCategoryClass <- function(categoryN) {
     category <- paste0('category', categoryN)
-    paste("sample", category, "name", sep="-")
+    paste("sample", category, "name", sep = "-")
 }
 sampleRowColName <- function(width, categoryN, index, value){
     class <- getSampleCategoryClass(categoryN)
-    column(width=width,
-        tags$div(class=class, textInput(
-            ns(paste(class, index, sep="-")),
-            if(categoryN==1) paste0(options$categories[[categoryN]]$singular, " #", index, " Name") else NULL,
+    column(width = width,
+        tags$div(class = class, textInput(
+            ns(paste(class, index, sep = "-")),
+            if(categoryN == 1) paste0(options$categories[[categoryN]]$singular, " #", index, " Name") else NULL,
             value
         ))
     ) 
@@ -123,7 +122,7 @@ observeEvent({
     selected <- data$selected()
 
     # collect information on the initial state of the grid
-    names <- getSampleNames(makeUnique=TRUE) # ensure that sortable returns a unique name
+    names <- getSampleNames(makeUnique = TRUE) # ensure that sortable returns a unique name
     spans <- lapply(names, function(name) tags$span(name) )[order(names)]
     ep$boxTitle <- "Selected Samples"
     isCategory <- sapply(1:2, function(i) !is.null(input[[paste0('nLevels', i)]]) )
@@ -144,16 +143,16 @@ observeEvent({
         ep$nLevels <- sampleSet$nLevels       
         allUIDs <- getSampleUniqueIds()[order(names)]
         ep$initVals <- lapply(1:ep$nLevels[1], function(i) lapply(1:ep$nLevels[2], function(j){
-            samples <- sampleSet$assignments[sampleSet$assignments$Category1==i &
-                                             sampleSet$assignments$Category2==j,]
-            UIDs <- paste(samples$Project, samples$Sample_ID, sep=":")
+            samples <- sampleSet$assignments[sampleSet$assignments$Category1 == i &
+                                             sampleSet$assignments$Category2 == j, ]
+            UIDs <- paste(samples$Project, samples$Sample_ID, sep = ":")
             spans[which(allUIDs %in% UIDs)]
         }))
         ep$categoryNames <- sampleSet$categoryNames
         workingId <<- names(data$list)[selected]
-        ep$boxTitle <- paste(ep$boxTitle, getSampleSetName(workingId), sep=" - ")
+        ep$boxTitle <- paste(ep$boxTitle, getSampleSetName(workingId), sep = " - ")
     }
-    ep$initValsSource <- spans[spans %notin% unlist(unlist(ep$initVals, recursive=FALSE), recursive=FALSE)]
+    ep$initValsSource <- spans[spans %notin% unlist(unlist(ep$initVals, recursive = FALSE), recursive = FALSE)]
     
     # size out the grid, i.e. contingency table
     category2NameCount <- if(ep$nLevels[2] > 1) 1 else 0
@@ -178,7 +177,7 @@ output$sampleGrid <- renderUI({
     ep <- editPanelData()
     req(ep)
     fluidRow(box(
-        width=12,
+        width = 12,
         title = ep$boxTitle,
         status = 'primary',
         solidHeader = TRUE,
@@ -189,9 +188,9 @@ output$sampleGrid <- renderUI({
                 sampleRowColName(ep$columnWidth, 1, i, ep$categoryNames[[1]][i])
             }),
             if(ep$nLevels[2] > 1){
-                column(width=ep$columnWidth,
+                column(width = ep$columnWidth,
                     tags$div(paste(options$categories[[2]]$singular, "Names"),
-                             class="samples-category2-names-label")
+                             class = "samples-category2-names-label")
                 )    
             } else ""
         ) else "",                
@@ -219,7 +218,7 @@ observeEvent(input$autofillGrid, {
     startSpinner(session, paste(module, 'input$autofillGrid'))
 
     # collect needed information for parsing
-    names <- sort(getSampleNames(makeUnique=TRUE))
+    names <- sort(getSampleNames(makeUnique = TRUE))
     spans <- lapply(names, function(name) tags$span(name) )
     inputs     <- sapply(1:2, function(i) input[[paste0('nLevels', i)]] )
     nLevels    <- sapply(1:2, function(i) if(!is.null(inputs[i])) as.integer(inputs[i]) else 1 )
@@ -237,7 +236,7 @@ observeEvent(input$autofillGrid, {
         if(split == "") split <- 'whitespace'        
         fillByDelimiter(names, spans, isCategory, nLevels, nLevelsNeeded, split)
     }
-    if(!x) commitAutofill(message="sample names do not conform to grid dimensions")
+    if(!x) commitAutofill(message = "sample names do not conform to grid dimensions")
 })
 
 # find the possible set of all common prefixes from the beginning of sample names
@@ -281,7 +280,7 @@ fillByDelimiter <- function(names, spans, isCategory, nLevels, nLevelsNeeded, sp
  
     # infer whether the first common prefix is likely to be category1 or category2
     # abort if can't cleanly fill either axis        
-    prefix1 <- commonSplitElementGroups(names, split, 1, require.suffix=TRUE)
+    prefix1 <- commonSplitElementGroups(names, split, 1, require.suffix = TRUE)
     matchPrefix1 <- sapply(1:2, function(i) {
         isCategory[i] && prefix1$nUniquePrefixes == nLevels[i]
     })
@@ -293,31 +292,37 @@ fillByDelimiter <- function(names, spans, isCategory, nLevels, nLevelsNeeded, sp
     }        
 
     # if two axes are needed, attempt to fill the second
-    prefix2 <- commonSplitElementGroups(names, split, 2, require.suffix=FALSE)
+    prefix2 <- commonSplitElementGroups(names, split, 2, require.suffix = FALSE)
     matchPrefix2 <- prefix2$nUniquePrefixes == nLevels_[2]
     if(!matchPrefix2) return(FALSE)
     commitAutofill( parseAutofill(spans, gridCategories[1] != 1, prefix1, prefix2) )        
 }
 
 # send our parsed data to the grid
-parseAutofill <- function(spans, flip=FALSE, prefix1=NULL, prefix2=NULL){
-    if(is.null(prefix1)) prefix1 <- list(uniquePrefixes='', prefixes='')
-    if(is.null(prefix2)) prefix2 <- list(uniquePrefixes='', prefixes='')
+parseAutofill <- function(spans, flip = FALSE, prefix1 = NULL, prefix2 = NULL){
+    if(is.null(prefix1)) prefix1 <- list(uniquePrefixes = '', prefixes = '')
+    if(is.null(prefix2)) prefix2 <- list(uniquePrefixes = '', prefixes = '')
     if(flip){
         list(
             samples = lapply(prefix2$uniquePrefixes, function(p2)
-                      lapply(prefix1$uniquePrefixes, function(p1) spans[prefix1$prefixes==p1 & prefix2$prefixes==p2] )),
+                      lapply(prefix1$uniquePrefixes, function(p1) spans[
+                          prefix1$prefixes == p1 & 
+                          prefix2$prefixes == p2
+                      ] )),
             categoryNames = list(prefix2$uniquePrefixes, prefix1$uniquePrefixes)
         )            
     } else {
         list(
             samples = lapply(prefix1$uniquePrefixes, function(p1)
-                      lapply(prefix2$uniquePrefixes, function(p2) spans[prefix1$prefixes==p1 & prefix2$prefixes==p2] )),
+                      lapply(prefix2$uniquePrefixes, function(p2) spans[
+                          prefix1$prefixes == p1 & 
+                          prefix2$prefixes == p2
+                      ] )),
             categoryNames = list(prefix1$uniquePrefixes, prefix2$uniquePrefixes)
         )     
     }
 }
-commitAutofill <- function(autofillData=NULL, message=NULL){
+commitAutofill <- function(autofillData = NULL, message = NULL){
     autofillData <<- autofillData
     resetEditPanel(message)
     stopSpinner(session)
@@ -352,22 +357,22 @@ observeEvent(input$saveRecord, {
                                     stringsAsFactors = FALSE)
 
     # fill in the grid assignments (not all grid cells need to be assigned)
-    names <- getSampleNames(makeUnique=TRUE)
+    names <- getSampleNames(makeUnique = TRUE)
     for(i in 1:d$nLevels[1]){
         for(j in 1:d$nLevels[2]){        
-            id_ <- getSortableGridId(assignSamplesId, i, j, useNS=FALSE)
+            id_ <- getSortableGridId(assignSamplesId, i, j, useNS = FALSE)
             samplesIs <- which(names %in% input[[id_]])
             N <- length(samplesIs)
             if(N == 0) sendFeedback('incomplete sample grid', TRUE)
             d$nSamples <- d$nSamples + N
-            d$assignments[samplesIs,'Category1'] <- i # numeric category indices, i.e. factor levels
-            d$assignments[samplesIs,'Category2'] <- j
+            d$assignments[samplesIs, 'Category1'] <- i # numeric category indices, i.e. factor levels
+            d$assignments[samplesIs, 'Category2'] <- j
         }
     }
 
     # remove the rows for samples not assigned to any category1+category2
     # thus, sample set is independent of the samples list in force at the time of its creation
-    d$assignments <- d$assignments[!is.na(d$assignments$Category1),]
+    d$assignments <- d$assignments[!is.na(d$assignments$Category1), ]
     
     # create a ~unique identifying signature to prevent record duplicates
     #   defining values:
@@ -378,9 +383,9 @@ observeEvent(input$saveRecord, {
     d$name <- r$name
     d$categoryNames <- lapply(1:2, function(categoryN){
         sapply(1:d$nLevels[categoryN], function(i){
-            id_ <- paste(getSampleCategoryClass(categoryN), i, sep="-")
+            id_ <- paste(getSampleCategoryClass(categoryN), i, sep = "-")
             x <- if(is.null(input[[id_]])) "" else input[[id_]]
-            if(x=="") paste0(options$categories[[categoryN]]$singular, " #", i) else x               
+            if(x == "") paste0(options$categories[[categoryN]]$singular, " #", i) else x               
         })
     })
 
@@ -413,11 +418,11 @@ addDataListObserver(module, summaryTemplate, data, function(r, id){
     df <- data.frame(
         Remove = rep('', length(r$nSamples)),
         Name   = '',
-            stringsAsFactors=FALSE
+            stringsAsFactors = FALSE
     )
     for(i in 1:2){
         if(isCategory[i]) df[[options$categories[[i]]$plural]] <- if(r$nLevels[i] > 1)
-            paste(r$categoryNames[[i]], collapse="<br>") else 'NA'        
+            paste(r$categoryNames[[i]], collapse = "<br>") else 'NA'        
     }
     df$N_Samples <- r$nSamples # put at end for nicer on screen formatting
     df
@@ -449,4 +454,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

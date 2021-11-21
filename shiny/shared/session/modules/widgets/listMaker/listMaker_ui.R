@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for a widget that enables users to construct an
 # arbitrarily long list of an element class defined by the caller
@@ -13,7 +12,7 @@ listMakerUI <- function(id, itemName, columnHeader="", sortable_options=NULL) {
 
     # return the UI contents
     tags$div(
-        tags$p(bsButton(ns('addItem'),paste('Add',itemName),style="info")),
+        tags$p(bsButton(ns('addItem'), paste('Add', itemName), style = "info")),
         columnHeader,
         rank_list(
             text = "",
@@ -25,4 +24,3 @@ listMakerUI <- function(id, itemName, columnHeader="", sortable_options=NULL) {
         )
     )
 }
-

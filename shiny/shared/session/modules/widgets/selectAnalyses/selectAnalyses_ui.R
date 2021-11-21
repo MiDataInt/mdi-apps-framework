@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # static components for a table that lists completed analysis jobs
 #----------------------------------------------------------------------
@@ -10,7 +9,5 @@ selectAnalysesUI <- function(id, width=8, collapsible=TRUE) {
     ns <- NS(id)
     
     # the selection table
-    summaryTableUI(ns('table'), 'Completed Analyses', width=width, collapsible=collapsible)
- 
+    summaryTableUI(ns('table'), 'Completed Analyses', width = width, collapsible = collapsible)
 }
-

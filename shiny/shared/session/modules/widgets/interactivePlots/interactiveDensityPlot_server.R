@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # reactive components to an interactive density plot using plot_ly
 #----------------------------------------------------------------------
@@ -16,7 +15,7 @@ interactiveDensityPlotServer <- function(id, reactive) {
 # initialize module
 #----------------------------------------------------------------------
 plotId <- ns('plot')
-selectionEvent <- quote(event_data("plotly_selected", source=plotId))
+selectionEvent <- quote(event_data("plotly_selected", source = plotId))
 selected <- reactiveVal()
 
 #----------------------------------------------------------------------
@@ -27,7 +26,7 @@ output$plotly <- renderPlotly({
     req(d)
     d <- density(na.omit(d))
     plot_ly(
-        data.frame(x=d$x, y=d$y), # plot_ly demands a data.frame, not a simple list
+        data.frame(x = d$x, y = d$y), # plot_ly demands a data.frame, not a simple list
         x = ~x,
         y = ~y,
         type = 'scatter',
@@ -43,7 +42,7 @@ observeEvent(selectionEvent, {
     d <- eval(selectionEvent)
     selected(d)
     print(head(d))
-}, event.quoted=TRUE)
+}, event.quoted = TRUE)
 
 #----------------------------------------------------------------------
 # set return values as reactives that will be assigned to app$data[[stepName]]
@@ -57,4 +56,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

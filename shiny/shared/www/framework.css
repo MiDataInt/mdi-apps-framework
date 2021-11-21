@@ -1,5 +1,4 @@
-
-/*  framework.css creates a consistent style for all MAGC Portal apps */
+/*  framework.css creates a consistent style for all apps */
 
 /*  ------------------------------------------------------------------------
     some generic styles
@@ -16,7 +15,7 @@
 }
 
 /*  ------------------------------------------------------------------------
-    frivolous rotation of the Portal logo on page load
+    frivolous rotation of the logo on page load
     ------------------------------------------------------------------------*/
 @keyframes rotatePortal {
   from { transform: rotate(0deg); }
@@ -352,4 +351,3 @@ table.dataTable tbody tr.selected {
 .results-box-header-button:hover {
     color: white !important;
 }
-

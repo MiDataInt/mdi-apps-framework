@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # object class for managing data objects stored on disk and/or cached
 # in memory during use; not unlike storr, but more specific to our needs
@@ -21,26 +20,26 @@ if(!dir.exists(parentDir)) dir.create(parentDir)
 cache <- list()
 createdOnce <- list() # logical by cache key whether we've seen this object yet this session
 sep <- "__"
-getCacheKeys <- function(type, keyObject=NULL, key=NULL){
+getCacheKeys <- function(type, keyObject = NULL, key = NULL){
     if(!is.null(keyObject)) key <- digest(keyObject) # hash the keyObject
     if(is.null(key)) return(NULL)
     list(
         key = key, # digest of keyObject, or the user provided key; can be shared by multiple cached objects
-        cacheKey = paste(key, type, sep=sep) # the key for cached storage == key__type; unique for a single cached object
-    )
+        cacheKey = paste(key, type, sep = sep) # the key for cached storage == key__type
+    )                                          # unique for a single cached object
 }
 splitCacheKey <- function(cacheKey) {
     x <- as.list(strsplit(cacheKey, sep)[[1]])
-    names(x) <- c('key','type')
+    names(x) <- c('key', 'type')
     x
 }
 
 #----------------------------------------------------------------------
 # create systematic names for directories and files based on MD5 digest of keyObject
 #----------------------------------------------------------------------
-getObjectFile <- function(cacheKey, create=FALSE){
+getObjectFile <- function(cacheKey, create = FALSE){
     x <- splitCacheKey(cacheKey)
-    dir <- getKeyedDir(parentDir, x$key, create=create)    
+    dir <- getKeyedDir(parentDir, x$key, create = create)    
     if(create && !dir.exists(dir)) dir.create(dir)
     paste0(dir, '/', x$type, '.rds') 
 }
@@ -53,9 +52,9 @@ getStructuredObject <- function(keyObject, keys, value, permanent){
     list(
         cacheKey  = keys$cacheKey,  # return the cacheKey to allow caller to use in calls to set and clear; == key__type
         keyObject = keyObject,      # return the keyObject so caller can easily re-learn about the data in value
-        key       = keys$key,       # digest of keyObject == cacheKey without the type component; useful for matching keys between cached objects
+        key       = keys$key,       # digest of keyObject == cacheKey without the type; for matching keys between cached objects # nolint
         value     = value,          # the data payload
-        timestamp = if(permanent) Sys.time() else NULL # a timestamp for comparing default and cached values on a machine
+        timestamp = if(permanent) Sys.time() else NULL # a timestamp for comparing default and cached values
     ) 
 }
     
@@ -67,13 +66,12 @@ get <- function(
     keyObject = NULL, # either keyObject or key is required
     key = NULL,       # should encompass all parameters that define the object's contents
     #----------------------------------------------------------------------
-    permanent = TRUE,       # permanent means we copy to disk for later sessions; permanent==FALSE is incompatible with from=='disk'
-    from = c('ram','disk'), # from determines where we are allowed to get data; disk disables the RAM cache
+    permanent = TRUE, # permanent means we copy to disk; permanent==FALSE is incompatible with from=='disk'
+    from = c('ram', 'disk'), # from determines where we are allowed to get data; disk disables the RAM cache
     #----------------------------------------------------------------------
-    create = c('asNeeded','once','always'), # create determines when we are obliged to call createFn
-    createFn = NULL, # for missing/potentially stale objects, we call this function to create them anew (caller controls all construction logic)
-    #----------------------------------------------------------------------
-    ...  # optional named additional arguments passed to createFn, in addition to cacheKey, keyObject, key, cacheObject
+    create = c('asNeeded', 'once', 'always'), # create determines when we are obliged to call createFn
+    createFn = NULL, # for missing/potentially stale objects, we call createFn to create them anew
+    ...  # optional named additional arguments passed to createFn, along with cacheKey, keyObject, key, cacheObject
     #----------------------------------------------------------------------
 ){
     # a unique identifier for this object instance of 'parentType' + 'type', suitable for nested path names
@@ -91,14 +89,15 @@ get <- function(
         
         # first from permanent disk copy, if it exists ...
         if(permanent){ 
-            file <- getObjectFile(keys$cacheKey, create=FALSE)
+            file <- getObjectFile(keys$cacheKey, create = FALSE)
             if(file.exists(file)) cacheObject <- readRDS(file)
         }
 
         # ... otherwise by letting caller create it anew;
         # can also call createFn to check the validity/freshness of disk cache based on create option
         if((forceCreate || is.null(cacheObject)) && !is.null(createFn)) { 
-            value <- createFn(cacheKey=keys$cacheKey, keyObject=keyObject, key=keys$key, cacheObject=cacheObject, ...)
+            value <- createFn(cacheKey = keys$cacheKey, keyObject = keyObject, 
+                              key = keys$key, cacheObject = cacheObject, ...)
             cacheObject <- getStructuredObject(keyObject, keys, value, permanent)
             createdOnce[[keys$cacheKey]] <<- TRUE
         }
@@ -108,9 +107,9 @@ get <- function(
     if(is.null(cacheObject)) return(NULL)
 
     # store cacheObject in our disk and/or ram cache
-    if(from[1]=='ram' && is.null(cache[[keys$cacheKey]])) cache[[keys$cacheKey]] <<- cacheObject
+    if(from[1] == 'ram' && is.null(cache[[keys$cacheKey]])) cache[[keys$cacheKey]] <<- cacheObject
     if(permanent) { # refuse to overwrite new values with stale ones
-        file <- getObjectFile(keys$cacheKey, create=TRUE)
+        file <- getObjectFile(keys$cacheKey, create = TRUE)
         if(forceCreate || !file.exists(file)) saveRDS(cacheObject, file)
     }
 
@@ -124,8 +123,8 @@ get <- function(
 set <- function(cacheObject, newValue=NULL){ # cacheKey as returned by the initial get call
     if(!is.null(newValue)) cacheObject$value <- newValue
     if(!is.null(cache[[cacheObject$cacheKey]])) cache[[cacheObject$cacheKey]] <<- cacheObject
-    file <- getObjectFile(cacheObject$cacheKey, create=FALSE)
-    if(file.exists(file)) { # i.e. is permanent
+    file <- getObjectFile(cacheObject$cacheKey, create = FALSE)
+    if(file.exists(file)) { # i.e., is permanent
         cacheObject$timestamp <- Sys.time()
         saveRDS(cacheObject, file)
     }
@@ -135,7 +134,7 @@ set <- function(cacheObject, newValue=NULL){ # cacheKey as returned by the initi
 #----------------------------------------------------------------------
 # clear the cache, and optionally the disk
 #----------------------------------------------------------------------
-clear <- function(cacheKeys=NULL, purgeFiles=FALSE) { # remove data/files only that are already in the RAM cache
+clear <- function(cacheKeys = NULL, purgeFiles = FALSE) { # remove data/files only that are already in the RAM cache
     reportProgress(parentType, 'clearing cache')
     if(is.null(cacheKeys)) cacheKeys <- names(cache)
     if(purgeFiles) purgeFiles_(cacheKeys)
@@ -143,13 +142,13 @@ clear <- function(cacheKeys=NULL, purgeFiles=FALSE) { # remove data/files only t
 }
 purgeFiles_ <- function(cacheKeys){
     for(cacheKey in cacheKeys){
-        file <- getObjectFile(cacheKey, create=FALSE)
+        file <- getObjectFile(cacheKey, create = FALSE)
         if(file.exists(file)) file.remove(file)
     }    
 }
 clearParentDir <- function(){ # remove all contents from parentDir from disk entirely
     reportProgress(parentType, 'clearing all cached files')
-    if(dir.exists(parentDir)) unlink(parentDir, recursive=TRUE, force=TRUE)
+    if(dir.exists(parentDir)) unlink(parentDir, recursive = TRUE, force = TRUE)
     dir.create(parentDir)
 }
 
@@ -172,4 +171,3 @@ structure(
 #----------------------------------------------------------------------
 }
 #----------------------------------------------------------------------
-

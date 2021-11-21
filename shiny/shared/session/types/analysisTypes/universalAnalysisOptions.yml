@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# define the two options applied to all analysis schema
+# define options applied to all analysis schema
 #----------------------------------------------------------------------
 ---
 # what data should we act on?
@@ -13,4 +13,3 @@ Analysis_Type:
     type: selectInput
     choices: null
     #startWithNull: true
-

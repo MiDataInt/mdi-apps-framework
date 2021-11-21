@@ -18,27 +18,27 @@ runAnalysesServer <- function(id, options, bookmark, locks) {
 # initialize module and the requested analysisTypes
 #----------------------------------------------------------------------
 assignOutcomes <- getStepOutcomesByType("assign") # depends on sample assignment appStep
-universalOptions <- file.path('session','types','analysisTypes','universalAnalysisOptions.yml')
+universalOptions <- file.path('session', 'types', 'analysisTypes', 'universalAnalysisOptions.yml')
 universalOptions <- read_yaml(universalOptions)
 universalOptionNames <- names(universalOptions)
 analysisTypes <- unlist(lapply(names(options$analysisTypes), function(typeType){
     typeNames <- options$analysisTypes[[typeType]]
     lapply(typeNames, function(typeName){
-        dir <- file.path('optional','types','analysisTypes', typeType, typeName)
-        loadAllRScripts(dir, recursive=TRUE) # load the analysisType module and methods
-        config <- read_yaml(file.path(dir,'config.yml')) # load the analysisType config        
-        for(loadType in c('classes','modules')){
+        dir <- file.path('optional', 'types', 'analysisTypes', typeType, typeName)
+        loadAllRScripts(dir, recursive = TRUE) # load the analysisType module and methods
+        config <- read_yaml(file.path(dir, 'config.yml')) # load the analysisType config        
+        for(loadType in c('classes', 'modules')){
             if(is.null(config[[loadType]])) next        
-            for(type in names(config[[loadType]])){ 
-                for(target in unique(config[[loadType]][[type]])){ # load any modules and classes required by the analysisType
-                    loadAllRScripts(file.path('optional', loadType, type, target), recursive=TRUE)
+            for(type in names(config[[loadType]])){ # load any modules and classes required by the analysisType
+                for(target in unique(config[[loadType]][[type]])){ 
+                    loadAllRScripts(file.path('optional', loadType, type, target), recursive = TRUE)
                 }        
             }
         }
         if(is.null(config$options)) config$options <- list()
         config
     }) %>% setNames(typeNames)
-}), recursive=FALSE) # discard the analysis typeType
+}), recursive = FALSE) # discard the analysis typeType
 analysisTypeNames <- names(analysisTypes)
 
 #----------------------------------------------------------------------
@@ -90,7 +90,7 @@ analysisOptionInputs <- function(analysisOptions, nColumns){
     if(length(analysisOptions) == 0) return(NULL)
     optionValues <- getOptionValuesFromSchema(analysisOptions, editPanelData()$selectedSchema)
     width <- 12 / nColumns
-    is <- 1:length(analysisOptions)
+    is <- seq_along(analysisOptions)
     x <- lapply(is, function(i){
         value <- if(is.null(optionValues)) NULL else optionValues[i]
         column(
@@ -98,7 +98,7 @@ analysisOptionInputs <- function(analysisOptions, nColumns){
             getAnalysisOptionInputs(ns, analysisTypeNames, analysisOptions[i], value)
         )
     })
-    lapply(split(x, floor((is-1)/4)), function(row) fluidRow(tagList(row)) ) # parse into rows of 4 options each
+    lapply(split(x, floor((is - 1) / 4)), function(row) fluidRow(tagList(row)) ) # parse into rows of 4 options each
 }
 
 #----------------------------------------------------------------------
@@ -130,7 +130,7 @@ observeEvent({
         workingId <<- names(data$list)[selected]
         list(
             selectedSchema = data$list[[selected]],
-            boxTitle = paste(boxTitle, getSchemaName(workingId), sep=" - ")
+            boxTitle = paste(boxTitle, getSchemaName(workingId), sep = " - ")
         )
     }
 
@@ -176,7 +176,7 @@ observeEvent(input$saveRecord, {
     if(input$Sample_Set    == "") sendFeedback('missing sample(s) selection', TRUE)
     if(input$Analysis_Type == "") sendFeedback('missing analysis type', TRUE)
     analysisType <- analysisTypes[[input$Analysis_Type]]
-    d <- getOptionValuesFromUI(analysisType$options, input, addOptions=universalOptions)
+    d <- getOptionValuesFromUI(analysisType$options, input, addOptions = universalOptions)
 
     # create a ~unique identifying signature to prevent record duplicates
     #   defining values:
@@ -187,7 +187,7 @@ observeEvent(input$saveRecord, {
     # continue filling non-defining record values
     #   set the analysis status
     #   abort record save if analysis is already completed
-    d$optionsHtml <- getOptionsUIFromSchema(analysisTypeNames, analysisType$options, d, exclude=universalOptionNames)
+    d$optionsHtml <- getOptionsUIFromSchema(analysisTypeNames, analysisType$options, d, exclude = universalOptionNames)
     d$name <- r$name
     diskStatus <- getJobDiskStatus(r$id)  
     d$status <- if(!is.null(diskStatus)) diskStatus
@@ -228,7 +228,7 @@ addDataListObserver(module, summaryTemplate, data, function(schema, id){
         Analysis_Type = schema$Analysis_Type,
         Options       = schema$optionsHtml,
         Job_Status    = schema$status,
-            stringsAsFactors=FALSE
+            stringsAsFactors = FALSE
     )
 })
 
@@ -252,7 +252,7 @@ list(
     ),
     analysisTypes = analysisTypes,
     analysisTypeNames = analysisTypeNames,
-    isReady = reactive({ getStepReadiness(options$source, fn=areSuccessfulAnalyses) })
+    isReady = reactive({ getStepReadiness(options$source, fn = areSuccessfulAnalyses) })
 )
 
 #----------------------------------------------------------------------
@@ -260,4 +260,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

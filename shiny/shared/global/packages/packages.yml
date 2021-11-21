@@ -1,9 +1,11 @@
-
-# CRAN packages
+#----------------------------------------------------------------------
+# Common R package dependencies
+#----------------------------------------------------------------------
 R:
 #----------------------------------------------------------------------
-    # pacakages in this section are general to all apps and are attached during page start
-    # therefore, their functions can be called directly (e.g. read_yaml())
+    # packages in this section are general to all apps and are attached during page start
+    # therefore, their functions can be called directly (e.g., read_yaml())
+    # the named yaml sections are for clarity in this file and to organize the loading process
     tools:
         - digest
         - knitr
@@ -38,17 +40,15 @@ R:
         - future
         - promises
 #----------------------------------------------------------------------
-    # prefer NOT to attach developer packaages ...
-    # but some don't work unless you do
+    # prefer NOT to attach developer packages, but some don't work unless you do
     developer:
-        unattached: null 
-            #- git2r' # deprecated in favor of system2 call to git         
+        unattached: null      
         attached: 
             - shinyTree
             - styler # attach so that developer is prompted to create a cache
 #----------------------------------------------------------------------
     # installed but not attached unless library() called by an app or module
-    # prefer to not attach Bioconductor but use in full syntax, e.g. GenomicRanges::GRanges
+    # prefer to not attach Bioconductor but to always use in full syntax, e.g., GenomicRanges::GRanges
     bioconductor:
         - BiocManager            
         - RMariaDB    # used by function makeTxDbFromUCSC
@@ -69,5 +69,3 @@ R:
             #SingleCellExperiment
     analysis: # like Bioconductor (see above), analysis packages are never attached a priori
         - HMM
-#----------------------------------------------------------------------
-

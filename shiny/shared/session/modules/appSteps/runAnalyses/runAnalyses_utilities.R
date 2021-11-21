@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------
 # retrieve analysis schema names, unique identifiers, statuses
 #----------------------------------------------------------------------
@@ -37,10 +36,10 @@ getSchemaNames <- function(rows=TRUE){
 
 # get the category axes we might group by for a comparison analysis
 getAnalyzeByNames <- function(invert=FALSE){
-    getCategoryNames(plural=FALSE, invert=invert)
+    getCategoryNames(plural = FALSE, invert = invert)
 }
 getInvertedAnalyzeByNames <- function(){
-    getCategoryNames(plural=FALSE, invert=TRUE)
+    getCategoryNames(plural = FALSE, invert = TRUE)
 }
 
 # get a single analysis status
@@ -78,4 +77,3 @@ areSuccessfulAnalyses <- function(){
     x <- getSuccessfulAnalyses()
     !is.null(x) && length(x) > 0
 }
-

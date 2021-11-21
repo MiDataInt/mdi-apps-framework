@@ -1,8 +1,7 @@
-
 #----------------------------------------------------------------------
 # static components for sample source file upload
-# handles all types including manifests, project zips, bookmarks and data tables
-# used on both launch page and sourceFileUpload module
+# handles all types including manifests, package zips, bookmarks and data tables
+# used on launch page and in sourceFileUpload module
 #----------------------------------------------------------------------
 
 # module ui function
@@ -14,9 +13,8 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
     # file upload input
     tags$div(
         fluidRow(
-            class = "file-input-controls",
-            if(serverEnv$IS_GLOBUS) column(width=3, getGlobusFileButtonUI(ns('globusFileImport'), 'Select File on Globus')) else NULL,               
-            column(width=if(serverEnv$IS_GLOBUS) 9 else 12, fileInput(
+            class = "file-input-controls",           
+            column(width = 12, fileInput(
                 ns('fileInput'),
                 NULL,
                 multiple = FALSE,
@@ -28,4 +26,3 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
         uiOutput(ns('fileInputFeedback'))
     )                       
 }
-

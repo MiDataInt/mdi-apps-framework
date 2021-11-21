@@ -12,33 +12,44 @@ setServerEnv <- function(name, default = NULL, type = as.character){
     }
 }
 
+# adjust selected environment variables to logical
+for(name in c('DEBUG', 'IS_DEVELOPER', 'IS_HOSTED', 'LAUNCH_BROWSER')) {
+    serverEnv[[name]] <- as.logical(serverEnv[[name]])
+}
+
 # set structured environment variables based on mode
-serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
-serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
+serverEnv$IS_REMOTE   <- serverEnv$SERVER_MODE == 'remote'
+serverEnv$IS_NODE     <- serverEnv$SERVER_MODE == 'node'
 serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
-if(serverEnv$IS_LOCAL || serverEnv$IS_ONDEMAND){ # e.g., end user desktop or laptop
-    serverEnv$HOST <- "127.0.0.1"
-    setServerEnv('LAUNCH_BROWSER', TRUE, as.logical)
-    setServerEnv('DEBUG', TRUE, as.logical)
-    setServerEnv('IS_DEVELOPER', FALSE, as.logical)
-    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e6, as.integer) # i.e. don't limit local start RAM
-    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
-    serverEnv$SERVER_URL   <- paste0("http://localhost:", serverEnv$SERVER_PORT, "/") # cannot be 127.0.0.1 for Globus OAuth2 callback # nolint
-    serverEnv$CALLBACK_URL <- paste0("http://127.0.0.1:", serverEnv$SERVER_PORT, "/") # cannot be localhost for endpoint helper page action # nolint
-    FALSE
-} else if(serverEnv$IS_SERVER) { # public web server mode
-    serverEnv$HOST <- "0.0.0.0"
-    serverEnv$LAUNCH_BROWSER <- FALSE
-    setServerEnv('DEBUG', FALSE, as.logical)
-    serverEnv$IS_DEVELOPER <- FALSE # !! never expose developer tools on a public server !!
-    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
-    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
-    serverEnv$CALLBACK_URL <- serverEnv$SERVER_URL
-    TRUE
+serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
+serverEnv$IS_LOCAL_BROWSER <- !serverEnv$IS_ONDEMAND # here, the browser runs on the server
+serverEnv$REQUIRES_AUTHENTICATION <- serverEnv$IS_SERVER # other users already validated themselves via SSH, etc.
+
+# set the interface the server listens to; only select cases listen beyond localhost
+serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
+serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_ONDEMAND){
+    "127.0.0.1"
+} else if(serverEnv$IS_NODE || serverEnv$IS_SERVER) {
+    "0.0.0.0"
 } else {
     stop(paste('unknown server mode:', serverEnv$SERVER_MODE))    
 }
+
+# set properties based on whether server is publicly accessible or restricted access
+if(serverEnv$IS_SERVER) { # public web server mode
+    serverEnv$IS_DEVELOPER <- FALSE # !! never expose developer tools on a public server !!
+    serverEnv$LAUNCH_BROWSER <- FALSE
+    setServerEnv('DEBUG', FALSE, as.logical)
+    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
+    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
+    serverEnv$CALLBACK_URL <- serverEnv$SERVER_URL
+} else { # web server has highly restricted (often single-user) access
+    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e6, as.integer) # i.e. don't limit local start RAM
+    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
+    # serverEnv$SERVER_URL   <- paste0("http://localhost:", serverEnv$SERVER_PORT, "/") # cannot be 127.0.0.1 for Globus OAuth2 callback # nolint
+    # serverEnv$CALLBACK_URL <- paste0("http://127.0.0.1:", serverEnv$SERVER_PORT, "/") # cannot be localhost for endpoint helper page action # nolint
+} 
 
 # set directories (framework runs from 'shared' directory that carries ui.R and server.R)
 if(!dir.exists(serverEnv$MDI_DIR)) stop(paste('unknown directory:', serverEnv$MDI_DIR))
@@ -66,26 +77,37 @@ if(serverEnv$DEBUG) message(paste('serverId', serverId))
 # declare that we are the parent process ('future' child processes override this to FALSE)
 isParentProcess <- TRUE
 
-# establish Globus client credentials (order is important)
+# load the Stage 2 apps config
 source(file.path('global', 'packages', 'packages.R'))
 loadFrameworkPackages(c('httr', 'yaml'))
-globusConfig <- tryCatch({
-    read_yaml(file.path(serverEnv$MDI_DIR, 'mdi.yml'))
-}, error = function(e) list(
-    client     = list(key = NULL, secret = NULL),
-    endpoint   = list(id = NULL),
-    usersGroup = NULL
-))
-serverEnv$IS_GLOBUS <- !(is.null(globusConfig$client$key) ||
-                         is.null(globusConfig$client$secret) ||
-                         is.null(globusConfig$endpoint$id))
-source(file.path('global', 'globus', 'globusAPI.R'))
-source(file.path('global', 'globus', 'globusClient.R'))
-source(file.path('global', 'globus', 'sessionCache.R'))
-globusClientData <- if(serverEnv$IS_SERVER) {
-    if(serverEnv$IS_DEVELOPER) message('getting client credentials')
-    list( tokens = getGlobusClientCredentials() )
-} else NULL
+serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
+
+# ensure that we have required server-level information for user authentication
+serverEnv$IS_GLOBUS <- FALSE
+serverEnv$IS_GOOGLE <- FALSE
+source(file.path('global', 'oauth2', 'oauth2.R'))
+source(file.path('global', 'oauth2', 'sessionCache.R')) 
+if(serverEnv$REQUIRES_AUTHENTICATION){
+    if(is.null(serverConfig$access_control))
+        stop("publicly addressable servers require an access_control declaration in config/stage2-apps.yml")
+    else if(serverConfig$access_control == 'oauth2'){
+        if(is.null(serverConfig$oauth2$host))
+            stop("access_control mode 'oauth2' requires an oauth2$host declaration in config/stage2-apps.yml")
+        if(!(serverConfig$oauth2$host %in% c('globus', 'google')))
+            stop("unknown oauth2$host declaration in config/stage2-apps.yml; must be 'google' or 'globus'")
+        if(is.null(serverConfig$oauth2$client$key) || 
+           is.null(serverConfig$oauth2$client$secret))
+            stop("invalid oauth2$client declaration in config/stage2-apps.yml; expect oauth2$client$key and oauth2$client$secret") # nolint
+        serverEnv$IS_GLOBUS <- serverConfig$oauth2$host == 'globus'
+        serverEnv$IS_GOOGLE <- serverConfig$oauth2$host == 'google'
+    } else if(serverConfig$access_control == 'keys'){
+        if(is.null(serverConfig$keys))
+            stop("access_control mode 'keys' requires key declarations in config/stage2-apps.yml")
+    } else
+        stop(paste("unknown access_control declaration:", serverConfig$access_control))
+}
+if(serverEnv$IS_GLOBUS) source(file.path('global', 'oauth2', 'globusAPI.R'))
+if(serverEnv$IS_GOOGLE) source(file.path('global', 'oauth2', 'googleAPI.R'))
 
 # initialize storr key-value on-disk storage
 loadFrameworkPackages('storr')
@@ -106,6 +128,16 @@ PRINT_DEBUG <- function(obj){
     x <- capture.output(print(obj))
     cat(x, file = PRINT_DEBUG_FILE, append = TRUE, sep = "\n")
 }
+
+# set the list of known apps
+appSuiteDirs <- getAppSuiteDirs()
+appDirs <- getAppDirs(appSuiteDirs)
+appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by installed apps; required prior to app load
+
+###################
+str(appSuiteDirs)
+str(appDirs)
+str(appUploadTypes)
 
 # start the server
 # with auto-restart when stopApp is called at session end

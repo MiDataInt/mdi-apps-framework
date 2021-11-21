@@ -1,14 +1,13 @@
-
 #----------------------------------------------------------------------
 # reactive components for sample source file upload
-# handles all types including manifests, project zips, bookmarks and data tables
-# used on both launch page and sourceFileUpload module
+# handles all types including manifests, package zips, bookmarks and data tables
+# used on launch page and in sourceFileUpload module
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-sourceFileInputServer <- function(id, appName=NULL, externalSuffixes=c()) {
+sourceFileInputServer <- function(id, appName = NULL, externalSuffixes = c()) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id)
         module <- ns('sourceFileInput') # for reportProgress tracing
@@ -28,9 +27,6 @@ incomingFile <- reactiveVal(list(
 sendFeedback <- recordFeedbackFunction(output, 'fileInputFeedback')
 allowedFileTypes <- getAllowedSourceFileTypes(appName, externalSuffixes)
 isLaunchPage <- is.null(appName)
-
-# enable Globus file import
-getGlobusFileButtonServer('globusFileImport', 'importFromGlobus', appName=appName)
 
 #----------------------------------------------------------------------
 # enable the file upload input
@@ -61,4 +57,3 @@ list(
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-
