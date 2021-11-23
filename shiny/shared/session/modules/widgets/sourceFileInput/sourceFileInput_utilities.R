@@ -54,7 +54,10 @@ getPackageFileConfig <- function(packageFile, sendFeedback){
         config <- read_yaml(ymlFile)
         unlink(ymlFile)
         config        
-    }, error = function(e) sendFeedback("missing file 'package.yml' in pipeline package", isError = TRUE))
+    }, error = function(e) {
+        # print(e)
+        sendFeedback("missing file 'package.yml' in pipeline package", isError = TRUE)
+    })
 }
 
 # get all possible target apps for a given package file

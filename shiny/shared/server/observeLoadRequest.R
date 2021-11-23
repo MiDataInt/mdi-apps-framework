@@ -32,8 +32,6 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     }
     initializeDescendants()
 
-
-
     # TODO: continue streamlining git; only switch to legacy tags, no developer switching, etc.
     # remove deprecated in-app developer tools; only a few remain (e.g., keep sandbox, lose git manager)
     # update sidebar status reporting (all apps can report suite/app/version even in run()?)
@@ -42,14 +40,14 @@ observeLoadRequest <- observeEvent(loadRequest(), {
 
     # reinstate developer tools addition (below) later, once apps are running in new framework
 
+    # this includes sidebarStatusUI and Server in lines further below
+
     # # enable developer interface in private modes only
     # if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
     #     loadAppScriptDirectory('developer')
     #     addDeveloperMenuItem()
     # }
 
-
-    
     # determine the best way to initialize the UI for this user and incoming file
     nAppSteps <- length(app$config$appSteps)
     appStepNames <- names(app$config$appSteps)
@@ -70,7 +68,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
 
     # initialize app-specific data paths
     initializeAppDataPaths()      
-    
+
     # initialize the app-specific sidebar menu
     removeUI(".sidebar-menu li, #saveBookmarkFile-saveBookmarkFile, .sidebar-status",
              multiple = TRUE, immediate = TRUE)
@@ -79,7 +77,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
             menuItem(tags$div(app$config$name, class = "app-name"), tabName = "appName"), # app name, links to Overview
             if(nAppSteps > 0) lapply(1:nAppSteps, sequentialMenuItem), # app-specific steps
             bookmarkingUI('saveBookmarkFile', list(class = "sidebarBookmarking")), # enable state bookmarking
-            if(serverEnv$IS_DEVELOPER) sibebarStatusUI('frameworkStatus') else ""
+            # if(serverEnv$IS_DEVELOPER) sibebarStatusUI('frameworkStatus') else ""
         )
     )      
 
@@ -133,7 +131,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     addRemoveModalObserver(input)        
     
     # enable additional feedback in the sidebar
-    if(serverEnv$IS_DEVELOPER) sibebarStatusServer('frameworkStatus')    
+    #if(serverEnv$IS_DEVELOPER) sibebarStatusServer('frameworkStatus')    
     
     # push the initial file upload to the app via it's first step module
     if(loadRequest()$file$type == CONSTANTS$sourceFileTypes$bookmark){
@@ -144,7 +142,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
         firstStep <- app[[ names(app$config$appSteps)[1] ]]        
         firstStep$loadSourceFile(loadRequest()$file)
     } 
-    
+
     # clean up
     stopSpinner(session, 'observeLoadRequest')
     observeLoadRequest$destroy() # user has to reload page to reset to launch page once an app is loaded
