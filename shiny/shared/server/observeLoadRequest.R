@@ -34,11 +34,13 @@ observeLoadRequest <- observeEvent(loadRequest(), {
 
 
 
-    # TODO: continue streamlining git; only switch to legacy, no developer switching, etc.
-    # also, remove deprecated in-app developer tools; only a few remain
-    # also, update sidebase status reporting (all apps can report suite/app/version even in run()?)
+    # TODO: continue streamlining git; only switch to legacy tags, no developer switching, etc.
+    # remove deprecated in-app developer tools; only a few remain (e.g., keep sandbox, lose git manager)
+    # update sidebar status reporting (all apps can report suite/app/version even in run()?)
 
     # key target scripts still needing work are utilities/git.R and developer/*
+
+    # reinstate developer tools addition (below) later, once apps are running in new framework
 
     # # enable developer interface in private modes only
     # if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
