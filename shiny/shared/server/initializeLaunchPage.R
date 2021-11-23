@@ -27,6 +27,7 @@ if(!restricted){
 
         # reset page to most recent bookmark when top left logo is clicked
         if(!is.null(queryString$resetPage)) observeEvent(bookmarkHistory$list$table(), {
+            req(nrow(bookmarkHistory$list$table()) > 0)
             hash <- bookmarkHistory$list$table()[1, hash]
             bookmark <- bookmarkHistory$list$get(hash = hash)
             loadBookmarkFromString(bookmark)
