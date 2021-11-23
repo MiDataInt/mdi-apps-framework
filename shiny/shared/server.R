@@ -16,7 +16,7 @@ serverFn <- function(input, output, session,
        !file.exists(sessionFile) && # this is a session with prior auth
        !restricted # this is a user's first encounter, show login help
     ) return()
-    
+
     # source the code that defines a session
     source("server/initializeSession.R", local = TRUE)
     show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)

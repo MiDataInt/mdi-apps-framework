@@ -8,7 +8,7 @@ getAppSuiteDirs <- function(){
     getForkSuiteDirs <- function(fork) {
         dirs <- list.dirs(file.path(serverEnv$SUITES_DIR, fork), recursive = FALSE, full.names = TRUE)
         isAppsSuite <- sapply(dirs, function(dir) dir.exists(file.path(dir, 'shiny', 'apps')))
-        c(dirs[isAppsSuite], file.path(serverEnv$FRAMEWORKS, fork))
+        c(dirs[isAppsSuite], file.path(serverEnv$FRAMEWORKS, fork, 'mdi-apps-framework'))
     }
     list(
         definitive = getForkSuiteDirs("definitive"),
@@ -24,7 +24,7 @@ getAppDirs <- function(appSuiteDirs){
         appNames <- list.dirs(appsDir, recursive = FALSE, full.names = FALSE)
         for(appName in appNames) appDirs[[appName]] <- file.path(appsDir, appName)
     }
-    appsDirs
+    appDirs
 }
 
 # upload types accepted by each app, stratified by upload type
