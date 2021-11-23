@@ -35,7 +35,7 @@ list <- historyListServer(
 # set and get history items
 #----------------------------------------------------------------------
 set <- function(json=NULL, file=NULL, name=NULL){
-    firstStepName <- names(app$info$appSteps)[1]     
+    firstStepName <- names(app$config$appSteps)[1]     
     if(is.null(json)) {
         if(is.null(file)) {
             json <- getBookmarkJson()

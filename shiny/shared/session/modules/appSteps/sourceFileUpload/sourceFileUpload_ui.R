@@ -5,7 +5,7 @@
 
 # module ui function
 sourceFileUploadUI <- function(id, options) {
-    appName <- app$info$name
+    appName <- app$config$name
 
     # initialize namespace
     ns <- NS(id)

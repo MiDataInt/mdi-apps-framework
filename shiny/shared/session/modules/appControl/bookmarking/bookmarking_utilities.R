@@ -22,7 +22,7 @@ getBookmarkJson <- function(){
         locks = list(),
         step  = input$sidebarMenu       
     )
-    for(stepName in names(app$info$appSteps)){ # convert reactives to hard values
+    for(stepName in names(app$config$appSteps)){ # convert reactives to hard values
         stepData <- app[[stepName]]
         if(typeof(stepData) != 'list') next()
         

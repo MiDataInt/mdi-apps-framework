@@ -15,7 +15,7 @@ sourceFileUploadServer <- function(id, options, bookmark, locks) {
 #----------------------------------------------------------------------
 # define session-level and module-level variables
 #----------------------------------------------------------------------
-sourceFileInput  <- sourceFileInputServer('fileInput', appName = app$info$name)
+sourceFileInput  <- sourceFileInputServer('fileInput', appName = app$config$name)
 cft <- CONSTANTS$contentFileTypes
 manifestFileType <- cft$manifestFile
 qcReportFileType <- cft$qcReport
@@ -128,7 +128,7 @@ loadPackageFile <- function(packagePath, packageId){ # packagePath validated ups
     # extract the contents declared to be in the package file
     packageConfig <- getPackageFileConfig(packagePath, sourceFileInput$sendFeedback)
     if(is.null(packageConfig$uploadType)) badSourceFile(packagePath, msg = "missing upload type in package file")
-    contentFileTypes <- app$info$uploadTypes[[ packageConfig$uploadType ]]$contentFileTypes
+    contentFileTypes <- app$config$uploadTypes[[ packageConfig$uploadType ]]$contentFileTypes
     # contentFileTypes[[manifestFileType]] <- list(required = TRUE)
     contentFileTypeNames <- names(contentFileTypes)
     packageFileTypeNames <- names(packageConfig$files)

@@ -9,20 +9,20 @@
 # at session start, create reactiveValues for each app step to record its data locks
 intializeStepLocks <- function(){
     locks <- list()
-    for(stepName in names(app$info$appSteps)) locks[[stepName]] <- reactiveValues()
+    for(stepName in names(app$config$appSteps)) locks[[stepName]] <- reactiveValues()
     locks
 }
 
 # use stepModuleInfo sourceTypes to tag parents with the children that depend on them
 #   only necessary to tag descendants one level-deep (i.e. children) since locks create a chain
 initializeDescendants <- function(){
-    steps <- app$info$appSteps
+    steps <- app$config$appSteps
     nSteps <- length(steps)
     if(nSteps <= 1) return(NULL)
     stepIs <- 1:nSteps
     for(i in stepIs){
         parentName <- names(steps)[i]
-        app$info$appSteps[[i]]$descendants <- c()
+        app$config$appSteps[[i]]$descendants <- c()
         for(j in stepIs){
             childName <- names(steps)[j]
             childSourceTypes <- stepModuleInfo[[steps[[j]]$module]]$sourceTypes
@@ -30,8 +30,8 @@ initializeDescendants <- function(){
             for(childSourceType in childSourceTypes){
                 childSource <- getAppStepNameByType(childSourceType)
                 if(childSource == parentName){
-                    app$info$appSteps[[i]]$descendants <- append(
-                        app$info$appSteps[[i]]$descendants, childName
+                    app$config$appSteps[[i]]$descendants <- append(
+                        app$config$appSteps[[i]]$descendants, childName
                     ) 
                 }
             }

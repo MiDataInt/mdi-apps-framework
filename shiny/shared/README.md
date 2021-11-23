@@ -33,6 +33,10 @@ are renewed in the R environment of every user session, i.e.,
 in <code>sessionEnv</code>. This enables hotfixes and rolling updates
 without server restart, only a page reload.
 
+The **developer** folder is similar to the sessions folder 
+except that those components are only loaded when the framework
+is running in developer mode. 
+
 The **static** folder has fixed content for populating the main
 framework pages with text, mostly via markdown rendered in R with
 <code>includeMarkdown(file.path('static/xxx.md'))</code>.

@@ -11,7 +11,7 @@ sampleSetGroupTypeUI <- function(id) {
     
     # determine which selectInputs are needed
     sampleSetSource <- appStepNamesByType$assign
-    categories <- app$info$appSteps[[sampleSetSource]]$options$categories
+    categories <- app$config$appSteps[[sampleSetSource]]$options$categories
 
     # return the UI contents
     fluidRow(

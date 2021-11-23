@@ -5,19 +5,20 @@ loadRequest <- reactiveVal(list())
 observeLoadRequest <- observeEvent(loadRequest(), {
     req(loadRequest()$app)
     startSpinner(session, 'observeLoadRequest') 
-    NAME <- loadRequest()$app
-    DIRECTORY <- paste('..', 'apps', appFamilies[NAME], NAME, sep = "/")
 
-    # in developer mode only, switch to a (new) branch dedicated to this app
-    # never change branches in production, stay on main always
-    if(serverEnv$IS_DEVELOPER) switchGitBranch(NAME, session, sessionEnv, CONSTANTS)
-    isolate(invalidateGitBranch( invalidateGitBranch() + 1 ))        
-    
-    # initialize the configuration of the requested app
+    # initialize the requested app
+    NAME <- loadRequest()$app
+    DIRECTORY <- appDirs[[NAME]] # app working directory, could be definitive or developer
     app$NAME <<- NAME
     app$DIRECTORY <<- DIRECTORY
-    app$info <<- read_yaml(file.path(DIRECTORY, 'config.yml'))
-    loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself
+    app$sources <<- parseAppDirectory(app$DIRECTORY)
+    app$config <<- read_yaml(file.path(DIRECTORY, 'config.yml'))
+
+    # load all relevant session scripts in reverse precedence order
+    #   global, then session, folders were previously sourced by initializeSession.R on page load
+    loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
+    loadAppScriptDirectory(app$sources$suiteSessionDir)
+    loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself; highest precedence
 
     # validate and establish the module dependency chain
     failure <- initializeAppStepNamesByType()
@@ -31,38 +32,27 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     }
     initializeDescendants()
 
-    # load all the optional modules and classes required by the app's modules
-    required <- list(modules = list(), classes = list())
-    loadTypes <- names(required)
-    for(appStep in app$info$appSteps){ # ensure that all appStep modules are loaded even if not listed in config.yml
-        moduleInfo <- stepModuleInfo[[appStep$module]]
-        for(loadType in loadTypes){
-            if(is.null(moduleInfo[[loadType]])) next
-            for(type in names(moduleInfo[[loadType]])) {
-                required[[loadType]][[type]] <- c( required[[loadType]][[type]], moduleInfo[[loadType]][[type]] )
-            }            
-        }
-        required$modules$appSteps <- c( required$modules$appSteps, appStep$module ) # load optional appSteps modules
-    }  
-    for(loadType in loadTypes){
-        for(type in names(required[[loadType]])){ # modules, organized by moduleType
-            for(target in unique(required[[loadType]][[type]])){
-                if(type == 'appSteps' && exists(paste0(target, 'UI'))) next # app can override standard modules (module of this name already loaded) # nolint
-                loadAllRScripts(file.path('optional', loadType, type, target), recursive = TRUE)
-            }        
-        }     
-    }
 
-    # enable developer interface in local mode only
-    if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
-        dir <- file.path('optional', 'modules', 'developerTools')
-        loadAllRScripts(dir, recursive = TRUE)
-        addDeveloperMenuItem()
-    }
+
+    # TODO: continue streamlining git; only switch to legacy tags, no developer switching, etc.
+    # remove deprecated in-app developer tools; only a few remain (e.g., keep sandbox, lose git manager)
+    # update sidebar status reporting (all apps can report suite/app/version even in run()?)
+
+    # key target scripts still needing work are utilities/git.R and developer/*
+
+    # reinstate developer tools addition (below) later, once apps are running in new framework
+
+    # # enable developer interface in private modes only
+    # if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
+    #     loadAppScriptDirectory('developer')
+    #     addDeveloperMenuItem()
+    # }
+
+
     
     # determine the best way to initialize the UI for this user and incoming file
-    nAppSteps <- length(app$info$appSteps)
-    appStepNames <- names(app$info$appSteps)
+    nAppSteps <- length(app$config$appSteps)
+    appStepNames <- names(app$config$appSteps)
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
     isBookmarkFile <- loadRequest()$file$type == "bookmark"
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
@@ -82,13 +72,13 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     initializeAppDataPaths()      
     
     # initialize the app-specific sidebar menu
-    removeUI(".sidebar-menu li, #saveMagcFile-saveMagcFile, .sidebar-status",
+    removeUI(".sidebar-menu li, #saveBookmarkFile-saveBookmarkFile, .sidebar-status",
              multiple = TRUE, immediate = TRUE)
     insertUI(".sidebar-menu", where = "beforeEnd", immediate = TRUE,
         ui = tagList(
-            menuItem(tags$div(app$info$name, class = "app-name"), tabName = "appName"), # app name, links to Overview
+            menuItem(tags$div(app$config$name, class = "app-name"), tabName = "appName"), # app name, links to Overview
             if(nAppSteps > 0) lapply(1:nAppSteps, sequentialMenuItem), # app-specific steps
-            bookmarkingUI('saveMagcFile', list(class = "sidebarBookmarking")), # enable state bookmarking
+            bookmarkingUI('saveBookmarkFile', list(class = "sidebarBookmarking")), # enable state bookmarking
             if(serverEnv$IS_DEVELOPER) sibebarStatusUI('frameworkStatus') else ""
         )
     )      
@@ -109,16 +99,16 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     locks <<- intializeStepLocks()
     
     # enable bookmarking; appStep modules react to bookmark
-    bookmark <<- bookmarkingServer('saveMagcFile', locks) # in the app sidebar
+    bookmark <<- bookmarkingServer('saveBookmarkFile', locks) # in the app sidebar
 
     # load servers for all required appStep modules, plus finally run appServer
     # because this is the slowest initialization step, defer many until after first UI load
     if(!exists('appServer')) appServer <- function() NULL # for apps with no specific server code
     runModuleServers <- function(startI, endI){
         lapply(startI:endI, function(i){
-            stepName <- names(app$info$appSteps)[i]
+            stepName <- names(app$config$appSteps)[i]
             reportProgress(paste('loadStepModuleServers', stepName))            
-            step <- app$info$appSteps[[i]]
+            step <- app$config$appSteps[[i]]
             server <- get(paste0(step$module, 'Server'))
             step$options$stepNumber <- i
             app[[stepName]] <<- server(stepName, step$options, bookmark, locks)
@@ -151,7 +141,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
         nocache <- loadRequest()$file$nocache
         if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
-        firstStep <- app[[ names(app$info$appSteps)[1] ]]        
+        firstStep <- app[[ names(app$config$appSteps)[1] ]]        
         firstStep$loadSourceFile(loadRequest()$file)
     } 
     

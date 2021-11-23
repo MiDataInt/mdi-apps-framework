@@ -56,7 +56,6 @@ loadAppScriptDirectory <- function(dir, local=NULL){
         loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
     }
 }
-
 loadAllRScripts('global', recursive = TRUE)
 loadAppScriptDirectory('session')
 

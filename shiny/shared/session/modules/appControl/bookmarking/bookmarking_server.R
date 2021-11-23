@@ -29,9 +29,9 @@ data <- reactiveValues(
 #----------------------------------------------------------------------
 output[[id]] <- downloadHandler(
     filename = function() {
-        firstStepName <- names(app$info$appSteps)[1]
+        firstStepName <- names(app$config$appSteps)[1]
         filename <- app[[firstStepName]]$outcomes$analysisSetName
-        filename <- if(is.null(filename)) app$info$name else filename()
+        filename <- if(is.null(filename)) app$config$name else filename()
         filename <- gsub(' ', '_', filename)
         paste(filename, "mdi", sep = ".")
     },

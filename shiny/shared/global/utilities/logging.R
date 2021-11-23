@@ -1,5 +1,13 @@
-# log information about sessions for server management
+# report code steps to console
+reportProgress <- function(msg, module=NULL){
+    if(serverEnv$DEBUG){
+        if(!is.null(module) && module != '') msg <- paste0(module, ": ", msg)
+        if(!isParentProcess) msg <- paste0('CHILD PROCESS', ": ", msg)
+        message(msg)
+    }
+}
 
+# log information about sessions for server management
 logSessionMetadata <- function(sessionData){
 
     # further memory calculations
