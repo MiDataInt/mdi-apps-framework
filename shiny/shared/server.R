@@ -25,7 +25,7 @@ serverFn <- function(input, output, session,
     source("server/initializeLaunchPage.R", local = TRUE)
     source("server/observeLoadRequest.R", local = TRUE)
     source("server/onSessionEnded.R", local = TRUE)
-    source("server/observeOauth2.R", local = TRUE) # last code acts on login
+    source("server/observeAuthentication.R", local = TRUE) # last code acts on login
 }
 
 #----------------------------------------------------------------------
@@ -48,7 +48,7 @@ server <- function(input, output, session){
         cookie <- parseCookie(input$initializeSession$cookie)
         priorCookie <- parseCookie(input$initializeSession$priorCookie)
         sessionKey <- getSessionKeyFromNonce(input$initializeSession$sessionNonce) # cannot rely on sessionKey if HttpOnly # nolint
-        sessionFile <- getOauth2SessionFile('session', sessionKey)
+        sessionFile <- getAuthenticatedSessionFile('session', sessionKey)
         isLoggedIn <- file.exists(sessionFile)   
 
         # new public user, show the help page only

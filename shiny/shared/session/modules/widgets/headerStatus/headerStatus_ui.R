@@ -18,7 +18,7 @@ headerStatusUI <- function(id) {
         # logout button, if REQUIRES_AUTHENTICATION
         if(serverEnv$REQUIRES_AUTHENTICATION) tagList(
             HTML("&nbsp;&nbsp;"),
-            actionLink(ns('logout'), label = NULL, icon = icon("sign-out"))
+            actionLink(ns('logout'), label = NULL, icon = icon("sign-out-alt"))
         ) else "",
         
         # dataDir display and switching, if not IS_SERVER

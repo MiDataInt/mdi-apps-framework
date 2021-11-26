@@ -1,5 +1,3 @@
----
-
 **What is Globus?**
 
 Globus is a web-based service for
