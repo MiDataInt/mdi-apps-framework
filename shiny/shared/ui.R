@@ -14,23 +14,39 @@ htmlHeadElements <- tags$head(
     )} else ""
 )
 
-# LOGIN PAGE CONTENT: prompt user authentication in server mode
+# LOGIN PAGE CONTENT: prompt for user authentication in server mode
+loginControls <- function(buttonId, buttonLabel, helpFile, includeKey = FALSE){
+    alignment <- if(includeKey) 'left' else 'center'
+    tagList(
+        tags$div(
+            style = paste0("font-size: 1.1em; text-align: ", alignment, "; margin-bottom: 15px;"),
+            if(includeKey) div(
+                style = "margin-bottom: 15px; font-size: 0.9em;",
+                p('Enter Access Key'),
+                passwordInput('accessKeyEntry', NULL)
+            ) else "",
+            bsButton(buttonId, buttonLabel, style = "primary"),
+            actionLink('showLoginHelp', 'Help', style = "margin-left: 1em; font-size: 0.8em;")
+        ),
+        tags$div(
+            id = "login-help",
+            style = "display: none;",
+            hr(),
+            includeMarkdown( file.path('static', helpFile) )
+        )
+    )
+}
 userLoginTabItem <- tabItem(tabName = "loginTab", tags$div(class = "text-block",
     tags$div(
         id = CONSTANTS$apps$loginPage,
         includeMarkdown( file.path('static/mdi-intro.md') ),
-        if(serverEnv$IS_GLOBUS || TRUE) tagList(
-            tags$div(style = "font-size: 1.1em; text-align: center; margin-bottom: 15px;",
-                bsButton('oauth2LoginButton', 'Log in using Globus', style = "primary"),
-                actionLink('showOAuth2Help', 'Help', style = "margin-left: 1em; font-size: 0.8em;")
-            ),
-            tags$div( # server busy page
-                id = "oauth2-help",
-                style = "display: none;",
-                includeMarkdown( file.path('static/globus-help.md') )
-            )
-        ) else if(serverEnv$IS_GOOGLE) "PENDING"
-        else "PENDING"
+        if(serverEnv$IS_GLOBUS) 
+            loginControls('oauth2LoginButton', 'Log in using Globus', 'globus-help.md')
+        else if(serverEnv$IS_GOOGLE)
+            loginControls('oauth2LoginButton', 'Log in using Google', 'google-help.md')
+        else if(serverEnv$IS_KEYED) 
+            loginControls('keyedLoginButton',  'Log in using Key', 'access-key-help.md', includeKey = TRUE)
+        else p("CONFIGURATION ERROR")
     )
 ))
 
@@ -96,29 +112,34 @@ getLaunchPage <- function(cookie, restricted = FALSE){
     )    
 }
 
-# LOADING FLOW CONTROL, i.e., page redirects, associated with Oauth2 API interactions
+# AUTHENTICATION FLOW CONTROL, i.e., page redirects, associated with authentication interactions
+handleLoginResponse <- function(cookie, queryString, handler){
+    success <- handler(cookie$sessionKey, queryString)
+    if(!success) return( getLaunchPage(cookie, restricted = TRUE) )
+    redirect <- sprintf("location.replace(\"%s\");", paste0(serverEnv$SERVER_URL, '?login=1'))
+    tags$script(HTML(redirect))  
+}
 parseAuthenticationRequest <- function(request, cookie){
-    queryString <- parseQueryString(request$QUERY_STRING) # httr function
+    queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
 
-    # user was redirected back after logging out; reset to login page
+    # user was redirected back after logging out; reset to login page        
     if(!is.null(queryString$logout)){
-        getLaunchPage(cookie, restricted = TRUE)   
+        getLaunchPage(cookie, restricted = TRUE)
+
+    # accessKey submission, handle and redirect to page with stripped url
+    } else if(!is.null(queryString$accessKey)){
+        handleLoginResponse(cookie, queryString, handleAccessKeyResponse)
 
     # OAuth2 code response, handle and redirect to page with stripped url
     } else if(!is.null(queryString$code)){
-        success <- handleOauth2Response(cookie$sessionKey, queryString) # includes state check
-        if(!success) return( getLaunchPage(cookie, restricted = TRUE) )
-        redirect <- sprintf("location.replace(\"%s\");", paste0(serverEnv$SERVER_URL, '?login=1'))
-        tags$script(HTML(redirect)) 
+        handleLoginResponse(cookie, queryString, handleOauth2Response)
         
     # OAuth2 or other error
     } else if(!is.null(queryString$error)){
-        getLaunchPage(cookie, restricted = TRUE)    
+        getLaunchPage(cookie, restricted = TRUE)
  
     # determine whether we have an active session ...
-    } else if(is.null(cookie$sessionKey)) { # session is initializing   
-    
-        # session-initialization service sets the HttpOnly session key (can Traefik or Shiny do this?)
+    } else if(is.null(cookie$sessionKey)) { # session-initialization service sets the HttpOnly session key
         url <- paste0(serverEnv$SERVER_URL, 'session')
         redirect <- sprintf("location.replace(\"%s\");", url)
         tags$script(HTML(redirect))
@@ -127,25 +148,27 @@ parseAuthenticationRequest <- function(request, cookie){
     } else if(serverEnv$IS_SERVER && # new public user, show the help page only
               is.null(cookie$hasLoggedIn) &&
               is.null(queryString$login)){
-        getLaunchPage(cookie, restricted = TRUE)  
+        getLaunchPage(cookie, restricted = TRUE)
 
     # check if we have credentials already, server will know how to handle them  
     } else {
-        if(file.exists(getOauth2SessionFile('session', cookie$sessionKey))){
-            getLaunchPage(cookie)            
+        if(file.exists(getAuthenticatedSessionFile('session', cookie$sessionKey))){
+            getLaunchPage(cookie)
+        } else if(serverEnv$IS_KEYED){
+            getLaunchPage(cookie, restricted = TRUE)
         } else {
             redirectToOauth2Login(cookie$sessionKey)
         }
     }
 }
 
-# determine what type of page request this is and act accordingly
+# MAIN UI FUNCTION: determine what type of page request this is and act accordingly
 # this is the function called by Shiny RunApp
 ui <- function(request){
-    cookie <- parseCookie(request$HTTP_COOKIE) # our helper function in oauth2.R
-    if(serverEnv$REQUIRES_AUTHENTICATION){
-        parseAuthenticationRequest(request, cookie) # public servers demand a valid identity
+    cookie <- parseCookie(request$HTTP_COOKIE) # parseCookie is an MDI-encoded helper function
+    if(serverEnv$REQUIRES_AUTHENTICATION){ # public servers demand a valid identity
+        parseAuthenticationRequest(request, cookie)
     } else {
-        return( getLaunchPage(cookie) )
+        getLaunchPage(cookie)
     }
 }

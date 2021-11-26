@@ -85,8 +85,9 @@ serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.ym
 # ensure that we have required server-level information for user authentication
 serverEnv$IS_GLOBUS <- FALSE
 serverEnv$IS_GOOGLE <- FALSE
-source(file.path('global', 'oauth2', 'oauth2.R'))
-source(file.path('global', 'oauth2', 'sessionCache.R')) 
+serverEnv$IS_KEYED  <- FALSE
+source(file.path('global', 'authentication', 'utilities.R')) 
+source(file.path('global', 'authentication', 'sessionCache.R')) 
 if(serverEnv$REQUIRES_AUTHENTICATION){
     if(is.null(serverConfig$access_control))
         stop("publicly addressable servers require an access_control declaration in config/stage2-apps.yml")
@@ -103,11 +104,15 @@ if(serverEnv$REQUIRES_AUTHENTICATION){
     } else if(serverConfig$access_control == 'keys'){
         if(is.null(serverConfig$keys))
             stop("access_control mode 'keys' requires key declarations in config/stage2-apps.yml")
+        serverEnv$IS_KEYED <- TRUE
     } else
         stop(paste("unknown access_control declaration:", serverConfig$access_control))
 }
-if(serverEnv$IS_GLOBUS) source(file.path('global', 'oauth2', 'globusAPI.R'))
-if(serverEnv$IS_GOOGLE) source(file.path('global', 'oauth2', 'googleAPI.R'))
+
+if(serverEnv$IS_GLOBUS || serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'oauth2.R'))
+if(serverEnv$IS_GLOBUS) source(file.path('global', 'authentication', 'globusAPI.R'))
+if(serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'googleAPI.R'))
+if(serverEnv$IS_KEYED)  source(file.path('global', 'authentication', 'accessKey.R'))
 
 # initialize storr key-value on-disk storage
 loadFrameworkPackages('storr')
