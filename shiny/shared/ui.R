@@ -14,6 +14,26 @@ htmlHeadElements <- tags$head(
     )} else ""
 )
 
+# LOGIN PAGE CONTENT: prompt user authentication in server mode
+userLoginTabItem <- tabItem(tabName = "loginTab", tags$div(class = "text-block",
+    tags$div(
+        id = CONSTANTS$apps$loginPage,
+        includeMarkdown( file.path('static/mdi-intro.md') ),
+        if(serverEnv$IS_GLOBUS || TRUE) tagList(
+            tags$div(style = "font-size: 1.1em; text-align: center; margin-bottom: 15px;",
+                bsButton('oauth2LoginButton', 'Log in using Globus', style = "primary"),
+                actionLink('showOAuth2Help', 'Help', style = "margin-left: 1em; font-size: 0.8em;")
+            ),
+            tags$div( # server busy page
+                id = "oauth2-help",
+                style = "display: none;",
+                includeMarkdown( file.path('static/globus-help.md') )
+            )
+        ) else if(serverEnv$IS_GOOGLE) "PENDING"
+        else "PENDING"
+    )
+))
+
 # LAUNCH PAGE CONTENT: the first items typically seen that support data import
 dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-block",
     tags$div( # main launch page and file upload
@@ -32,41 +52,16 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
     plotlyOutput('nullPlotly', height = "0px", width = "0px") # must do now so plotly.js etc. are loaded  
 ))
 
-# CONFIGURATION: the tabset panel with suite selection and OAuth2 help information
-mdiConfigPanels <- function(){
-    tags$div( # page to help get Globus access to engage that data import method
-        id = "globus-setup",
-        tabBox(                          
-            title = NULL,
-            width = 12, 
-            tabPanel(
-                title = 'Tool Suites',
-                value = 'configureToolSuites',
-                "pending"
-            ),                     
-            tabPanel(
-                title = 'Get a Globus Login',
-                value = 'setupGlobusAccount',
-                includeMarkdown( file.path('static/setup-globus-account.md') ),
-                tags$div(style = "font-size: 1.1em; text-align: center; margin-bottom: 15px;",
-                    bsButton('oauth2LoginButton', 'Log in using Globus', style = "primary") 
-                )
-            )
-        )
-    )
-}
-
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
 getLaunchPage <- function(cookie, restricted = FALSE){
 
     # enforce content restrictions on first encounter of a new user while providing login help
     if(restricted){
-        dataImportMenuItem <- ""
-        dataImportTabItem  <- tags$div(class = "tab-pane")
+        firstMenuItem <- menuItem(tags$div('1 - Login',  class = "app-step"), tabName = "loginTab")
+        firsttTabItem <- userLoginTabItem
     } else {
-        dataImportMenuItem <- menuItem(tags$div('1 - Import Data',  class = "app-step"), 
-                                       tabName = "dataImport", selected = !restricted)
-        dataImportTabItem  <- dataImportTabItem
+        firstMenuItem <- menuItem(tags$div('1 - Import Data',  class = "app-step"), tabName = "dataImport")
+        firsttTabItem <- dataImportTabItem
     }
     
     # assemble the dashboard page style
@@ -86,11 +81,7 @@ getLaunchPage <- function(cookie, restricted = FALSE){
         ),
         dashboardSidebar(
             # the dashboard option selectors, filled dynamically per app after first data load
-            sidebarMenu(id = "sidebarMenu",
-                menuItem(tags$div(class = "app-step", '0 - Configure'), 
-                         tabName = "configureMDI", selected = restricted),               
-                dataImportMenuItem         
-            ),
+            sidebarMenu(id = "sidebarMenu", firstMenuItem),
             htmlHeadElements, # yes, place the <head> content here (even though it seems odd)
             width = "175px" # must be here, not in CSS
         ),
@@ -100,11 +91,7 @@ getLaunchPage <- function(cookie, restricted = FALSE){
             useShinyjs(), # enable shinyjs
             HTML(paste0("<input type=hidden id='sessionNonce' value='",
                         setSessionKeyNonce(cookie$sessionKey), "' />")),
-            tabItems(
-                tabItem(tabName = "configureMDI",
-                        tags$div(class = "text-block", mdiConfigPanels())),                
-                dataImportTabItem
-            )
+            tabItems(firsttTabItem)
         )
     )    
 }
@@ -113,8 +100,12 @@ getLaunchPage <- function(cookie, restricted = FALSE){
 parseAuthenticationRequest <- function(request, cookie){
     queryString <- parseQueryString(request$QUERY_STRING) # httr function
 
+    # user was redirected back after logging out; reset to login page
+    if(!is.null(queryString$logout)){
+        getLaunchPage(cookie, restricted = TRUE)   
+
     # OAuth2 code response, handle and redirect to page with stripped url
-    if(!is.null(queryString$code)){
+    } else if(!is.null(queryString$code)){
         success <- handleOauth2Response(cookie$sessionKey, queryString) # includes state check
         if(!success) return( getLaunchPage(cookie, restricted = TRUE) )
         redirect <- sprintf("location.replace(\"%s\");", paste0(serverEnv$SERVER_URL, '?login=1'))
