@@ -19,3 +19,8 @@ observeEvent(input$oauth2LoginButton, {
     url <- getOauth2RedirectUrl(sessionKey) 
     runjs(paste0('window.location.replace("', url, '")'));
 })
+
+# show help on the login page about external authorization sources
+observeEvent(input$showOAuth2Help, {
+    show('oauth2-help')
+})

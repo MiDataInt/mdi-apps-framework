@@ -33,6 +33,7 @@ CONSTANTS <- list(
     
     # the name of the app for running Stage 1 pipelines and other framework functions
     apps = list(
+        loginPage      = 'login-page',
         launchPage     = 'launch-page',
         serverBusy     = 'server-busy',
         pipelineRunner = 'pipelineRunner'
