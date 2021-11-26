@@ -166,9 +166,6 @@ parseAuthenticationRequest <- function(request, cookie){
 # this is the function called by Shiny RunApp
 ui <- function(request){
     cookie <- parseCookie(request$HTTP_COOKIE) # parseCookie is an MDI-encoded helper function
-
-return(getLaunchPage(cookie, restricted = TRUE))
-
     if(serverEnv$REQUIRES_AUTHENTICATION){ # public servers demand a valid identity
         parseAuthenticationRequest(request, cookie)
     } else {

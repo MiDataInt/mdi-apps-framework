@@ -109,12 +109,6 @@ if(serverEnv$REQUIRES_AUTHENTICATION){
         stop(paste("unknown access_control declaration:", serverConfig$access_control))
 }
 
-#####################
-serverEnv$REQUIRES_AUTHENTICATION <- TRUE
-serverEnv$IS_KEYED <- TRUE
-
-
-
 if(serverEnv$IS_GLOBUS || serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'oauth2.R'))
 if(serverEnv$IS_GLOBUS) source(file.path('global', 'authentication', 'globusAPI.R'))
 if(serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'googleAPI.R'))
