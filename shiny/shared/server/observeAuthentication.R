@@ -26,3 +26,9 @@ observeEvent(input$keyedLoginButton, {
 observeEvent(input$showLoginHelp, {
     show('login-help')
 })
+
+# determine whether session has an authorized user
+isAuthorizedUser <- function(){
+    !serverEnv$REQUIRES_AUTHENTICATION || # private server users are implicitly authorized
+    !is.null(authenticatedUserData$authorization) # doesn't care _what_ is authorized at this stage
+}

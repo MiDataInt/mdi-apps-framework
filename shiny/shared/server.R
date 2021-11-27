@@ -22,10 +22,10 @@ serverFn <- function(input, output, session,
     show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
          CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        
     createSpinner() # create the loading spinner
+    source("server/observeAuthentication.R", local = TRUE)
     source("server/initializeLaunchPage.R", local = TRUE)
     source("server/observeLoadRequest.R", local = TRUE)
     source("server/onSessionEnded.R", local = TRUE)
-    source("server/observeAuthentication.R", local = TRUE) # last code acts on login
 }
 
 #----------------------------------------------------------------------
