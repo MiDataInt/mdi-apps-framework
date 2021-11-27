@@ -30,9 +30,10 @@ locks <- list()              # key relationships for data/UI integrity
 bookmark <- NULL             # for saving and restoring app state
 modalTmpFile <- NULL         # path to a file currently stored in www/tmp for loading into a modal
 inlineScripts <- list()      # paths to scripts sourced by app step servers
-oauth2UserData <- list()     # user info+tokens associated with external login (session-specific, not always required)
+authenticatedUserData <- list() # authenticated user info+token/key (session-specific, not always required)
 headerStatusData <- reactiveValues( # for UI display
-    user = if(serverEnv$REQUIRES_AUTHENTICATION) "" else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
+    userDisplayName = if(serverEnv$REQUIRES_AUTHENTICATION) "" 
+                      else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
     dataDir = serverEnv$DATA_DIR
 )
 

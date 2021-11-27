@@ -25,7 +25,7 @@ loginControls <- function(buttonId, buttonLabel, helpFile, includeKey = FALSE){
                 p('Enter Access Key'),
                 passwordInput('accessKeyEntry', NULL)
             ) else "",
-            bsButton(buttonId, buttonLabel, style = "primary"),
+            bsButton(buttonId, paste("Log in using", buttonLabel), style = "primary"),
             actionLink('showLoginHelp', 'Help', style = "margin-left: 1em; font-size: 0.8em;")
         ),
         tags$div(
@@ -41,11 +41,11 @@ userLoginTabItem <- tabItem(tabName = "loginTab", tags$div(class = "text-block",
         id = CONSTANTS$apps$loginPage,
         includeMarkdown( file.path('static/mdi-intro.md') ),
         if(serverEnv$IS_GLOBUS) 
-            loginControls('oauth2LoginButton', 'Log in using Globus', 'globus-help.md')
+            loginControls('oauth2LoginButton', 'Globus', 'globus-help.md')
         else if(serverEnv$IS_GOOGLE)
-            loginControls('oauth2LoginButton', 'Log in using Google', 'google-help.md')
+            loginControls('oauth2LoginButton', 'Google', 'google-help.md')
         else if(serverEnv$IS_KEYED) 
-            loginControls('keyedLoginButton',  'Log in using Key', 'access-key-help.md', includeKey = TRUE)
+            loginControls('keyedLoginButton',  'Key',    'access-key-help.md', includeKey = TRUE)
         else p("CONFIGURATION ERROR")
     )
 ))
@@ -117,20 +117,16 @@ handleLoginResponse <- function(cookie, queryString, handler){
     success <- handler(cookie$sessionKey, queryString)
     if(!success) return( getLaunchPage(cookie, restricted = TRUE) )
     redirect <- sprintf("location.replace(\"%s\");", paste0(serverEnv$SERVER_URL, '?login=1'))
-    tags$script(HTML(redirect))  
+    tags$script(HTML(redirect)) # redirect to page with stripped url
 }
 parseAuthenticationRequest <- function(request, cookie){
     queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
 
-    # user was redirected back after logging out; reset to login page        
-    if(!is.null(queryString$logout)){
-        getLaunchPage(cookie, restricted = TRUE)
-
-    # accessKey submission, handle and redirect to page with stripped url
-    } else if(!is.null(queryString$accessKey)){
+    # handle accessKey submission
+    if(!is.null(queryString$accessKey)){
         handleLoginResponse(cookie, queryString, handleAccessKeyResponse)
 
-    # OAuth2 code response, handle and redirect to page with stripped url
+    # handle OAuth2 code response
     } else if(!is.null(queryString$code)){
         handleLoginResponse(cookie, queryString, handleOauth2Response)
         
@@ -145,19 +141,19 @@ parseAuthenticationRequest <- function(request, cookie){
         tags$script(HTML(redirect))
 
     # ... for a known user
-    } else if(serverEnv$IS_SERVER && # new public user, show the help page only
-              is.null(cookie$hasLoggedIn) &&
-              is.null(queryString$login)){
+    } else if(serverEnv$REQUIRES_AUTHENTICATION && # new session for a public user, show the login page only
+              is.null(cookie$hasLoggedIn) && # false if reloading a current valid session
+              is.null(queryString$login)){   # false if this is a redirect after a successful login
         getLaunchPage(cookie, restricted = TRUE)
 
     # check if we have credentials already, server will know how to handle them  
     } else {
-        if(file.exists(getAuthenticatedSessionFile('session', cookie$sessionKey))){
+        if(file.exists(getAuthenticatedSessionFile('session', cookie$sessionKey))){ # non-cookie check for an authenticated session # nolint
             getLaunchPage(cookie)
         } else if(serverEnv$IS_KEYED){
             getLaunchPage(cookie, restricted = TRUE)
         } else {
-            redirectToOauth2Login(cookie$sessionKey)
+            redirectToOauth2Login(cookie$sessionKey) # allow oauth2 users to quickly pass authentication via prior SSO
         }
     }
 }

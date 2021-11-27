@@ -10,12 +10,17 @@ headerStatusServer <- function(id) {
     moduleServer(id, function(input, output, session) {
         
 # output text
-output$user    <- renderText({ headerStatusData$user })
-output$dataDir <- renderText({ headerStatusData$dataDir })    
+output$userDisplayName <- renderText({ 
+    headerStatusData$userDisplayName 
+})
+output$dataDir <- renderText({ 
+    req(headerStatusData$userDisplayName)
+    headerStatusData$dataDir 
+})    
 
 # allow user to log out
 observeEvent(input$logout, {
-    req(headerStatusData$user)
+    req(headerStatusData$userDisplayName)
     config <- getOauth2Config()
     url <- parse_url(config$urls$logout)
     file.remove(sessionFile) # make sure we forget them too
@@ -29,6 +34,8 @@ observeEvent(input$logout, {
 
 # allow user to change the dataDir; necessarily reloads the page
 observeEvent(input$changeDataDir, {
+    req(headerStatusData$userDisplayName)
+    req(headerStatusData$dataDir)
     showUserDialog(
         "Change the data directory",
         tags$p("Navigate to the folder where apps should store/look for data and analyses and click OK."),

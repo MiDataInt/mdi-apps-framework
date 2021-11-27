@@ -19,9 +19,10 @@ handleAccessKeyResponse <- function(sessionKey, queryString){
         testHash <- digest::digest(saltedKey)
         if(testHash == expectedHash){
             keyMatch <- TRUE
-            keyedUserData <- list()
-            keyedUserData$user <- list(keyName = keyName, key = key)
-            save(keyedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
+            authenticatedUserData <- key
+            authenticatedUserData$user <- list(keyName = keyName, key = key)
+            authenticatedUserData$user$displayName <- keyName
+            save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
             break
         }
     }
