@@ -21,8 +21,8 @@ observeEvent(input$logout, {
     file.remove(sessionFile) # make sure we forget them too
     url$query <- list(
         client_id = serverConfig$oauth2$client$key, # don't redirect back to app, since it requires logging in again!
-        redirect_uri = "https://midataint.github.io/",
-        redirect_name = "Michigan Data Interface"        
+        redirect_uri = serverEnv$SERVER_URL,
+        redirect_name = paste("Michigan Data Interface at", serverEnv$SERVER_URL)
     )
     runjs(paste0("window.location.href = '", build_url(url), "'"))
 })
