@@ -52,27 +52,22 @@ server <- function(input, output, session){
         isLoggedIn <- file.exists(sessionFile)   
 
         # new public user, show the help page only
-        if(serverEnv$IS_SERVER && 
-           is.null(cookie$hasLoggedIn) &&
-           !isLoggedIn) { 
+        if(serverEnv$REQUIRES_AUTHENTICATION && !isLoggedIn) { 
             serverFn(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted = TRUE)
-
-        # # redirect after setting session key in local mode
-        # } else if(is.null(priorCookie$isSession)){ 
-        #     runjs(paste0('window.location.replace("', serverEnv$SERVER_URL, '")'));
       
         # definitive page load
         } else {
-            # if(isLoggedIn && is.null(cookie$hasLoggedIn)) session$sendCustomMessage(
-            #     'setDocumentCookie',
-            #     list(
-            #         name  = 'hasLoggedIn',
-            #         data  = list(value = 1, isServerMode = serverEnv$IS_SERVER),
-            #         nDays = 10 * 365
-            #     )
-            # )
+            if(isLoggedIn && is.null(cookie$hasLoggedIn)) session$sendCustomMessage(
+                'setDocumentCookie',
+                list(
+                    name  = 'hasLoggedIn',
+                    data  = list(value = 1, isServerMode = serverEnv$IS_SERVER)
+                    # ,
+                    # nDays = 10 * 365
+                )
+            )
             serverFn(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted = FALSE) 

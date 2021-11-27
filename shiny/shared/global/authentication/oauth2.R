@@ -44,11 +44,12 @@ handleOauth2Response <- function(sessionKey, queryString){
             app      = config$app,        # access tokens have expires_in = 172800 seconds = 48 hours
             code     = queryString$code
         )
-        oauth2UserData <- list(tokens = list( # sets into variable declared is server function, i.e., session scoped
+        authenticatedUserData <- list(tokens = list( 
             auth     = convertOauth2Tokens(tokens)
         ))
-        oauth2UserData$user <- jwt_decode_sig(tokens$id_token, config$publicKey) # using the id_token
-        save(oauth2UserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
+        authenticatedUserData$user <- jwt_decode_sig(tokens$id_token, config$publicKey) # using the id_token
+        authenticatedUserData$user$displayName <- authenticatedUserData$user$email
+        save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
     } else {
         message('!! OAuth2 state check failed !!')   
     }
