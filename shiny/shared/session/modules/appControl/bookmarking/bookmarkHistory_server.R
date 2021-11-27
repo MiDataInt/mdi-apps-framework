@@ -54,6 +54,8 @@ set <- function(json=NULL, file=NULL, name=NULL){
     )
 }
 
+message("bookmarkHistoryServer DONE LOADING")
+
 #----------------------------------------------------------------------
 # return values
 #----------------------------------------------------------------------

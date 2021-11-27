@@ -32,7 +32,7 @@ observeEvent(input$updateCode, {
     startSpinner(session, 'sidebarStatus input$updateCode')
     
     # resource all scripts (presumably including developer edits)
-    loadAllRScripts('global', recursive=TRUE)
+    loadAllRScripts('global', recursive = TRUE)
     loadAppScriptDirectory('session')
     loadAppScriptDirectory(app$DIRECTORY)
     
