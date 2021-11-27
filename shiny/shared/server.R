@@ -26,6 +26,9 @@ serverFn <- function(input, output, session,
     source("server/observeLoadRequest.R", local = TRUE)
     source("server/onSessionEnded.R", local = TRUE)
     source("server/observeAuthentication.R", local = TRUE) # last code acts on login
+
+message("serverFn DONE")
+
 }
 
 #----------------------------------------------------------------------

@@ -14,6 +14,7 @@ observeEvent(input$oauth2LoginButton, {
     runjs(paste0('window.location.replace("', url, '")'));
 })
 observeEvent(input$keyedLoginButton, {
+    req(input$accessKeyEntry)
     state <- list(accessKey = input$accessKeyEntry) # don't pass the key, just a transient stateKey, in the redirect url
     stateKey <- getAuthenticationStateKey(sessionKey)
     save(state, file = getAuthenticatedSessionFile('state', stateKey))

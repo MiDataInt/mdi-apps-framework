@@ -4,7 +4,7 @@
 session$onSessionEnded(function(){
     
     # autosave the users last page state and clean up the bookmarking storr
-    isolate( bookmarkHistory$set(name = CONSTANTS$autoSavedBookmark) )
+    if(exists(bookmarkHistory)) isolate( bookmarkHistory$set(name = CONSTANTS$autoSavedBookmark) )
     serverEnv$STORR$gc()
 
     # delete any session tmp files still on disk
