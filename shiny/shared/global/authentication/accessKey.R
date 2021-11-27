@@ -4,8 +4,10 @@
 
 # process the access key offered by the user
 handleAccessKeyResponse <- function(sessionKey, queryString){
-    stateMatch <- getAuthenticationStateKey(sessionKey) == queryString$state
+    stateKey <- getAuthenticationStateKey(sessionKey)
+    stateMatch <- stateKey == queryString$state
     if(!stateMatch) return(FALSE)
+    load(file = getAuthenticatedSessionFile('state', stateKey))
     keyMatch <- FALSE
     config <- serverConfig$keys
     for(keyName in names(config)){
@@ -13,7 +15,7 @@ handleAccessKeyResponse <- function(sessionKey, queryString){
         x <- strsplit(key$hash, '_')[[1]] 
         salt <- x[1]
         expectedHash <- x[2]
-        saltedKey <- paste0(salt, queryString$accessKey)
+        saltedKey <- paste0(salt, state$accessKey)
         testHash <- digest::digest(saltedKey)
         if(testHash == expectedHash){
             keyMatch <- TRUE

@@ -65,14 +65,14 @@ server <- function(input, output, session){
       
         # definitive page load
         } else {
-            if(isLoggedIn && is.null(cookie$hasLoggedIn)) session$sendCustomMessage(
-                'setDocumentCookie',
-                list(
-                    name  = 'hasLoggedIn',
-                    data  = list(value = 1, isServerMode = serverEnv$IS_SERVER),
-                    nDays = 10 * 365
-                )
-            )
+            # if(isLoggedIn && is.null(cookie$hasLoggedIn)) session$sendCustomMessage(
+            #     'setDocumentCookie',
+            #     list(
+            #         name  = 'hasLoggedIn',
+            #         data  = list(value = 1, isServerMode = serverEnv$IS_SERVER),
+            #         nDays = 10 * 365
+            #     )
+            # )
             serverFn(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted = FALSE) 

@@ -40,7 +40,6 @@ serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_O
 if(serverEnv$IS_SERVER) { # public web server mode
     serverEnv$IS_DEVELOPER <- FALSE # !! never expose developer tools on a public server !!
     serverEnv$LAUNCH_BROWSER <- FALSE
-    setServerEnv('DEBUG', FALSE, as.logical)
     setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
     setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
     serverEnv$CALLBACK_URL <- serverEnv$SERVER_URL
@@ -108,7 +107,6 @@ if(serverEnv$REQUIRES_AUTHENTICATION){
     } else
         stop(paste("unknown access_control declaration:", serverConfig$access_control))
 }
-
 if(serverEnv$IS_GLOBUS || serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'oauth2.R'))
 if(serverEnv$IS_GLOBUS) source(file.path('global', 'authentication', 'globusAPI.R'))
 if(serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'googleAPI.R'))
@@ -126,13 +124,6 @@ invisible(unlink(
     recursive = TRUE,
     force = TRUE
 ))
-
-# web server debug assist (since harder to track log files on server)
-PRINT_DEBUG_FILE <- 'PRINT_DEBUG.txt'
-PRINT_DEBUG <- function(obj){
-    x <- capture.output(print(obj))
-    cat(x, file = PRINT_DEBUG_FILE, append = TRUE, sep = "\n")
-}
 
 # set the list of known apps
 source(file.path('global', 'utilities', 'apps.R'))

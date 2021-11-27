@@ -20,10 +20,13 @@ observeEvent(input$oauth2LoginButton, {
     runjs(paste0('window.location.replace("', url, '")'));
 })
 observeEvent(input$keyedLoginButton, {
+    reportProgress('input$keyedLoginButton')
+    state <- list(accessKey = input$accessKeyEntry)
     stateKey <- getAuthenticationStateKey(sessionKey)
     save(state, file = getAuthenticatedSessionFile('state', stateKey))
-    url <- sprintf("location.replace(\"%s\");", paste0(
-        serverEnv$SERVER_URL, '?state=', stateKey, '&accessKey=', input$accessKeyEntry)
+    url <- sprintf(
+        "location.replace(\"%s\");", 
+        paste0(serverEnv$SERVER_URL, '?state=', stateKey, '?accessKey=', TRUE)
     )
     runjs(paste0('window.location.replace("', url, '")'));
 })
