@@ -60,10 +60,6 @@ observe({
     activateTab(bookmark$step)
 })
 
-
-message("bookmarkingServer DONE LOADING")
-
-
 #----------------------------------------------------------------------
 # set return value as reactiveValues
 #----------------------------------------------------------------------
