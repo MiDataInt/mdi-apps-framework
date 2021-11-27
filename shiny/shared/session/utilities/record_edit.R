@@ -64,7 +64,6 @@ addDataListObserver <- function(module, template, data, dataFrame){
         reportProgress('observe data$list', module)
         table <- template
         for(id in names(data$list)){
-            message(id)
             table <- rbind(table, dataFrame(data$list[[id]], id))
         }
         data$summary <- table

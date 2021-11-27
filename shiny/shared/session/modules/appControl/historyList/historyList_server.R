@@ -38,9 +38,9 @@ indices <- 1:maxN
 
 # set the key that identifies the user
 userKey <- reactive({
-    if(headerStatusData$user != '') headerStatusData$user # prefer email or host user name
-    else if(!serverEnv$IS_SERVER) cookie$hostKey # fallback in case failed to get host user name
-    else NULL # if not logged in in server mode
+    if(headerStatusData$userDisplayName != "") headerStatusData$userDisplayName # prefer email or host user name
+    else if(!serverEnv$REQUIRES_AUTHENTICATION) cookie$hostKey # fallback in case failed to get host user name
+    else NULL # if not logged in server mode
 })
 
 # get or create the master table of all history items
