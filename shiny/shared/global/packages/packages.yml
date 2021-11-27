@@ -33,6 +33,7 @@ R:
         - sortable   # drag and drop capability
         - tippy      # tooltips
         - shinyjs
+        - shinyFiles # for server-side file browsing, etc.
             #- shinycssloaders
             #- readxl
             #- writexl
