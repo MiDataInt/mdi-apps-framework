@@ -14,13 +14,10 @@ observeEvent(input$oauth2LoginButton, {
     runjs(paste0('window.location.replace("', url, '")'));
 })
 observeEvent(input$keyedLoginButton, {
-    state <- list(accessKey = input$accessKeyEntry) # don't pass the key, just a transient state, in the redirect rule
+    state <- list(accessKey = input$accessKeyEntry) # don't pass the key, just a transient stateKey, in the redirect url
     stateKey <- getAuthenticationStateKey(sessionKey)
     save(state, file = getAuthenticatedSessionFile('state', stateKey))
-    url <- sprintf(
-        "location.replace(\"%s\");", 
-        paste0(serverEnv$SERVER_URL, '?state=', stateKey, '&accessKey=', TRUE)
-    )
+    url <- paste0(serverEnv$SERVER_URL, '?state=', stateKey, '&accessKey=', TRUE)
     runjs(paste0('window.location.replace("', url, '")'));
 })
 
