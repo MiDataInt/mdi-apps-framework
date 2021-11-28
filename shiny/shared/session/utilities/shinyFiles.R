@@ -24,6 +24,7 @@ serverFilesButtonUI <- function(id){
 serverFilesButtonServer <- function(id, input, session, 
                                     rw = "read", filetypes = NULL,
                                     loadFn = function(file) NULL){
+    message('serverFilesButtonServer')
     addServerFilesObserver(id, input, loadFn)
     shinyFileChoose(
         input,
@@ -37,6 +38,7 @@ serverFilesButtonServer <- function(id, input, session,
     )
 }
 addServerFilesObserver <- function(id, input, loadFn){
+    message('addServerFilesObserver')
     observeEvent(input[[id]], {
         file <- input[[id]]
         req(file)    
@@ -49,10 +51,11 @@ addServerFilesObserver <- function(id, input, loadFn){
 # get the server file paths authorized to the current, authenticated user
 #----------------------------------------------------------------------
 getAuthorizedServerPaths <- function(rw = "read"){
+    message('getAuthorizedServerPaths')
     auth <- authenticatedUserData$authorization
     if(is.null(auth) || is.null(auth$paths) || is.null(auth$paths[[rw]])) return( character() )
     paths <- auth$paths[[rw]]
-    if(paths == "all") paths <- names(serverConfig$paths)
+    if(length(paths) == 1 && paths == "all") paths <- names(serverConfig$paths)
     unlist(serverConfig$paths[paths])
 }
 

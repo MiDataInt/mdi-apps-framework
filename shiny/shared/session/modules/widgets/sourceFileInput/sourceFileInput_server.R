@@ -32,6 +32,7 @@ isLaunchPage <- is.null(appName)
 # enable the local file upload input
 #----------------------------------------------------------------------
 handleIncomingSourceFile <- function(file){
+    message('handleIncomingSourceFile')
     loadIncomingFile(
         file = file,
         allowedFileTypes = allowedFileTypes,
@@ -51,6 +52,7 @@ observeEvent(input$fileInput, {
 # as needed, enable the server-side file browser
 #----------------------------------------------------------------------
 if(serverEnv$IS_SERVER && isAuthorizedUser()) {
+    message('adding server file button')
     serverFilesButtonServer(
         'serverFileInput', 
         input, 
