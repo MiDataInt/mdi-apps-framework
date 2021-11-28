@@ -25,13 +25,13 @@ headerStatusUI <- function(id) {
         ) else "",
         
         # dataDir display and switching
-        # if(serverEnv$IS_SERVER){
-        #     ""
-        # } else { tagList(
+        if(!isAuthorizedUser()){
+            ""
+        } else { tagList(
             tags$br(),
             textOutput(ns('dataDir'), inline = TRUE), # TODO: enable changing dataDir within running app
             HTML("&nbsp;&nbsp;"),
             actionLink(ns('changeDataDir'), label = NULL, icon = icon("folder"))
-        # )}
+        )}
     )
 }
