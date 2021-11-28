@@ -18,7 +18,8 @@ serverFilesButtonUI <- function(id){
         viewtype = "detail"
     )
 }
-serverFilesButtonServer <- function(id, input, session, filetypes = NULL){
+serverFilesButtonServer <- function(id, input, session, 
+                                    rw = "read", filetypes = NULL){
     observe({
         message()
         message("input[[id]]")
@@ -31,14 +32,18 @@ serverFilesButtonServer <- function(id, input, session, filetypes = NULL){
         session = session,
         defaultRoot = NULL,
         defaultPath = "",
-        roots = getAuthorizedServerPaths,
+        roots = getAuthorizedServerPaths(rw),
         filetypes = filetypes
     )
 }
 
-# get the server files paths authorized to this user
-getAuthorizedServerPaths <- function(){
-    c(TEST = "/srv/mdi")
+# get the server file paths authorized to this user
+getAuthorizedServerPaths <- function(rw = "read"){
+    auth <- authenticatedUserData$authorization
+    if(is.null(auth) || is.null(auth$paths) || is.null(auth$paths[[rw]])) return( character() )
+    paths <- auth$paths[[rw]]
+    if(paths == "all") paths <- names(serverConfig$paths)
+    unlist(serverConfig$paths[paths])
 }
 
 # roots         A named vector of absolute filepaths or a function returning a named vector of
