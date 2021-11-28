@@ -37,7 +37,6 @@ getOauth2RedirectUrl <- function(sessionKey, state = list()){
 # process the OAuth2 code response by turning it into tokens
 handleOauth2Response <- function(sessionKey, queryString){
     stateMatch <- getAuthenticationStateKey(sessionKey) == queryString$state
-    isAuthorized <- FALSE
     if(stateMatch){ # validate state to prevent cross site forgery
         config <- getOauth2Config()
         tokens <- oauth2.0_access_token(    # completes the OAuth2 authorization sequence
@@ -59,14 +58,13 @@ handleOauth2Response <- function(sessionKey, queryString){
             authenticatedUserData$authorization <- userGroup
             break
         }
-        isAuthorized <- !is.null(authenticatedUserData$authorization)
 
         # save authenticated and authorized user data in a session file
-        if(isAuthorized) save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
+        save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
     } else {
         message('!! OAuth2 state check failed !!')   
     }
-    stateMatch && isAuthorized # reject users with not authorization even if they authenticated
+    stateMatch # reject users with not authorization even if they authenticated
 }
 
 # convert tokens

@@ -52,4 +52,5 @@ isEmailMatch <- function(email, emailList){
     domain <- rev(strsplit(email, '@')[[1]])[1]
     email <- paste('*', domain, sep = '@')
     if(email %in% emailList) return(TRUE) # email domain matching, e.g., institution matching
+    FALSE # user is authenticated but not authorized
 }
