@@ -61,14 +61,15 @@ renderExpr <- quote({
         shareX <- !(is.null(shareAxis$x) || !shareAxis$x)
         shareY <- !(is.null(shareAxis$y) || !shareAxis$y)
         plotList <- lapply(names(d), function(name) {
-            getBasePlot(name, d[[name]], isMultiPlot, shareX, shareY)
+            i <- which(names(d) == name)
+            getBasePlot(name, i, d[[name]], isMultiPlot, shareX, shareY)
         })
         nPlots <- length(d)
         dims <- rep(1 / nPlots, nPlots)
         if(shareY) subplot(plotList, ncols = nPlots, shareY = TRUE, margin = shareMargin, widths = dims)
               else subplot(plotList, nrows = nPlots, shareX = TRUE, margin = shareMargin, heights = dims)
     } else {
-        getBasePlot(NULL, d, isMultiPlot)
+        getBasePlot(NULL, 1, d, isMultiPlot)
     }
 
     # finish the common layout
@@ -109,8 +110,8 @@ output$plotly <- renderPlotly(renderExpr, quoted = TRUE) #%>% bindCache(id, cach
 #----------------------------------------------------------------------
 
 # one plot of one incoming data set
-getBasePlot <- function(name, d, isMultiPlot, shareX=NULL, shareY=NULL){ 
-    fig <- if(is.list(d)) getBasePlot_data_frame(name, d) else getBasePlot_vector(name, d)
+getBasePlot <- function(name, i, d, isMultiPlot, shareX=NULL, shareY=NULL){ 
+    fig <- if(is.list(d)) getBasePlot_data_frame(name, i, d) else getBasePlot_vector(name, i, d)
     fig$p %>% layout(
         xaxis = list(
             range = fig$xrange,
@@ -133,21 +134,22 @@ getBasePlot <- function(name, d, isMultiPlot, shareX=NULL, shareY=NULL){
     ) %>% 
     addLines(d)
 }
-getRange <- function(d){
+getRange <- function(d, i){
     if(is.reactive(range)) range()
-    else if(is.function(range)) range(d)
+    else if(is.function(range)) range(d, i)
+    else if(length(range) > 1) range[i]
     else range
 }
-getBasePlot_vector <- function(name, d){ # no subgroups, caller provided a named vector
+getBasePlot_vector <- function(name, i, d){ # no subgroups, caller provided a named vector
     fig <- if(orientation == "vertical") list(
         x = names(d),
         y = d,
         xrange = NULL,
-        yrange = getRange(d)
+        yrange = getRange(d, i)
     ) else list(
         x = d,
         y = names(d),
-        xrange = getRange(d),
+        xrange = getRange(d, i),
         yrange = NULL
     )
     fig$p <- plot_ly(
@@ -159,16 +161,16 @@ getBasePlot_vector <- function(name, d){ # no subgroups, caller provided a named
     )
     fig
 }
-getBasePlot_data_frame <- function(name, d){ # groups + subgroups, caller provided a data frame
+getBasePlot_data_frame <- function(name, i, d){ # groups + subgroups, caller provided a data frame
     fig <- if(orientation == "vertical") list(
         x = d$group,
         y = d$value,
         xrange = NULL,
-        yrange = getRange(d$value)
+        yrange = getRange(d$value, i)
     ) else list(
         x = d$value,
         y = d$group,
-        xrange = getRange(d$value),
+        xrange = getRange(d$value, i),
         yrange = NULL
     )
     fig$p <- plot_ly(

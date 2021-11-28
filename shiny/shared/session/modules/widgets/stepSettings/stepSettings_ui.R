@@ -15,6 +15,6 @@ stepSettingsUI <- function(id, isHeader=TRUE) {
     # most typical usage places icon at the top of the page after the header
     span( 
         style = if(isHeader) "font-size: 0.8em; margin-left: 10px;" else NULL,
-        actionLink(ns('gearIcon'), '', icon('gear'))
+        actionLink(ns('gearIcon'), '', icon('cog')) # apparently, "gear" is no longer the Font Awesome icon name
     )
 }
