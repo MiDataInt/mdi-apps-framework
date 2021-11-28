@@ -29,7 +29,8 @@ allowedFileTypes <- getAllowedSourceFileTypes(appName, externalSuffixes)
 isLaunchPage <- is.null(appName)
 
 # as needed, enable the server-side file browser
-if(serverEnv$IS_SERVER && isAuthorizedUser()) serverFilesButtonServer(id, input, session)
+if(serverEnv$IS_SERVER && isAuthorizedUser()) 
+    serverFilesButtonServer('serverFileInput', input, session, filetypes = c("mdi", "csv"))
 
 #----------------------------------------------------------------------
 # enable the file upload input
