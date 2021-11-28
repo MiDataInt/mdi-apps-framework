@@ -1,10 +1,13 @@
 #----------------------------------------------------------------------
 # wrapper functions for shinyFiles access to server files
-# enforces authorization
+# enforces path authorization
 #----------------------------------------------------------------------
-# note: this is not a module due to the implementation of the shinyFiles package
+# note: this is _not_ a module due to the implementation of the shinyFiles package
 #----------------------------------------------------------------------
 
+#----------------------------------------------------------------------
+# a button to find a file to load
+#----------------------------------------------------------------------
 serverFilesButtonUI <- function(id){
     shinyFilesButton(
         id,
@@ -19,12 +22,9 @@ serverFilesButtonUI <- function(id){
     )
 }
 serverFilesButtonServer <- function(id, input, session, 
-                                    rw = "read", filetypes = NULL){
-    observe({
-        message()
-        message("input[[id]]")
-        print(input[[id]])
-    })
+                                    rw = "read", filetypes = NULL,
+                                    loadFn = function(file) NULL){
+    addServerFilesObserver(id, input, loadFn)
     shinyFileChoose(
         input,
         id,
@@ -36,8 +36,18 @@ serverFilesButtonServer <- function(id, input, session,
         filetypes = filetypes
     )
 }
+addServerFilesObserver <- function(id, input, loadFn){
+    observeEvent(input[[id]], {
+        file <- input[[id]]
+        req(file)    
+        reportProgress('input[[id]]')
+        loadFn(file)
+    })
+}
 
-# get the server file paths authorized to this user
+#----------------------------------------------------------------------
+# get the server file paths authorized to the current, authenticated user
+#----------------------------------------------------------------------
 getAuthorizedServerPaths <- function(rw = "read"){
     auth <- authenticatedUserData$authorization
     if(is.null(auth) || is.null(auth$paths) || is.null(auth$paths[[rw]])) return( character() )

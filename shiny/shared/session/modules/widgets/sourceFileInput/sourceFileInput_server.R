@@ -28,18 +28,10 @@ sendFeedback <- recordFeedbackFunction(output, 'fileInputFeedback')
 allowedFileTypes <- getAllowedSourceFileTypes(appName, externalSuffixes)
 isLaunchPage <- is.null(appName)
 
-# as needed, enable the server-side file browser
-if(serverEnv$IS_SERVER && isAuthorizedUser()) 
-    serverFilesButtonServer('serverFileInput', input, session, 
-                            rw = "read") # , filetypes = c("mdi", "csv")
-
 #----------------------------------------------------------------------
-# enable the file upload input
+# enable the local file upload input
 #----------------------------------------------------------------------
-observeEvent(input$fileInput, {
-    file <- input$fileInput
-    req(file)    
-    reportProgress('input$fileInput', module)
+handleIncomingSourceFile <- function(file){
     loadIncomingFile(
         file = file,
         allowedFileTypes = allowedFileTypes,
@@ -47,7 +39,27 @@ observeEvent(input$fileInput, {
         isLaunchPage = isLaunchPage,
         incomingFile = incomingFile
     )
+}
+observeEvent(input$fileInput, {
+    file <- input$fileInput
+    req(file)    
+    reportProgress('input$fileInput', module)
+    handleIncomingSourceFile(file)
 })
+
+#----------------------------------------------------------------------
+# as needed, enable the server-side file browser
+#----------------------------------------------------------------------
+if(serverEnv$IS_SERVER && isAuthorizedUser()) {
+    serverFilesButtonServer(
+        'serverFileInput', 
+        input, 
+        session, 
+        rw = "read", 
+        filetypes = c("mdi", "zip", "csv"),
+        loadFn = handleIncomingSourceFile
+    ) 
+}
 
 #----------------------------------------------------------------------
 # return reactive with path to incoming file

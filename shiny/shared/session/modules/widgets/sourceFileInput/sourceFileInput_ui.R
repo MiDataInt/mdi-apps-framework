@@ -12,7 +12,7 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
 
 # as needed, enable the server-side file browser
     if(serverEnv$IS_SERVER && isAuthorizedUser()){
-        localWidth <- 8        
+        localWidth <- 9        
         fileServerButton <- column(
             width = 12 - localWidth, 
             serverFilesButtonUI( ns('serverFileInput') )
