@@ -10,11 +10,22 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
     # initialize namespace
     ns <- NS(id)
 
+    # as needed, enable the server-side file browser
+    if(serverEnv$IS_SERVER && isAuthorizedUser()){
+        fileServerButton <- serverFilesButtonUI( ns('serverFileInput') )
+        localWidth <- 8
+    } else {
+        fileServerButton <- ""
+        localWidth <- 12
+    }
+
+
     # file upload input
     tags$div(
         fluidRow(
-            class = "file-input-controls",           
-            column(width = 12, fileInput(
+            class = "file-input-controls",    
+            fileServerButton,
+            column(width = localWidth, fileInput(
                 ns('fileInput'),
                 NULL,
                 multiple = FALSE,
