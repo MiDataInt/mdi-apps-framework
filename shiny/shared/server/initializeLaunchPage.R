@@ -4,7 +4,7 @@
 if(!restricted){
     
     # initial file upload (just one initial file, additional files added later via sourceFileUpload module)
-    output$mainFileInputUI <- renderUI({
+    if(isAuthorizedUser()) output$mainFileInputUI <- renderUI({
         id <- 'mainFileInput'
         sourceFileInputServer(id)
         sourceFileInputUI(id)
@@ -21,7 +21,7 @@ if(!restricted){
     
     # bookmarks cached on user's local computer
     bookmarkHistory <- NULL
-    output$bookmarkHistoryList <- renderUI({
+    output$bookmarkHistoryList <- if(isAuthorizedUser()) renderUI({
         id <- 'bookmarkHistory'
         bookmarkHistory <<- bookmarkHistoryServer(id)
 
@@ -34,5 +34,19 @@ if(!restricted){
         })       
 
         bookmarkHistoryUI(id)
+
+    # message to communicate authorization failure (despite authentication success)
+    # piggybacks into bookmarkHistoryList for convenience
+    }) else renderUI({
+        tagList(
+            hr(),
+            tags$p(
+                tags$strong("You are not authorized to use the resources on this server."),
+                style = "color: rgb(125,0,0); font-size: 1.05em;"
+            ),
+            tags$p(
+                "Please contact the site administrator if you think you have reached this message in error."
+            )
+        )
     })
 }

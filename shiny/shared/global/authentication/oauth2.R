@@ -37,6 +37,7 @@ getOauth2RedirectUrl <- function(sessionKey, state = list()){
 # process the OAuth2 code response by turning it into tokens
 handleOauth2Response <- function(sessionKey, queryString){
     stateMatch <- getAuthenticationStateKey(sessionKey) == queryString$state
+    isAuthorized <- FALSE
     if(stateMatch){ # validate state to prevent cross site forgery
         config <- getOauth2Config()
         tokens <- oauth2.0_access_token(    # completes the OAuth2 authorization sequence
@@ -44,16 +45,28 @@ handleOauth2Response <- function(sessionKey, queryString){
             app      = config$app,        # access tokens have expires_in = 172800 seconds = 48 hours
             code     = queryString$code
         )
+
+        # record authenticated user information
         authenticatedUserData <- list(tokens = list( 
-            auth     = convertOauth2Tokens(tokens)
+            auth = convertOauth2Tokens(tokens)
         ))
         authenticatedUserData$user <- jwt_decode_sig(tokens$id_token, config$publicKey) # using the id_token
         authenticatedUserData$user$displayName <- authenticatedUserData$user$email
-        save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
+
+        # determine the authorizations for the newly authenticated user
+        for(userGroup in serverConfig$user_groups){
+            if(!isEmailMatch(authenticatedUserData$user$email, userGroup$emails)) next
+            authenticatedUserData$authorization <- userGroup
+            break
+        }
+        isAuthorized <- !is.null(authenticatedUserData$authorization)
+
+        # save authenticated and authorized user data in a session file
+        if(isAuthorized) save(authenticatedUserData, file = getAuthenticatedSessionFile('session', sessionKey)) # cache user session by sessionKey # nolint
     } else {
         message('!! OAuth2 state check failed !!')   
     }
-    stateMatch
+    stateMatch && isAuthorized # reject users with not authorization even if they authenticated
 }
 
 # convert tokens

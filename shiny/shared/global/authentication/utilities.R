@@ -41,3 +41,15 @@ getUserSessionState <- function(sessionKey){
     load(stateFile)
     state
 }
+
+# email wildcard matching
+isEmailMatch <- function(email, emailList){
+    if(is.null(email) || # check for valid inputs
+       is.null(emailList) || 
+       !grepl('@', email)) return(FALSE)
+    if(email %in% emailList) return(TRUE) # 1-to-1 matching
+    if("*@*" %in% emailList) return(TRUE) # matching to all authenticated users
+    domain <- rev(strsplit(email, '@')[[1]])[1]
+    email <- paste('*', domain, sep = '@')
+    if(email %in% emailList) return(TRUE) # email domain matching, e.g., institution matching
+}

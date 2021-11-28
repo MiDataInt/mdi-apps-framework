@@ -168,7 +168,7 @@ renderExpr <- quote({
     p <- layout(
         p,
         xaxis = list(
-            title = xtitle,
+            title = getTitle(xtitle),
             zeroline = xzeroline,
             tickmode = if(is.null(ticks$x)) 'auto' else 'linear',
             tick0 = if(is.null(ticks$x)) NULL else ticks$x$tick0,
@@ -177,7 +177,7 @@ renderExpr <- quote({
             gridcolor = if(is.logical(grid$x)) NULL else grid$x
         ),
         yaxis = list(
-            title = ytitle,
+            title = getTitle(ytitle),
             zeroline = yzeroline,
             tickmode = if(is.null(ticks$y)) 'auto' else 'linear',
             tick0 = if(is.null(ticks$y)) NULL else ticks$y$tick0,
@@ -276,6 +276,11 @@ getBasePlot <- function(name, d, overplot, isMultiPlot, shareX = NULL, shareY = 
 # helper functions to add elements to ploty_ly
 # TODO: update lines to use add_segments instead of add_trace?
 #----------------------------------------------------------------------
+
+# parse an axis title 
+getTitle <- function(title){
+    if(is.reactive(title) || is.function(title)) title() else title
+}
 
 # add one set of overplot data points
 addOverplot <- function(p, overplot){

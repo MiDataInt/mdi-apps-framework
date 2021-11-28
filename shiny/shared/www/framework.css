@@ -13,6 +13,9 @@
     color: rgb(200,0,0);
     animation: rotation alternate 
 }
+hr {
+    border-color: #ccc;
+}
 
 /*  ------------------------------------------------------------------------
     frivolous rotation of the logo on page load
