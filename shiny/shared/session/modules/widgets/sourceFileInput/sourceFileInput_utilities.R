@@ -86,7 +86,7 @@ getTargetAppFromPackageFile <- function(packageFile, sendFeedback){
 #----------------------------------------------------------------------
 loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
                              isLaunchPage = TRUE, incomingFile = NULL,
-                             suppressUnlink = FALSE){
+                             suppressUnlink = NULL){
     reportProgress('loadIncomingFile')
 
     # check for valid work to do
@@ -106,7 +106,8 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
         ))
     }
     addDataSource <- function(type){
-        incomingFile(list(name = file$name, path = file$datapath, type = type))
+        incomingFile(list(name = file$name, path = file$datapath, type = type, 
+                          suppressUnlink = suppressUnlink))
     }    
 
     # bookmark files (only allowed from launch page, always loads target app)

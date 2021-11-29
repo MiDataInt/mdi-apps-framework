@@ -111,7 +111,7 @@ observeEvent(sourceFileInput$file(), {
     req(x)
     type <- x$type
     req(type)
-    loadSourceFile(x)
+    loadSourceFile(x, suppressUnlink = x$suppressUnlink)
 })
 badSourceFile <- function(filePath, msg=""){
     unlink(filePath)

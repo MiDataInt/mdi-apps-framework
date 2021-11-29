@@ -20,7 +20,8 @@ sourceFileInputServer <- function(id, appName = NULL, externalSuffixes = c()) {
 incomingFile <- reactiveVal(list(
     name = NULL,
     path = NULL,
-    type = NULL
+    type = NULL,
+    suppressUnlink = NULL
 ))
 
 # customize the file upload feedback
