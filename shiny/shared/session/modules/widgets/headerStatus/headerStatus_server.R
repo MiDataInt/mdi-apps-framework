@@ -36,14 +36,14 @@ observeEvent(input$logout, {
 observeEvent(input$changeDataDir, {
     req(headerStatusData$userDisplayName)
     req(headerStatusData$dataDir)
-    showUserDialog(
-        "Change the data directory",
-        tags$p("Navigate to the folder where apps should store/look for data and analyses and click OK."),
-        tags$p("Please note: changing the data directory will reset the web page - you may want to Save Your Work first."), # nolint
-        tags$p("pending"), # TODO: need a file browser popup, with OK/Cancel
-        callback = function(parentInput) NULL,
-        size = "m"
-    ) 
+    # showUserDialog(
+    #     "Change the data directory",
+    #     tags$p("Navigate to the folder where apps should store/look for data and analyses and click OK."),
+    #     tags$p("Please note: changing the data directory will reset the web page - you may want to Save Your Work first."), # nolint
+    #     tags$p("pending"), # TODO: need a file browser popup, with OK/Cancel
+    #     callback = function(parentInput) NULL,
+    #     size = "m"
+    # ) 
 })
 
 #----------------------------------------------------------------------

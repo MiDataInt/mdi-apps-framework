@@ -36,13 +36,14 @@ writeBookmarkToFile <- function(file) {
     write(json, file)
 }
 if(!isServer) output[[id]] <- downloadHandler(
-    filename = function() {
-        firstStepName <- names(app$config$appSteps)[1]
-        filename <- app[[firstStepName]]$outcomes$analysisSetName
-        filename <- if(is.null(filename)) app$config$name else filename()
-        filename <- gsub(' ', '_', filename)
-        paste(filename, "mdi", sep = ".")
-    },
+    # filename = function() {
+    #     firstStepName <- names(app$config$appSteps)[1]
+    #     filename <- app[[firstStepName]]$outcomes$analysisSetName
+    #     filename <- if(is.null(filename)) app$config$name else filename()
+    #     filename <- gsub(' ', '_', filename)
+    #     paste(filename, "mdi", sep = ".")
+    # },
+    filename = getDefaultBookmarkName,
     content = writeBookmarkToFile
 )
 

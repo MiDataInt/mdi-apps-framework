@@ -18,7 +18,8 @@ bookmarkingUI <- function(id, options) {
     
     # return a single button to initiate download...
     # ... to public server
-    if(options$shinyFiles) serverBookmarkButtonUI(ns(id), label, class = options$class)
+    if(options$shinyFiles) 
+        serverBookmarkButtonUI(ns(id), label, class = options$class, filename = options$filename)
     # ...to local computer
     else downloadButton(ns(id), label, class = options$class)
 }
