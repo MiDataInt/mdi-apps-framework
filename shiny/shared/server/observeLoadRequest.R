@@ -152,7 +152,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
         if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
         firstStep <- app[[ names(app$config$appSteps)[1] ]]        
-        firstStep$loadSourceFile(loadRequest()$file)
+        firstStep$loadSourceFile(loadRequest()$file, suppressUnlink = loadRequest()$suppressUnlink)
     } 
 
     # clean up
