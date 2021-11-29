@@ -40,9 +40,9 @@ serverFilesButtonServer <- function(id, input, session,
 addServerFilesObserver <- function(id, input, loadFn, paths){
     observeEvent(input[[id]], {
         file <- input[[id]]
-        req(file)    
+        req(file)
         reportProgress('input[[id]]')
-        loadFn( parseFilePaths(paths, file) )   
+        loadFn( parseFilePaths(paths, file) )
     })
 }
 
