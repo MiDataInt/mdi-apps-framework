@@ -28,6 +28,7 @@ appStepNamesByType <- list() # lookup to find an app step name by the type(s) of
 #analysisTypes <- list()     # parameters defining different types of data analyses
 locks <- list()              # key relationships for data/UI integrity
 bookmark <- NULL             # for saving and restoring app state
+serverBookmark <- NULL       
 modalTmpFile <- NULL         # path to a file currently stored in www/tmp for loading into a modal
 inlineScripts <- list()      # paths to scripts sourced by app step servers
 authenticatedUserData <- list() # authenticated user info+token/key (session-specific, not always required)

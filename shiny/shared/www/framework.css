@@ -112,17 +112,23 @@ body, html {
     text-align: center;
     font-size: 1.2em;
 }
+
+
 .sidebarBookmarking, .sidebarBookmarking:hover, .sidebarBookmarking:focus {
     border: transparent;    
     background-color: transparent;    
-    margin-top: 2em;
 }
 .sidebarBookmarking {
     color: #dddddd !important;
+    padding: 0.25em 1em;
 }
 .sidebarBookmarking:hover {
     color: #f2f8fc !important;
 }
+.sidebarBookmarkingSingle {
+    margin-top: 2em;
+}
+
 .sidebar-status {
     color: white;
     padding: 10px;

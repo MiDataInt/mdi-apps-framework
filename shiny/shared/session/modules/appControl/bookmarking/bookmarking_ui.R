@@ -10,10 +10,15 @@ bookmarkingUI <- function(id, options) {
 
     # override missing options to defaults
     options <- setDefaultOptions(options, list(
-        label = "-Save Your Work",
-        class = ""
+        label = "Save Your Work",
+        class = "sidebarBookmarking",
+        shinyFiles = FALSE
     ))
+    label <- paste0("-", options$label)
     
-    # return a single button to initiate download
-    downloadButton(ns(id), options$label, class = options$class)
+    # return a single button to initiate download...
+    # ... to public server
+    if(options$shinyFiles) serverBookmarkButtonUI(ns(id), label, class = options$class)
+    # ...to local computer
+    else downloadButton(ns(id), label, class = options$class)
 }
