@@ -6,7 +6,7 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-bookmarkingServer <- function(id, locks) {
+bookmarkingServer <- function(id, options, locks) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'bookmarking' # for reportProgress tracing
@@ -23,11 +23,12 @@ data <- reactiveValues(
     locks = list(),
     step  = ""
 )
+isServer <- !is.null(options$shinyFiles) && options$shinyFiles
 
 #----------------------------------------------------------------------
-# download a bookmark file
+# download a bookmark file to the local computer
 #----------------------------------------------------------------------
-output[[id]] <- downloadHandler(
+if(!isServer) output[[id]] <- downloadHandler(
     filename = function() {
         firstStepName <- names(app$config$appSteps)[1]
         filename <- app[[firstStepName]]$outcomes$analysisSetName
@@ -41,6 +42,16 @@ output[[id]] <- downloadHandler(
         bookmarkHistory$set(json = json)
         write(json, file)
     }
+)
+
+#----------------------------------------------------------------------
+# save a bookmark file to the server machine
+#----------------------------------------------------------------------
+if(isServer) serverBookmarkButtonServer(
+    id, 
+    input, 
+    session,
+    saveFn = function(file) message(file)
 )
 
 #----------------------------------------------------------------------

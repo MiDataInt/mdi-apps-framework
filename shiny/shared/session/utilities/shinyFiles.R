@@ -1,6 +1,5 @@
 #----------------------------------------------------------------------
-# wrapper functions for shinyFiles access to server files
-# enforces path authorization
+# wrapper functions for shinyFiles access to server files, subject to authorization
 #----------------------------------------------------------------------
 # note: this is _not_ a module due to the implementation of the shinyFiles package
 #----------------------------------------------------------------------
@@ -11,13 +10,13 @@
 serverFilesButtonUI <- function(id){
     shinyFilesButton(
         id,
-        "Browse on Server",
+        "Load from Server",
         "Select data package, bookmark, or other source file to import",
         multiple = FALSE,
         buttonType = "default",
         class = NULL,
         icon = NULL,
-        style = NULL,
+        style = "width: 100%",
         viewtype = "detail"
     )
 }
@@ -29,7 +28,6 @@ serverFilesButtonServer <- function(id, input, session,
     shinyFileChoose(
         input,
         id,
-        updateFreq = 0,
         session = session,
         defaultRoot = NULL,
         defaultPath = "",
@@ -41,22 +39,57 @@ addServerFilesObserver <- function(id, input, loadFn, paths){
     observeEvent(input[[id]], {
         file <- input[[id]]
         req(file)
-        reportProgress('input[[id]]')
+        reportProgress('serverFilesObserver')
         loadFn( parseFilePaths(paths, file) )
     })
 }
 
 #----------------------------------------------------------------------
-# get the server file paths authorized to the current, authenticated user
+# enable bookmark saving
 #----------------------------------------------------------------------
-getAuthorizedServerPaths <- function(rw = "read"){
-    auth <- authenticatedUserData$authorization
-    if(is.null(auth) || is.null(auth$paths) || is.null(auth$paths[[rw]])) return( character() )
-    paths <- auth$paths[[rw]]
-    if(length(paths) == 1 && paths == "all") paths <- names(serverConfig$paths)
-    unlist(serverConfig$paths[paths])
+serverBookmarkButtonUI <- function(id, label, class){
+    shinySaveButton(
+        id,
+        label,
+        "Save bookmark to server",
+
+        filename = "xxxxx",
+
+        filetype = "mdi",
+        buttonType = "default",
+        class = class,
+        icon = icon("download"),
+        style = "margin: 0;",
+        viewtype = "detail"
+    )
+}
+serverBookmarkButtonServer <- function(id, input, session,
+                                       saveFn = function(file) NULL){
+    paths <- getAuthorizedServerPaths('write')
+    addServerBookmarkObserver(id, input, saveFn, paths)
+    shinyFileSave(
+        input, 
+        id, 
+        session = session,
+        defaultRoot = NULL,
+        defaultPath = "shinyFileSave", ##################### 
+        allowDirCreate = TRUE,
+        roots = paths,
+        filetypes = 'mdi'
+    )
+}
+addServerBookmarkObserver <- function(id, input, saveFn, paths){
+    observeEvent(input[[id]], {
+        file <- input[[id]]
+        req(file)
+        reportProgress('serverBookmarkObserver')
+        saveFn( parseSavePath(paths, file) )
+    })
 }
 
+#----------------------------------------------------------------------
+# from the shinyFile documentation for dirGetter and fileGetter, used by shinyFileChoose, etc.
+#----------------------------------------------------------------------
 # roots         A named vector of absolute filepaths or a function returning a named vector of
 #               absolute filepaths (the latter is useful if the volumes should adapt to changes in
 #               the filesystem).

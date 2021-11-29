@@ -6,9 +6,20 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     req(loadRequest()$app)
     startSpinner(session, 'observeLoadRequest') 
 
-    # initialize the requested app
+    # authorize the requested app
     NAME <- loadRequest()$app
-    DIRECTORY <- appDirs[[NAME]] # app working directory, could be definitive or developer
+    DIRECTORY <- appDirs[[NAME]] # app working directory, could be definitive or developer    
+    if(serverEnv$REQUIRES_AUTHENTICATION && !isAuthorizedApp(NAME)) {
+        stopSpinner(session, 'observeLoadRequest: unauthorized')
+        showUserDialog(
+            "Unauthorized App", 
+            tags$p(paste("You are not authorized to use the", NAME, "app.")), 
+            type = 'okOnly'
+        )
+        return()
+    }
+
+    # initialize the requested app
     app$NAME <<- NAME
     app$DIRECTORY <<- DIRECTORY
     app$sources <<- parseAppDirectory(app$DIRECTORY)
@@ -76,7 +87,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
         ui = tagList(
             menuItem(tags$div(app$config$name, class = "app-name"), tabName = "appName"), # app name, links to Overview
             if(nAppSteps > 0) lapply(1:nAppSteps, sequentialMenuItem), # app-specific steps
-            bookmarkingUI('saveBookmarkFile', list(class = "sidebarBookmarking")), # enable state bookmarking
+            saveYourWorkLinks()  # enable state bookmarking
             # if(serverEnv$IS_DEVELOPER) sibebarStatusUI('frameworkStatus') else ""
         )
     )      
@@ -97,7 +108,8 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     locks <<- intializeStepLocks()
     
     # enable bookmarking; appStep modules react to bookmark
-    bookmark <<- bookmarkingServer('saveBookmarkFile', locks) # in the app sidebar
+    bookmark <<- bookmarkingServer('saveBookmarkFile', list(), locks) # in the app sidebar
+    if(serverEnv$IS_SERVER) serverBookmark <<- bookmarkingServer('saveBookmarkToServer', list(shinyFiles = TRUE), locks)
 
     # load servers for all required appStep modules, plus finally run appServer
     # because this is the slowest initialization step, defer many until after first UI load
