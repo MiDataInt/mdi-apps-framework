@@ -19,3 +19,13 @@ getAuthorizedServerPaths <- function(rw = "read"){
     if(length(paths) == 1 && paths == "all") paths <- names(serverConfig$paths)
     unlist(serverConfig$paths[paths])
 }
+
+# get a user's authorized default root, i.e. volume, for shinyFiles
+getAuthorizedRootVolume <- function(type){
+    auth <- authenticatedUserData$authorization
+    if(is.null(auth) || is.null(auth$paths) || is.null(auth$paths[[type]])) return( NULL )
+    root <- auth$paths[[type]]
+    paths <- names(serverConfig$paths)
+    if(!(root %in% paths)) return( NULL )
+    root
+}

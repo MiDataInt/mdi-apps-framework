@@ -31,7 +31,7 @@ isLaunchPage <- is.null(appName)
 #----------------------------------------------------------------------
 # enable the local file upload input
 #----------------------------------------------------------------------
-handleIncomingSourceFile <- function(file){
+handleIncomingSourceFile <- function(file, suppressUnlink = FALSE){
     reportProgress('handleIncomingSourceFile')
     req(file)
     req(is.list(file))
@@ -41,7 +41,8 @@ handleIncomingSourceFile <- function(file){
         allowedFileTypes = allowedFileTypes,
         sendFeedback = sendFeedback,
         isLaunchPage = isLaunchPage,
-        incomingFile = incomingFile
+        incomingFile = incomingFile,
+        suppressUnlink = suppressUnlink
     )
 }
 observeEvent(input$fileInput, {
@@ -61,7 +62,7 @@ if(serverEnv$IS_SERVER && isAuthorizedUser()) {
         session, 
         rw = "read", 
         filetypes = c("mdi", "zip", "csv"),
-        loadFn = handleIncomingSourceFile
+        loadFn = function(file) handleIncomingSourceFile(file, suppressUnlink = TRUE)
     ) 
 }
 

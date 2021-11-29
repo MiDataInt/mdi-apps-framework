@@ -85,7 +85,8 @@ getTargetAppFromPackageFile <- function(packageFile, sendFeedback){
 # perform initial validation and pass to app or initial page launch
 #----------------------------------------------------------------------
 loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
-                             isLaunchPage=TRUE, incomingFile=NULL){
+                             isLaunchPage = TRUE, incomingFile = NULL,
+                             suppressUnlink = FALSE){
     reportProgress('loadIncomingFile')
 
     # check for valid work to do
@@ -97,8 +98,12 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
     # initialize common values and actions
     sft <- CONSTANTS$sourceFileTypes
     launchApp <- function(type, appName){
-        loadRequest(list(app = appName, file = list(name = file$name, path = file$datapath,
-                                                    type = type, nocache = file$nocache)))
+        loadRequest(list(
+            app = appName, 
+            file = list(name = file$name, path = file$datapath,
+                        type = type, nocache = file$nocache),
+            suppressUnlink = suppressUnlink
+        ))
     }
     addDataSource <- function(type){
         incomingFile(list(name = file$name, path = file$datapath, type = type))

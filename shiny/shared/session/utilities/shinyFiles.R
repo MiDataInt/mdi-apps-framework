@@ -29,8 +29,7 @@ serverFilesButtonServer <- function(id, input, session,
         input,
         id,
         session = session,
-        defaultRoot = NULL,
-        defaultPath = "",
+        defaultRoot = getAuthorizedRootVolume('load_default'),
         roots = paths,
         filetypes = filetypes
     )
@@ -47,14 +46,13 @@ addServerFilesObserver <- function(id, input, loadFn, paths){
 #----------------------------------------------------------------------
 # enable bookmark saving
 #----------------------------------------------------------------------
-serverBookmarkButtonUI <- function(id, label, class){
+serverBookmarkButtonUI <- function(id, label, class, filename = NULL){
+    if(is.null(filename)) filename <- app$NAME
     shinySaveButton(
         id,
         label,
         "Save bookmark to server",
-
-        filename = "xxxxx",
-
+        filename = filename,
         filetype = "mdi",
         buttonType = "default",
         class = class,
@@ -71,8 +69,7 @@ serverBookmarkButtonServer <- function(id, input, session,
         input, 
         id, 
         session = session,
-        defaultRoot = NULL,
-        defaultPath = "shinyFileSave", ##################### 
+        defaultRoot = getAuthorizedRootVolume('bookmark_default'),
         allowDirCreate = TRUE,
         roots = paths,
         filetypes = 'mdi'
@@ -82,8 +79,10 @@ addServerBookmarkObserver <- function(id, input, saveFn, paths){
     observeEvent(input[[id]], {
         file <- input[[id]]
         req(file)
+        file <- parseSavePath(paths, file)
+        req(nrow(file) > 0)    
         reportProgress('serverBookmarkObserver')
-        saveFn( parseSavePath(paths, file) )
+        saveFn( file$datapath[1] )
     })
 }
 

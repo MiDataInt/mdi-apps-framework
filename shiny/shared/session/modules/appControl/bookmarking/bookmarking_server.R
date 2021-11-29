@@ -28,6 +28,13 @@ isServer <- !is.null(options$shinyFiles) && options$shinyFiles
 #----------------------------------------------------------------------
 # download a bookmark file to the local computer
 #----------------------------------------------------------------------
+writeBookmarkToFile <- function(file) {
+    req(file)
+    reportProgress('writeBookmarkToFile', module)
+    json <- getBookmarkJson()
+    bookmarkHistory$set(json = json)
+    write(json, file)
+}
 if(!isServer) output[[id]] <- downloadHandler(
     filename = function() {
         firstStepName <- names(app$config$appSteps)[1]
@@ -36,12 +43,7 @@ if(!isServer) output[[id]] <- downloadHandler(
         filename <- gsub(' ', '_', filename)
         paste(filename, "mdi", sep = ".")
     },
-    content = function(file) {
-        reportProgress('bookmarking download', module)
-        json <- getBookmarkJson()
-        bookmarkHistory$set(json = json)
-        write(json, file)
-    }
+    content = writeBookmarkToFile
 )
 
 #----------------------------------------------------------------------
@@ -51,7 +53,7 @@ if(isServer) serverBookmarkButtonServer(
     id, 
     input, 
     session,
-    saveFn = function(file) message(file)
+    saveFn = writeBookmarkToFile
 )
 
 #----------------------------------------------------------------------

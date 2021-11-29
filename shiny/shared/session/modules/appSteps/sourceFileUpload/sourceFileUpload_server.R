@@ -84,7 +84,7 @@ samples <- summaryTableServer(
 #----------------------------------------------------------------------
 # load an incoming data source file (either via launch page or app step 1)
 #----------------------------------------------------------------------
-loadSourceFile <- function(incomingFile){
+loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
     reportProgress('loadSourceFile', module)
     reportProgress(incomingFile$path, module)
     startSpinner(session, 'loadSourceFile')
@@ -94,7 +94,7 @@ loadSourceFile <- function(incomingFile){
     loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId) # nolint
          else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId)
          else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId) # nolint
-    unlink(incomingFile$path)         
+    if(is.null(suppressUnlink) || !suppressUnlink) unlink(incomingFile$path)         
     sources$list[[sourceId]] <- c(
         loaded,
         list(
