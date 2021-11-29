@@ -2,8 +2,8 @@
 saveYourWorkLinks <- function(){
 
     # in server mode, show two buttons, one for local download, one for shinyFiles
-    if(serverEnv$IS_SERVER){
-        addServerBookmarkObserver()
+    if(TRUE || serverEnv$IS_SERVER){
+        addServerAnalysisSetObserver()
         tagList(
             tags$p(
                 "Save Your Work",
@@ -31,7 +31,7 @@ saveYourWorkLinks <- function(){
 }
 serverBookmarkingContainer <- "serverBookmarkingContainer"
 serverBookmarkingContainerId <- paste0("#", serverBookmarkingContainer)
-getServerBookmarkingUI <- function(filename){
+getServerBookmarkingUI <- function(filename = NULL){
     tags$span( 
         id = serverBookmarkingContainer,
         bookmarkingUI(
@@ -46,11 +46,14 @@ getServerBookmarkingUI <- function(filename){
 }
 
 # watch appStep 1 analysisSetName to update the server default file name
-addServerBookmarkObserver <- function(){
+addServerAnalysisSetObserver <- function(){
     observe({
         firstStepName <- names(app$config$appSteps)[1]
-        analysisSetName <- app[[firstStepName]]$outcomes$analysisSetName()
+        analysisSetName <- app[[firstStepName]]$outcomes$analysisSetName
         req(analysisSetName)
+        analysisSetName <- analysisSetName()
+        req(analysisSetName)
+        input$sidebarMenu # this causes a link flash, have to omit from default name to prevent it...
         isolate({
             filename <- getDefaultBookmarkName(suppressExtension = TRUE)
             removeUI(paste(serverBookmarkingContainerId, '*'), multiple = TRUE, immediate = TRUE)
