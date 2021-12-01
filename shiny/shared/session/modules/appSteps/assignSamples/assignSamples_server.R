@@ -389,6 +389,12 @@ observeEvent(input$saveRecord, {
         })
     })
 
+    # if requested by the calling app, validate the sample assignment set
+    if(!validateSampleAssignments__(options$validationFn, d, sendFeedback)) {
+        workingId <<- NULL
+        return()
+    }
+
     # save our work
     saveEditedRecord(d, workingId, data, r)
 

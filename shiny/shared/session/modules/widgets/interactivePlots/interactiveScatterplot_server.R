@@ -85,7 +85,6 @@ if(is.logical(selectable)){
     selectdirection <- NULL    
     selectable <- TRUE
 }
-source <- if(selectable || clickable) plotId else NULL
 dragmode <- if(selectable) selectmode else 'zoom' # or lasso, pan, https://plotly.com/r/reference/layout/#layout-dragmode # nolint
 modeBarButtons <- list( # tools available to the user
     list('zoom2d', 'pan2d'), 
@@ -218,7 +217,7 @@ getBasePlot <- function(name, d, overplot, isMultiPlot, shareX = NULL, shareY = 
         y = ~y,
         type = scatterType,
         mode = mode,
-        source = source,
+        source = plotId,
         name = name,
         marker = if(grepl('markers', mode)) list(
             size = getPointSize(d, pointSize),

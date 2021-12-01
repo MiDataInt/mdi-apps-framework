@@ -38,7 +38,6 @@ clicked <- reactiveVal()
 #----------------------------------------------------------------------
 # initialize default interaction tools and state
 #----------------------------------------------------------------------
-source <- if(clickable) plotId else NULL
 modeBarButtons <- list( # tools available to the user
     list('zoom2d', 'pan2d'), 
     list('autoScale2d', 'resetScale2d'),
@@ -156,7 +155,7 @@ getBasePlot_vector <- function(name, i, d){ # no subgroups, caller provided a na
         type = "bar",
         x = fig$x,
         y = fig$y,
-        source = source,
+        source = plotId,
         name = name    
     )
     fig
@@ -179,7 +178,7 @@ getBasePlot_data_frame <- function(name, i, d){ # groups + subgroups, caller pro
         y = fig$y,
         color = factor(d$subgroup),
         colors = subgroupColors,
-        source = source,
+        source = plotId,
         name = name    
     )
     fig
