@@ -42,7 +42,10 @@ observeEvent({
 })
 categories <- list()
 observeEvent(input$sampleSet, {
-    categories <<- source$outcomes$sampleSets()[[input$sampleSet]]$categoryNames
+    sss <- source$outcomes$sampleSets()
+    req(sss)
+    req(length(sss) > 0)
+    categories <<- sss[[input$sampleSet]]$categoryNames
     values <- reactiveValuesToList(default)
     default$group <- 1
     default$type  <- 1
@@ -63,7 +66,7 @@ observeEvent(input$sampleSet, {
 # react to user set/group/type selections by setting a reactive
 #----------------------------------------------------------------------
 assignments <- reactive({
-    req(input$sampleSet)    
+    req(input$sampleSet) 
     isGroup <- !is.null(sourceOptions$categories$group) && length(categories[[1]]) > 1
     isType  <- !is.null(sourceOptions$categories$type)  && length(categories[[2]]) > 1     
     if(isGroup) req(input$group)

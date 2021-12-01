@@ -114,7 +114,7 @@ addRemoveObserver <- function(input, inputId, module, data, sendFeedback=NULL, r
                 data$selected(NA)
                 data$list[[id]]  <- NULL # cascades to update data$ids via dataListObserver
                 data$names[[id]] <- NULL
-                if(!is.null(sendFeedback)) sendFeedback(NULL)                
+                if(!is.null(sendFeedback)) sendFeedback(NULL)               
             }
         )
     })

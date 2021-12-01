@@ -112,7 +112,7 @@ assignSamplesUI <- function(id, options) {
                 width = 9,
                 style = "padding: 0;",
                 uiOutput(ns('sampleGrid'))
-            )  
-        ) 
+            )
+        )
     )    
 }

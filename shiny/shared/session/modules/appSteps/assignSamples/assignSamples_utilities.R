@@ -55,6 +55,7 @@ getInvertedCategoryNames <- function(plural=FALSE) getCategoryNames(plural = plu
 getSampleSetAssignments <- function(id, category1=NULL, category2=NULL, categoryNames=FALSE){
     stepName <- appStepNamesByType$assign
     sampleSet <- app[[stepName]]$outcomes$sampleSets()[[id]]
+    req(sampleSet)
     assignments <- data.table(sampleSet$assignments)
     if(!is.null(category1)) assignments <- assignments[Category1 == category1]
     if(!is.null(category2)) assignments <- assignments[Category2 == category2]
