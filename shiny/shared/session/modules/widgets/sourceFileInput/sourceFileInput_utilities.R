@@ -98,10 +98,11 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
     # initialize common values and actions
     sft <- CONSTANTS$sourceFileTypes
     launchApp <- function(type, appName){
+        nocache <- if('nocache' %in% names(file)) file$nocache else NULL # suppress shinyFiles tibble warning
         loadRequest(list(
             app = appName, 
             file = list(name = file$name, path = file$datapath,
-                        type = type, nocache = file$nocache),
+                        type = type, nocache = nocache),
             suppressUnlink = suppressUnlink
         ))
     }
