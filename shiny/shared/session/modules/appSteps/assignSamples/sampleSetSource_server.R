@@ -32,7 +32,10 @@ observeEvent({
     updateSelectInput(session, 'sampleSet', choices = setNames(names(x), x))
 })
 observeEvent(assignments(), {
-    dataSources <- unique(assignments()$Source_ID)
+    assignments <- assignments()
+    req(assignments)
+    req(nrow(assignments) > 0)
+    dataSources <- unique(assignments$Source_ID)
     names(dataSources) <- sapply(dataSources, function(sourceId){
         getSourceFromId(sourceId)$unique$Project[1]
     })
@@ -45,6 +48,7 @@ observeEvent(assignments(), {
 assignments <- reactive({
     req(input$sampleSet)    
     getSampleSetAssignments(input$sampleSet)
+
 })
 allAssignments <- assignments
 

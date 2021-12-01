@@ -85,6 +85,7 @@ getStepReadiness <- function(source=NULL, list=NULL, fn=NULL, ...){
     stepListIsReady <- is.null(list) || length(list) > 0
     stepFunctionIsReady <- is.null(fn) || fn(...) # fn must return a logical
     sourceIsReady && stepListIsReady && stepFunctionIsReady
+
 }
 stepIsReady <- reactiveValues()
 addStepReadinessObserver <- function(stepName){

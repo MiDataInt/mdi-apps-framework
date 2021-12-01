@@ -7,6 +7,14 @@ reportProgress <- function(msg, module=NULL){
     }
 }
 
+# debug function (with easily searchable names to find when done debugging)
+debugMsg <- function(msg, module=NULL){
+    if(!is.null(module) && module != '') msg <- paste0(module, ": ", msg)
+    if(!isParentProcess) msg <- paste0('CHILD PROCESS', ": ", msg)
+    message(msg)
+}
+debugStr <- function(x) str(x)
+
 # log information about sessions for server management
 logSessionMetadata <- function(sessionData){
 
