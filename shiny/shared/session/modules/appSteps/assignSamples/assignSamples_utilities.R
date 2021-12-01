@@ -1,10 +1,67 @@
 #----------------------------------------------------------------------
-# retrieve sample set names and unique identifiers
+# check and retrieve sample set names and unique identifiers
 #----------------------------------------------------------------------
 # depends on assignSamples or comparable replacement module
 # which must set app[[stepName]]$sampleSets and $sampleSetNames reactives
 #----------------------------------------------------------------------
 # names can be overriden by user edits and are stored in keyed list
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+# if requested by calling app, validate a sampleSet assignment
+#----------------------------------------------------------------------
+
+# internal function called by observeEvent(input$saveRecord)
+validateSampleAssignments__ <- function(validationFn, sampleSet, sendFeedback){
+
+    # no validation was requested
+    if(is.null(validationFn)) return(TRUE)
+
+    # check for a valid validation function
+    if(!exists(validationFn, envir = sessionEnv)){
+        sendFeedback(paste("unknown validationFn:", validationFn), TRUE)
+        return(FALSE)
+    }
+    fn <- get(validationFn, envir = sessionEnv)
+    if(!is.function(fn)) {
+        sendFeedback(paste("not a function:", validationFn), TRUE)
+        return(FALSE)
+    }
+
+    # ask app to validate the sampleSet
+    # validationFn must return list(success = logical, message = character)
+    results <- fn(sampleSet)
+    if(results$success) return(TRUE)
+    sendFeedback(results$message, TRUE)
+    return(FALSE)
+}
+
+# check that all sampleIds in sampleSet are known to app/package
+# to be called by validationFn, above
+checkSampleDataExists <- function(sampleSet, knownSamplesFn){
+    sourceIds <- sampleSet$assignments$Source_ID
+    for(sourceId in unique(sourceIds)){
+        rows <- sourceIds == sourceId
+        setSampleIds <- unique(sampleSet$assignments[rows, 'Sample_ID'])
+        known <- setSampleIds %in% knownSamplesFn(sourceId) # allow app to look up samples by source
+        if(!all(known)){
+            i <- which(!known)[1]
+            firstBadSample <- paste(
+                setSampleIds[i],
+                getSampleNames(sampleIds = setSampleIds[i]),
+                sep = ' == '
+            )
+            return( list(
+                success = FALSE, 
+                message = paste("sample has no data: ", firstBadSample)
+            ))
+        }
+    }
+    list(success = TRUE)
+}
+
+#----------------------------------------------------------------------
+# sampleSet getters
 #----------------------------------------------------------------------
 
 # get a single sample set name, with overrides
