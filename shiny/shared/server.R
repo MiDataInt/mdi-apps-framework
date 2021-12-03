@@ -64,8 +64,6 @@ server <- function(input, output, session){
                 list(
                     name  = 'hasLoggedIn',
                     data  = list(value = 1, isServerMode = serverEnv$IS_SERVER)
-                    # ,
-                    # nDays = 10 * 365
                 )
             )
             serverFn(input, output, session,

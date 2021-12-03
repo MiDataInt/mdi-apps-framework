@@ -115,9 +115,7 @@ getLaunchPage <- function(cookie, restricted = FALSE){
 # AUTHENTICATION FLOW CONTROL, i.e., page redirects, associated with authentication interactions
 handleLoginResponse <- function(cookie, queryString, handler){
     success <- handler(cookie$sessionKey, queryString)
-    if(!success) return( getLaunchPage(cookie, restricted = TRUE) )
-    redirect <- sprintf("location.replace(\"%s\");", paste0(serverEnv$SERVER_URL, '?login=1'))
-    tags$script(HTML(redirect)) # redirect to page with stripped url
+    getLaunchPage(cookie, restricted = !success)
 }
 parseAuthenticationRequest <- function(request, cookie){
     queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
@@ -142,8 +140,7 @@ parseAuthenticationRequest <- function(request, cookie){
 
     # ... for a known user
     } else if(serverEnv$REQUIRES_AUTHENTICATION && # new session for a public user, show the login page only
-              is.null(cookie$hasLoggedIn) && # false if reloading a current valid session
-              is.null(queryString$login)){   # false if this is a redirect after a successful login
+              is.null(cookie$hasLoggedIn)){ # false if reloading a current valid session
         getLaunchPage(cookie, restricted = TRUE)
 
     # check if we have credentials already, server will know how to handle them  
