@@ -1,0 +1,24 @@
+#----------------------------------------------------------------------
+# ui
+#----------------------------------------------------------------------
+
+# label shown on dashboard menu 
+shortLabel: "Monitor Status"
+
+# description shown on the Overview page
+shortDescription: "Track the state of previously queued analysis jobs."
+
+# label shown at top of appStep tab  
+longLabel: "Track the status of pipeline jobs"
+
+#----------------------------------------------------------------------
+# server
+#----------------------------------------------------------------------
+
+# names of the type(s) of this module ...
+types:
+    - monitorJob
+    
+# ... and of its dependencies
+sourceTypes:
+    - runJob

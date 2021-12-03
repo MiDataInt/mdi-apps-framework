@@ -49,4 +49,16 @@ if(!restricted){
             )
         )
     })
+
+    # enable the Pipeline Runner app
+    observeEvent(input$launchPipelineRunner, {
+        loadRequest(list(
+            app = "pipelineRunner",
+            file = list(
+                type = "",
+                path = ""
+            ),
+            suppressUnlink = NA
+        ))
+    })
 }

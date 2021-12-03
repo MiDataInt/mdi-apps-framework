@@ -1,0 +1,23 @@
+#----------------------------------------------------------------------
+# ui
+#----------------------------------------------------------------------
+
+# label shown on dashboard menu 
+shortLabel: "Configure Options"
+
+# description shown on the Overview page
+shortDescription: "Select input data file(s) and set options to run Stage 1 Pipeline job(s)."
+
+# label shown at top of appStep tab  
+longLabel: "Enter Stage 1 Pipeline job options"
+
+#----------------------------------------------------------------------
+# server
+#----------------------------------------------------------------------
+
+# names of the type(s) of this module ...
+types:
+    - configureJob
+    
+# ... and of its dependencies
+sourceTypes: null
