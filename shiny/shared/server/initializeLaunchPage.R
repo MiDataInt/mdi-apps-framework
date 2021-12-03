@@ -50,7 +50,7 @@ if(!restricted){
         )
     })
 
-    # enable the Pipeline Runner app
+    # enable the Pipeline Runner app from a cold start link, i.e., with no uploaded input file
     observeEvent(input$launchPipelineRunner, {
         loadRequest(list(
             app = "pipelineRunner",

@@ -4,5 +4,5 @@
     style="animation: rotatePortal 1s 1 linear;" 
 /> 
 The 
-<a href="https://midataint.github.io/" target="_mdi_docs">Michigan Data Interface</a> (MDI)
+<strong><a href="https://midataint.github.io/" target="_mdi_docs">Michigan Data Interface</a></strong> (MDI)
 provides access to various data analysis pipelines and apps.

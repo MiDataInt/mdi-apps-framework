@@ -43,6 +43,9 @@ body, html {
 .nav-tabs {
     font-weight: bold;
 }
+#configure-optionFamilies>div {
+    padding: 0;
+}
 
 /*  ------------------------------------------------------------------------
     shinydashboard header styles

@@ -125,8 +125,8 @@ invisible(unlink(
     force = TRUE
 ))
 
-# set the list of known apps
-source(file.path('global', 'utilities', 'apps.R'))
+# set the list of known apps (let Pipeline Runner load pipeline suites)
+source(file.path('global', 'utilities', 'suites.R'))
 appSuiteDirs <- getAppSuiteDirs()
 appDirs <- getAppDirs(appSuiteDirs)
 appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by installed apps; required prior to app load

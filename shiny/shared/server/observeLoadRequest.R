@@ -120,6 +120,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
             reportProgress(paste('loadStepModuleServers', stepName))            
             step <- app$config$appSteps[[i]]
             server <- get(paste0(step$module, 'Server'))
+            if(is.null(step$options)) step$options <- list()
             step$options$stepNumber <- i
             app[[stepName]] <<- server(stepName, step$options, bookmark, locks)
             addStepReadinessObserver(stepName)

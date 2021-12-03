@@ -56,13 +56,13 @@ observeEvent(input$fileInput, {
 #----------------------------------------------------------------------
 # as needed, enable the server-side file browser
 #----------------------------------------------------------------------
-if(serverEnv$IS_SERVER && isAuthorizedUser()) {
+if(exposeServerFiles()) {
     serverFilesButtonServer(
         'serverFileInput', 
         input, 
         session, 
         rw = "read", 
-        filetypes = c("mdi", "zip", "csv"),
+        filetypes = c("yml", "mdi", "zip", "csv"),
         loadFn = function(file) handleIncomingSourceFile(file, suppressUnlink = TRUE)
     ) 
 }

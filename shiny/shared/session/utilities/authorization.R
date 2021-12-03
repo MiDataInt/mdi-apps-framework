@@ -13,6 +13,7 @@ isAuthorizedApp <- function(appName){
 
 # get the server file paths authorized to an authenticated user
 getAuthorizedServerPaths <- function(rw = "read"){
+    if(!serverEnv$REQUIRES_AUTHENTICATION) return(unlist(serverConfig$paths))
     auth <- authenticatedUserData$authorization
     if(is.null(auth) || is.null(auth$paths) || is.null(auth$paths[[rw]])) return( character() )
     paths <- auth$paths[[rw]]

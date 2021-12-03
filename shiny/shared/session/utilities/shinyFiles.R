@@ -87,6 +87,50 @@ addServerBookmarkObserver <- function(id, input, saveFn, paths){
 }
 
 #----------------------------------------------------------------------
+# generic file saving
+#----------------------------------------------------------------------
+serverServerFileButtonUI <- function(id, label, filename, filetype){
+    shinySaveButton(
+        id,
+        label,
+        "Save file to server",
+        filename = filename,
+        filetype = filetype,
+        buttonType = "success",
+        viewtype = "detail"
+    )
+}
+serverServerFileButtonServer <- function(id, input, session, filetype,
+                                         saveFn = function(file) NULL){
+    paths <- getAuthorizedServerPaths('write')
+
+    message()
+str(paths)
+message()
+
+    # addServerBookmarkObserver(id, input, saveFn, paths)
+    shinyFileSave(
+        input, 
+        id, 
+        session = session,
+        defaultRoot = "treehouse", #getAuthorizedRootVolume('bookmark_default'),
+        allowDirCreate = TRUE,
+        roots = paths,
+        filetypes = filetype
+    )
+}
+# addServerBookmarkObserver <- function(id, input, saveFn, paths){
+#     observeEvent(input[[id]], {
+#         file <- input[[id]]
+#         req(file)
+#         file <- parseSavePath(paths, file)
+#         req(nrow(file) > 0)    
+#         reportProgress('serverBookmarkObserver')
+#         saveFn( file$datapath[1] )
+#     })
+# }
+
+#----------------------------------------------------------------------
 # from the shinyFile documentation for dirGetter and fileGetter, used by shinyFileChoose, etc.
 #----------------------------------------------------------------------
 # roots         A named vector of absolute filepaths or a function returning a named vector of
