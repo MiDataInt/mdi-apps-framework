@@ -28,7 +28,7 @@ uploadTypes: null
 appSteps:
     configure:
         module: configureJob
-    # run: 
-    #     module: runJob
+    run: 
+        module: runJob
     # monitor: 
     #     module: monitorJob

@@ -18,6 +18,7 @@ for(name in c('DEBUG', 'IS_DEVELOPER', 'IS_HOSTED', 'LAUNCH_BROWSER')) {
 }
 
 # set structured environment variables based on mode
+serverEnv$IS_WINDOWS  <- .Platform$OS.type != "unix"
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
 serverEnv$IS_REMOTE   <- serverEnv$SERVER_MODE == 'remote'
 serverEnv$IS_NODE     <- serverEnv$SERVER_MODE == 'node'

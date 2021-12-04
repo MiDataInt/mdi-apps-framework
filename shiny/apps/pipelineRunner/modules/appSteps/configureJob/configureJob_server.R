@@ -12,12 +12,11 @@ configureJobServer <- function(id, options, bookmark, locks) {
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# initialize module
+# initialize installed pipelines
 #----------------------------------------------------------------------
 pipelineSuiteDirs <-  getPipelineSuiteDirs()
 pipelineDirs <- getPipelineDirs(pipelineSuiteDirs)
 pipelineSuites <- getInstalledPipelineSuites(pipelineDirs)
-serverServerFileButtonServer("saveJobFile", input, session, "yml", saveFn = function(file) NULL)
 
 #----------------------------------------------------------------------
 # cascade update suite and pipeline selectInputs
@@ -45,6 +44,64 @@ pipelineConfig <- reactive({
 })
 
 #----------------------------------------------------------------------
+# control job file saving and file-path-dependent display elements
+#----------------------------------------------------------------------
+jobFile <- reactiveVal(NULL) # current working job file, the main output of this module
+
+# control job file UI elements
+output$jobFilePath <- renderUI({  # display jobFile path to user, with delete link
+    req(jobFile())
+    tags$p(
+        jobFile(), 
+        " ",
+        tags$span(style = "margin-left: 1em;"), actionLink(ns("deleteJobFile"), "Delete")
+    )
+})
+output$saveJobFileUI <- renderUI({ # dynamically colored button for job file saving
+    req(input$pipeline)
+    buttonType <- if(is.null(jobFile())) "success" else "default"
+    serverSaveFileButtonUI(ns("saveJobFile"), "Save Job Config", input$pipeline, ".yml", 
+                           buttonType = buttonType)
+})
+observeEvent(jobFile(), {
+    req(jobFile())
+    disable('suite') # once a file is saved, the pipeline cannot be changed
+    disable('pipeline')
+})
+
+# job file save action
+saveJobFile <- function(jobFilePath){
+    jobFile(jobFilePath)
+}
+serverSaveFileButtonServer("saveJobFile", input, session, "yml", 
+                           default_type = 'job_default', saveFn = saveJobFile)
+
+# job file delete action
+observeEvent(input$deleteJobFile, {
+    showUserDialog(
+        "Confirm Job File Deletion", 
+        tags$p("The following job file will be permanently deleted. This cannot be undone."), 
+        tags$p(jobFile()),
+        callback = function(parentInput) NULL, # TODO: finish this, may want to suppress deletion of executed jobs?
+        type = 'okCancel',
+        size = "m"
+    )
+})
+
+# conditional display elements dependent on job file path
+# important because option default values may depend on file path context, e.g., <pipeline>.yml
+observe({
+    toggle(
+        selector = "span.requiresJobFile", 
+        condition = !is.null(jobFile())
+    )
+    toggle(
+        selector = "div.requiresJobFileMessage", 
+        condition = is.null(jobFile())
+    )
+})
+
+#----------------------------------------------------------------------
 # cascade update pipeline actions to execute (if more than one)    
 #----------------------------------------------------------------------
 observe({
@@ -63,6 +120,33 @@ observe({
 #----------------------------------------------------------------------
 # cascade update panels to enter/adjust job options by family
 #----------------------------------------------------------------------
+getOptionTag <- function(option, options = NULL){
+    isLabel <- is.null(options)
+    column(
+        width = if(isLabel) 2 else 3,
+        style = if(isLabel) "margin-top: 20px;" else "margin-top: 10px;",
+        if(isLabel) tags$p(tags$strong(
+            option
+        )) else textInput(
+            ns(paste('input', option, sep = "_")), 
+            label = option, 
+            value = options[[option]]
+        )
+    )
+}
+getOptionFamilyTags <- function(optionFamily, optionFamilies){
+    options <- optionFamilies[[optionFamily]]
+    border <- if(optionFamily != rev(names(optionFamilies))[1]) "border-bottom: 1px solid #ddd;" else ""
+    fluidRow(
+        style = paste("padding: 0 0 10px 0;", border),
+        lapply(seq_along(options), function(i){
+            tagList(
+                if(i %% 3 == 1) getOptionTag(if(i == 1) optionFamily else "") else "",
+                getOptionTag(names(options)[i], options)
+            )
+        })
+    )
+}
 output$optionFamilies <- renderUI({
     config <- pipelineConfig()
     req(config)
@@ -72,22 +156,10 @@ output$optionFamilies <- renderUI({
         optionFamilies <- config$optionFamilies[[action]]
         tabPanel(
             action, 
-            lapply(names(optionFamilies), function(optionFamily){
-                options <- optionFamilies[[optionFamily]]
-                tagList(
-                    fluidRow(tags$p(strong(optionFamily))),
-                    fluidRow(
-                        lapply(names(options), function(option){
-                            column(
-                                width = 3,
-                                textInput(ns(paste('input', option, sep = "_")), 
-                                          label = option, value = options[[option]])
-                            )
-                        })   
-                    ),
-                    tags$hr()
-                )
-            })
+            tags$div(
+                style = "padding-left: 15px;",
+                lapply(names(optionFamilies), getOptionFamilyTags, optionFamilies)
+            )
         )
     })
     tabs$id <- "pipelineRunnerOptionTabs"
@@ -98,22 +170,12 @@ output$optionFamilies <- renderUI({
 #----------------------------------------------------------------------
 # handle an incoming job.yml, or a cold start from the launch page #launchPipelineRunner link
 #----------------------------------------------------------------------
-loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
-    reportProgress('launch', module)
-
-
-    startSpinner(session, 'launch pipelineRunner')
-
-    stopSpinner(session, 'launch pipelineRunner')
-
+loadSourceFile <- function(incomingFile, ...){
+    stopSpinner(session)    
+    req(incomingFile)
+    req(is.character(incomingFile))
+    jobFile(incomingFile)
 }
-
-#----------------------------------------------------------------------
-# populate the top level inputs and outputs for suite, pipeline and job file
-#----------------------------------------------------------------------
-output$jobFilePath <- renderText({
-    "pending"
-})
 
 #----------------------------------------------------------------------
 # define bookmarking actions
@@ -121,6 +183,7 @@ output$jobFilePath <- renderText({
 observe({
     bm <- getModuleBookmark(id, module, bookmark, locks)
     req(bm)
+    jobFile(bm$outcomes$jobFile)
     # updateTextInput(session, 'analysisSetName', value = bm$outcomes$analysisSetName)
     # sources$list  <- bm$outcomes$sources
     # samples$list  <- bm$outcomes$samples
@@ -132,11 +195,12 @@ observe({
 #----------------------------------------------------------------------
 list(
     outcomes = list(
-      
+        jobFile = jobFile
     ),
-    loadSourceFile = loadSourceFile
-    # ,
-    # isReady = reactive({TRUE}) #reactive({ getStepReadiness(options$source, samples$list) })
+    loadSourceFile = loadSourceFile,
+    isReady = reactive({ 
+        getStepReadiness(fn = function() !is.null(jobFile()) ) 
+    })
 )
 
 #----------------------------------------------------------------------

@@ -3,13 +3,13 @@
 #----------------------------------------------------------------------
 
 # label shown on dashboard menu 
-shortLabel: "Run Job"
+shortLabel: "Monitor Status"
 
 # description shown on the Overview page
-shortDescription: "Launch a job in one of several asynchronous execution modes."
+shortDescription: "Track the state of previously queued analysis jobs."
 
 # label shown at top of appStep tab  
-longLabel: "Run or queue a Stage 1 Pipeline job"
+longLabel: "Track the status of pipeline jobs"
 
 #----------------------------------------------------------------------
 # server
@@ -17,8 +17,8 @@ longLabel: "Run or queue a Stage 1 Pipeline job"
 
 # names of the type(s) of this module ...
 types:
-    - runJob
+    - monitorJob
     
 # ... and of its dependencies
 sourceTypes:
-    - configureJob
+    - runJob

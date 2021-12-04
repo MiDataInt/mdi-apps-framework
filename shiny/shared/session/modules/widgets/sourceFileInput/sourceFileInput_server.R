@@ -57,7 +57,7 @@ observeEvent(input$fileInput, {
 # as needed, enable the server-side file browser
 #----------------------------------------------------------------------
 if(exposeServerFiles()) {
-    serverFilesButtonServer(
+    serverSourceFilesButtonServer(
         'serverFileInput', 
         input, 
         session, 

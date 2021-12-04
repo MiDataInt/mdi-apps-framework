@@ -1,13 +1,13 @@
 #----------------------------------------------------------------------
-# wrapper functions for shinyFiles access to server files, subject to authorization
+# shinyFiles wrapper functions to load and save server files, subject to authorization
 #----------------------------------------------------------------------
-# note: this is _not_ a module due to the implementation of the shinyFiles package
+# note: these are _not_ modules due to the implementation of the shinyFiles package
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# a button to find a file to load
+# a button to find a source file to load, used by sourceFileUpload
 #----------------------------------------------------------------------
-serverFilesButtonUI <- function(id){
+serverSourceFilesButtonUI <- function(id){
     shinyFilesButton(
         id,
         "Load from Server",
@@ -20,11 +20,11 @@ serverFilesButtonUI <- function(id){
         viewtype = "detail"
     )
 }
-serverFilesButtonServer <- function(id, input, session, 
+serverSourceFilesButtonServer <- function(id, input, session, 
                                     rw = "read", filetypes = NULL,
                                     loadFn = function(file) NULL){
     paths <- getAuthorizedServerPaths(rw)
-    addServerFilesObserver(id, input, loadFn, paths)
+    addServerSourceFilesObserver(id, input, loadFn, paths)
     shinyFileChoose(
         input,
         id,
@@ -34,11 +34,11 @@ serverFilesButtonServer <- function(id, input, session,
         filetypes = filetypes
     )
 }
-addServerFilesObserver <- function(id, input, loadFn, paths){
+addServerSourceFilesObserver <- function(id, input, loadFn, paths){
     observeEvent(input[[id]], {
         file <- input[[id]]
         req(file)
-        reportProgress('serverFilesObserver')
+        reportProgress('serverSourceFilesObserver')
         loadFn( parseFilePaths(paths, file) )
     })
 }
@@ -89,46 +89,42 @@ addServerBookmarkObserver <- function(id, input, saveFn, paths){
 #----------------------------------------------------------------------
 # generic file saving
 #----------------------------------------------------------------------
-serverServerFileButtonUI <- function(id, label, filename, filetype){
+serverSaveFileButtonUI <- function(id, label, filename, filetype, buttonType = "success"){
     shinySaveButton(
         id,
         label,
-        "Save file to server",
+        label,
         filename = filename,
         filetype = filetype,
-        buttonType = "success",
+        buttonType = buttonType, # adds class "btn-success", etc.
         viewtype = "detail"
     )
 }
-serverServerFileButtonServer <- function(id, input, session, filetype,
-                                         saveFn = function(file) NULL){
+serverSaveFileButtonServer <- function(id, input, session, filetype,
+                                       default_type = NULL,
+                                       saveFn = function(file) NULL){
     paths <- getAuthorizedServerPaths('write')
-
-    message()
-str(paths)
-message()
-
-    # addServerBookmarkObserver(id, input, saveFn, paths)
+    addServerSaveFileObserver(id, input, saveFn, paths)
     shinyFileSave(
         input, 
         id, 
         session = session,
-        defaultRoot = "treehouse", #getAuthorizedRootVolume('bookmark_default'),
+        defaultRoot = getAuthorizedRootVolume(default_type),
         allowDirCreate = TRUE,
         roots = paths,
         filetypes = filetype
     )
 }
-# addServerBookmarkObserver <- function(id, input, saveFn, paths){
-#     observeEvent(input[[id]], {
-#         file <- input[[id]]
-#         req(file)
-#         file <- parseSavePath(paths, file)
-#         req(nrow(file) > 0)    
-#         reportProgress('serverBookmarkObserver')
-#         saveFn( file$datapath[1] )
-#     })
-# }
+addServerSaveFileObserver <- function(id, input, saveFn, paths){
+    observeEvent(input[[id]], {
+        file <- input[[id]]
+        req(file)
+        file <- parseSavePath(paths, file)
+        req(nrow(file) > 0)    
+        reportProgress('serverSaveFileObserver')
+        saveFn( file$datapath[1] ) # just the file path string
+    })
+}
 
 #----------------------------------------------------------------------
 # from the shinyFile documentation for dirGetter and fileGetter, used by shinyFileChoose, etc.

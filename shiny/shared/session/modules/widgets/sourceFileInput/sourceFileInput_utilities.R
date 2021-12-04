@@ -16,23 +16,29 @@ getAllowedSourceFileTypes <- function(appName = NULL, externalSuffixes = list())
     # first source file load from the launch page
     # bookmark files only allowed here
     if(is.null(appName)){ 
-        list(jobFile   = fs$jobFile,
-             manifest  = fs$manifest, # DEPRECATED
-             package   = fs$package,
-             dataTable = fs$dataTable,             
-             bookmark  = fs$bookmark,
-             book      = fs$book)
-        
-    # a chance to upload additional manifest files to submit to a Stage 1 pipeline
-    } else if (appName == CONSTANTS$apps$pipelineRunner){
-        list(jobFile   = fs$jobFile,
-             manifest  = fs$manifest) # DEPRECATED
+        x <- list(
+            # jobFile   = fs$jobFile,
+            # manifest  = fs$manifest, # DEPRECATED
+            package   = fs$package,
+            dataTable = fs$dataTable,             
+            bookmark  = fs$bookmark,
+            book      = fs$book
+        )
+        if(serverEnv$IS_WINDOWS) x$jobFile <- fs$jobFile
+        x
+
+    # # a chance to upload additional manifest files to submit to a Stage 1 pipeline
+    # } else if (appName == CONSTANTS$apps$pipelineRunner){
+    #     list(jobFile   = fs$jobFile,
+    #          manifest  = fs$manifest) # DEPRECATED
     
     # a chance to upload additional data source files for a running Stage 2 app
     } else { 
-        list(package   = fs$package,
-             dataTable = fs$dataTable,
-             external  = externalSuffixes)
+        list(
+            package   = fs$package,
+            dataTable = fs$dataTable,
+            external  = externalSuffixes
+        )
     }
 }
 

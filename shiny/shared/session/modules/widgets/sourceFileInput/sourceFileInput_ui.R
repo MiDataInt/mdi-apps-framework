@@ -15,7 +15,7 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
         localWidth <- 9        
         fileServerButton <- column(
             width = 12 - localWidth, 
-            serverFilesButtonUI( ns('serverFileInput') )
+            serverSourceFilesButtonUI( ns('serverFileInput') )
         )
     } else {
         localWidth <- 12        
