@@ -31,15 +31,27 @@ observeEvent(input$suite, {
 pipelineConfig <- reactive({
     req(input$suite)
     req(input$pipeline)  
-    args <- c(input$pipeline, 'template', '--all-options')
+
+    # use 'mdi <pipeline> template' to recover the ordered actions list
+    args <- c(input$pipeline, 'template') #, '--all-options')
     template <- runMdiCommand(args)
     req(template$success)
     template <- read_yaml(text = template$results)
     actions <- template$execute
     template <- template[names(template) %in% actions]
+
+    # use 'mdi <pipeline> optionsTable' to recover comprehensive information about options
+    # does NOT include default values yet
+    args <- c(input$pipeline, 'optionsTable')
+    optionsTable <- runMdiCommand(args)
+    req(optionsTable$success)
+    optionsTable <- fread(text = optionsTable$results)
+
+    # return the results
     list(
         actions = actions, 
-        optionFamilies = template # keyed by pipeline action
+        options = optionsTable
+        # optionFamilies = template # keyed by pipeline action
     )
 })
 
@@ -130,19 +142,19 @@ getOptionTag <- function(option, options = NULL){
         )) else textInput(
             ns(paste('input', option, sep = "_")), 
             label = option, 
-            value = options[[option]]
+            value = options[optionName == option, required] # TODO: need values now
         )
     )
 }
-getOptionFamilyTags <- function(optionFamily, optionFamilies){
-    options <- optionFamilies[[optionFamily]]
-    border <- if(optionFamily != rev(names(optionFamilies))[1]) "border-bottom: 1px solid #ddd;" else ""
+getOptionFamilyTags <- function(optionFamilyName, options, optionFamilyNames){
+    options <- options[optionFamily == optionFamilyName]
+    border <- if(optionFamilyName != rev(optionFamilyNames)[1]) "border-bottom: 1px solid #ddd;" else ""
     fluidRow(
         style = paste("padding: 0 0 10px 0;", border),
-        lapply(seq_along(options), function(i){
+        lapply(seq_len(nrow(options)), function(i){
             tagList(
-                if(i %% 3 == 1) getOptionTag(if(i == 1) optionFamily else "") else "",
-                getOptionTag(names(options)[i], options)
+                if(i %% 3 == 1) getOptionTag(if(i == 1) optionFamilyName else "") else "",
+                getOptionTag(options[i, optionName], options)
             )
         })
     )
@@ -152,13 +164,14 @@ output$optionFamilies <- renderUI({
     req(config)
     req(config$actions)
     tabActions <- if(length(config$actions) > 1) input$actions else config$actions
-    tabs <- lapply(tabActions, function(action){
-        optionFamilies <- config$optionFamilies[[action]]
+    tabs <- lapply(tabActions, function(actionName){
+        options <- config$options[action == actionName][order(universal, optionFamily, order, -required)]
+        optionFamilyNames <- options[, unique(optionFamily)]
         tabPanel(
-            action, 
+            actionName, 
             tags$div(
                 style = "padding-left: 15px;",
-                lapply(names(optionFamilies), getOptionFamilyTags, optionFamilies)
+                lapply(optionFamilyNames, getOptionFamilyTags, options, optionFamilyNames)
             )
         )
     })
