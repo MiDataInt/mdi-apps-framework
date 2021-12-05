@@ -73,7 +73,14 @@ configureJobUI <- function(id, options) {
             fluidRow(
                 box(
                     width = 12,
-                    title = "Specify the job option values for each action", 
+                    title = tags$span(
+                        "Specify the job option values for each action", 
+                        tags$span(
+                            style = "margin-left: 0.5em; font-size: 0.9em;",
+                            actionLink(ns("showRequiredOnly"), "Show required only"),
+                            actionLink(ns("showAllOptions"), "Show all options", style = "display: none;")
+                        )
+                    ),
                     status = 'primary',
                     solidHeader = FALSE,
                     uiOutput(ns('optionFamilies'))

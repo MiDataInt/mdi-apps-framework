@@ -88,7 +88,7 @@ body, html {
     shinydashboard sidebar styles
     ------------------------------------------------------------------------*/
 .skin-blue  .main-sidebar {
-    padding-top: 50px; #0;
+    padding-top: 50px; 
     background-color: #00274C;
     border-top: 1px solid #F2D384;
 }
@@ -115,7 +115,6 @@ body, html {
     text-align: center;
     font-size: 1.2em;
 }
-
 
 .sidebarBookmarking, .sidebarBookmarking:hover, .sidebarBookmarking:focus {
     border: transparent;    
@@ -362,4 +361,18 @@ table.dataTable tbody tr.selected {
 }
 .results-box-header-button:hover {
     color: white !important;
+}
+
+/*  ------------------------------------------------------------------------
+    Pipeline Runner
+    ------------------------------------------------------------------------*/
+.pr-help-icon {
+    font-size: 1rem; 
+    color: #0174BB;    
+    margin-left: 2px; 
+}
+.pr-required-icon {
+    font-size: 0.9rem; 
+    color: rgb(175,0,0);    
+    margin-left: 2px; 
 }

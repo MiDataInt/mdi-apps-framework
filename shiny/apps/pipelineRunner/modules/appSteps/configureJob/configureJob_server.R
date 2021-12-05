@@ -33,12 +33,11 @@ pipelineConfig <- reactive({
     req(input$pipeline)  
 
     # use 'mdi <pipeline> template' to recover the ordered actions list
-    args <- c(input$pipeline, 'template') #, '--all-options')
+    args <- c(input$pipeline, 'template') 
     template <- runMdiCommand(args)
     req(template$success)
     template <- read_yaml(text = template$results)
     actions <- template$execute
-    template <- template[names(template) %in% actions]
 
     # use 'mdi <pipeline> optionsTable' to recover comprehensive information about options
     # does NOT include default values yet
@@ -46,19 +45,25 @@ pipelineConfig <- reactive({
     optionsTable <- runMdiCommand(args)
     req(optionsTable$success)
     optionsTable <- fread(text = optionsTable$results)
+    optionsTable$required <- as.logical(optionsTable$required) 
 
     # return the results
     list(
         actions = actions, 
-        options = optionsTable
-        # optionFamilies = template # keyed by pipeline action
+        options = optionsTable,
+        template = template
     )
+})
+suiteName <- reactive({
+    req(input$suite)
+    rev(strsplit(input$suite, '/')[[1]])[1]
 })
 
 #----------------------------------------------------------------------
 # control job file saving and file-path-dependent display elements
 #----------------------------------------------------------------------
 jobFile <- reactiveVal(NULL) # current working job file, the main output of this module
+jobFileValues <- reactiveVal(list())
 
 # control job file UI elements
 output$jobFilePath <- renderUI({  # display jobFile path to user, with delete link
@@ -75,20 +80,24 @@ output$saveJobFileUI <- renderUI({ # dynamically colored button for job file sav
     serverSaveFileButtonUI(ns("saveJobFile"), "Save Job Config", input$pipeline, ".yml", 
                            buttonType = buttonType)
 })
+
+# *** job file load action ***
 observeEvent(jobFile(), {
     req(jobFile())
+    jobFileValues( readDataYml(jobFile()) )
     disable('suite') # once a file is saved, the pipeline cannot be changed
     disable('pipeline')
 })
 
-# job file save action
+# *** job file save action ***
 saveJobFile <- function(jobFilePath){
+    write_yaml(parseDataYml(), file = jobFilePath)
     jobFile(jobFilePath)
 }
 serverSaveFileButtonServer("saveJobFile", input, session, "yml", 
                            default_type = 'job_default', saveFn = saveJobFile)
 
-# job file delete action
+# *** job file delete action ***
 observeEvent(input$deleteJobFile, {
     showUserDialog(
         "Confirm Job File Deletion", 
@@ -114,11 +123,23 @@ observe({
 })
 
 #----------------------------------------------------------------------
+# handle an incoming job.yml, or a cold start from the launch page #launchPipelineRunner link
+#----------------------------------------------------------------------
+loadSourceFile <- function(incomingFile, ...){
+    stopSpinner(session)    
+    req(incomingFile)
+    req(is.character(incomingFile))
+    jobFile(incomingFile)
+}
+
+#----------------------------------------------------------------------
 # cascade update pipeline actions to execute (if more than one)    
 #----------------------------------------------------------------------
 observe({
     config <- pipelineConfig()
+    values <- jobFileValues()
     req(config)
+    req(values)
     updateCheckboxGroupInput(
         'actions',
         session  = session,
@@ -132,6 +153,28 @@ observe({
 #----------------------------------------------------------------------
 # cascade update panels to enter/adjust job options by family
 #----------------------------------------------------------------------
+getOptionInput <- function(optionName, option){
+    if(requiredOnly() && !option$required) return("")
+    id <- ns(paste('input', optionName, sep = "_"))
+    requiredId <- paste(id, "required", sep = "_")
+    helpId <- paste(id, "help", sep = "_")
+    placeholder <- paste(option$type, if(option$required) "REQUIRED" else "")
+    label <- HTML(paste(
+        optionName, 
+        if(option$required) tags$span(id = requiredId, class = "pr-required-icon", icon("asterisk")) else "",
+        tags$span(id = helpId, class = "pr-help-icon", icon("question"))
+    ))
+    input <- if(option$type == "boolean") 
+        checkboxGroupInput(id, label, choices = "", 
+                           selected = if(as.logical(as.integer(option$default))) "" else NULL)
+    else 
+        textInput(id, label, value = option$default, placeholder = placeholder)
+    tagList(
+        input,
+        bsTooltip(helpId, option$description, placement = "top"),
+        if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
+    )
+}
 getOptionTag <- function(option, options = NULL){
     isLabel <- is.null(options)
     column(
@@ -139,15 +182,15 @@ getOptionTag <- function(option, options = NULL){
         style = if(isLabel) "margin-top: 20px;" else "margin-top: 10px;",
         if(isLabel) tags$p(tags$strong(
             option
-        )) else textInput(
-            ns(paste('input', option, sep = "_")), 
-            label = option, 
-            value = options[optionName == option, required] # TODO: need values now
+        )) else getOptionInput(
+            option,
+            options[optionName == option]
         )
     )
 }
 getOptionFamilyTags <- function(optionFamilyName, options, optionFamilyNames){
     options <- options[optionFamily == optionFamilyName]
+    if(requiredOnly() && sum(options$required) == 0) return("")    
     border <- if(optionFamilyName != rev(optionFamilyNames)[1]) "border-bottom: 1px solid #ddd;" else ""
     fluidRow(
         style = paste("padding: 0 0 10px 0;", border),
@@ -161,8 +204,11 @@ getOptionFamilyTags <- function(optionFamilyName, options, optionFamilyNames){
 }
 output$optionFamilies <- renderUI({
     config <- pipelineConfig()
+    values <- jobFileValues()
     req(config)
-    req(config$actions)
+    req(config$actions)    
+    req(values)
+    startSpinner(session, "output$optionFamilies")
     tabActions <- if(length(config$actions) > 1) input$actions else config$actions
     tabs <- lapply(tabActions, function(actionName){
         options <- config$options[action == actionName][order(universal, optionFamily, order, -required)]
@@ -177,17 +223,81 @@ output$optionFamilies <- renderUI({
     })
     tabs$id <- "pipelineRunnerOptionTabs"
     tabs$width <- 12
+    stopSpinner(session, "output$optionFamilies")
     do.call(tabBox, tabs)
 })
 
+# enable toggle for option visibility
+requiredOnly <- reactiveVal(FALSE)
+observeEvent(requiredOnly(), { 
+    toggle('showRequiredOnly', condition = !requiredOnly())
+    toggle('showAllOptions',   condition =  requiredOnly())
+})
+observeEvent(input$showRequiredOnly, { requiredOnly(TRUE) })
+observeEvent(input$showAllOptions,   { requiredOnly(FALSE) })
+
 #----------------------------------------------------------------------
-# handle an incoming job.yml, or a cold start from the launch page #launchPipelineRunner link
+# convert input option values to job yml (for writing) and vice versa (for loading)
 #----------------------------------------------------------------------
-loadSourceFile <- function(incomingFile, ...){
-    stopSpinner(session)    
-    req(incomingFile)
-    req(is.character(incomingFile))
-    jobFile(incomingFile)
+
+# use 'mdi <pipeline> valuesTable' to recover the context-dependent job values from <data>.yml
+readDataYml <- function(jobFile){
+    args <- c('valuesTable', 'valuesTable', jobFile)
+    valuesTable <- runMdiCommand(args)
+    req(valuesTable$success)
+    read_yaml(text = valuesTable$results)
+}
+
+# parse inputs to a partial <data>.yml file
+parseDataYml <- function(){
+    config <- pipelineConfig()
+    req(config)  
+
+    # first save, include all actions to start
+    if(is.null(jobFile())) return(config$template)
+
+    # saving after option value changes, requested actions only
+    req(input$actions)
+
+    # get the option values for each action
+    x <- lapply(c("_PIPELINE_", input$actions), function(actionName){
+
+        dmsg(actionName)
+
+        if(actionName == "_PIPELINE_") return( paste(suiteName(), input$pipeline, sep = "/") )
+
+        options <- config$options[action == actionName]
+        optionFamilyNames <- options[, unique(optionFamily)]
+        x <- lapply(optionFamilyNames, function(optionFamilyName){
+            options <- options[optionFamily == optionFamilyName]
+            x <- lapply(seq_len(nrow(options)), function(i){
+                option <- options[i]
+
+                dmsg(option$optionName)
+
+
+                value <- {
+                    id <- paste('input', option$optionName, sep = "_")
+                    value <- input[[id]]
+
+                    if(option$type == "boolean") value <- if(is.null(value)) 0 else 1
+
+dprint(value)
+
+                    if(option$required || value != option$default) value else NULL
+                }
+                if(!is.null(value) && value == "_NA_") value <- "NA" 
+                value
+            })
+            names(x) <- options$optionName
+            x
+        })
+        names(x) <- optionFamilyNames
+        x
+    })
+    names(x) <- c("pipeline", input$actions)
+    x$execute <- input$actions
+    x
 }
 
 #----------------------------------------------------------------------
