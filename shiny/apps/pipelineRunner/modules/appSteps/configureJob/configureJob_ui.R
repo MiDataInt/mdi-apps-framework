@@ -23,40 +23,35 @@ configureJobUI <- function(id, options) {
         options$longLabel,
         leaderText,
 
-        # top level inputs and outputs for suite, pipeline and job file
-        box(
-            width = 12,
-            title = "Set the job's suite, pipeline and configuration file", 
-            status = 'primary',
-            solidHeader = FALSE,
-            fluidRow(
-                column( # top level selectors for suite and pipeline
-                    width = 6,
-                    style = "margin-left: 10px;", 
-                    fluidRow(
-                        column(width = 6, selectInput(ns('suite'),    'Suite',    choices = "")),
-                        column(width = 6, selectInput(ns('pipeline'), 'Pipeline', choices = ""))                
-                    ),
-                    fluidRow( # show the working job file path on server
-                        style = "font-size: 1.1em;",
-                        column(
-                            width = 12, 
-                            uiOutput(ns("jobFilePath"))      
-                        )
-                    )                            
-                ),
-                column( # save action
-                    width = 4,  
-                    style = "padding-top: 10px; margin-top: 1em",
-                    uiOutput(ns("saveJobFileUI")),
-                    uiOutput(ns('saveJobFeedback'))
-                )                   
-            )
-        ) %>% fluidRow(),
+        # enable merging additional sample sources into this one
+        tags$div(
+            class = "text-block",
+            sourceFileInputUI(ns('fileInput'), appName = 'pipelineRunner')
+        ),
+
+        # enable cold creation of a new job config file
+        createJobFileUI(ns('create')),
+
+        # tables of the sample sources and samples that are uploaded and ready
+        conditionalPanel( condition = paste0("window['", ns('jobFiles-count'), "'] > 0"), 
+            summaryTableUI(ns('jobFiles'), 'Job Configuration Files', width = 12),
+        ),
 
         # second row inputs for selecting pipeline actions (if more than one)    
         span(
             class = "requiresJobFile",
+            fluidRow(
+                box(
+                    width = 12,
+                    title = "Working file actions", 
+                    status = 'primary',
+                    solidHeader = FALSE,
+                    style = "padding: 0 0 10px 15px;",
+                    actionLink(ns('discardChanges'), 'Discard Changes', style = "margin-right: 1rem;"),
+                    uiOutput(ns('saveJobFileAsUI'), style = "display: inline-block; margin-right: 1rem; cursor: pointer;"), # nolint
+                    uiOutput(ns('saveJobFileUI'), style = "display: inline-block;")
+                ) 
+            ),
             fluidRow(
                 id = ns("actionSelectors"),
                 box(
@@ -90,7 +85,7 @@ configureJobUI <- function(id, options) {
         div(
             class = "requiresJobFileMessage",
             style = "font-size: 1.1em; margin-left: 1em;",
-            "Please save a job configuration file to expose the available pipeline options."
+            "Please select or save a job configuration file to show the available pipeline options."
         )
     ) 
 }

@@ -58,6 +58,14 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
             modalButton("Cancel"),
             actionButton("userDialogOk", "OK")
         ),
+        deleteCancel = tagList( # an action that require input and/or confirmation
+            modalButton("Cancel"),
+            bsButton("userDialogOk", "Delete Permanently", style = "warning")
+        ),
+        discardCancel = tagList( # an action that require input and/or confirmation
+            modalButton("Cancel"),
+            bsButton("userDialogOk", "Discard Permanently", style = "warning")
+        ),
         okOnlyWithAction = tagList( # an information dialog that executes an action upon closing
             actionButton("userDialogOk", "OK")
         ),

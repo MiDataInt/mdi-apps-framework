@@ -100,6 +100,16 @@ serverSaveFileButtonUI <- function(id, label, filename, filetype, buttonType = "
         viewtype = "detail"
     )
 }
+serverSaveFileLinkUI <- function(id, label, filename, filetype){
+    shinySaveLink(
+        id,
+        label,
+        label,
+        filename = filename,
+        filetype = filetype,
+        viewtype = "detail"
+    )
+}
 serverSaveFileButtonServer <- function(id, input, session, filetype,
                                        default_type = NULL,
                                        saveFn = function(file) NULL){

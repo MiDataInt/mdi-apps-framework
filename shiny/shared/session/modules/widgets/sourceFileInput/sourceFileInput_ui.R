@@ -37,8 +37,11 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
                     accept = getAllowedSourceFileTypes(appName, externalSuffixes),
                     width = width
                 )
+            ),
+            column(
+                width = 12, 
+                uiOutput(ns('fileInputFeedback'))
             )
-        ),
-        uiOutput(ns('fileInputFeedback'))
+        )
     )                       
 }
