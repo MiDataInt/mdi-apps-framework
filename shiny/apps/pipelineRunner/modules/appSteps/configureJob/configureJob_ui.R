@@ -34,7 +34,7 @@ configureJobUI <- function(id, options) {
 
         # tables of the sample sources and samples that are uploaded and ready
         conditionalPanel( condition = paste0("window['", ns('jobFiles-count'), "'] > 0"), 
-            summaryTableUI(ns('jobFiles'), 'Job Configuration Files', width = 12),
+            summaryTableUI(ns('jobFiles'), 'Job Configuration Files', width = 12, collapsible = TRUE),
         ),
 
         # second row inputs for selecting pipeline actions (if more than one)    

@@ -58,11 +58,15 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
             modalButton("Cancel"),
             actionButton("userDialogOk", "OK")
         ),
-        deleteCancel = tagList( # an action that require input and/or confirmation
+        saveCancel = tagList( 
+            modalButton("Cancel"),
+            bsButton("userDialogOk", "Save", style = "success")
+        ),
+        deleteCancel = tagList( 
             modalButton("Cancel"),
             bsButton("userDialogOk", "Delete Permanently", style = "warning")
         ),
-        discardCancel = tagList( # an action that require input and/or confirmation
+        discardCancel = tagList(
             modalButton("Cancel"),
             bsButton("userDialogOk", "Discard Permanently", style = "warning")
         ),
