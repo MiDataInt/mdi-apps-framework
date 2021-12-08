@@ -47,6 +47,7 @@ showHtmlModal <- function(file, type, title){
 
 # a small format modal popup for getting user input or confirmation
 dialogCallback <- function(parentInput) NULL
+dialogCallbackFired <- reactiveVal(TRUE)
 showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
                            size="s", type='okCancel', footer=NULL, easyClose=TRUE){
     dialogCallback <<- callback
@@ -77,6 +78,7 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
         ""
     )
     stopSpinner(session)
+    dialogCallbackFired(FALSE) # see comment below
     showModal(modalDialog(
         title = tags$strong(title),
         ...,
@@ -88,12 +90,14 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
     ))
 }
 observeEvent(input$userDialogOk, {
+    req(!dialogCallbackFired()) # for unknown reasons, sometimes input$userDialogOk fires twice!
     tryCatch({
         dialogCallback(input)
         removeModal()
     }, error = function(e){
         runjs(paste0( '$("#modal-dialog-error").html("', e$message, '")' ))
     })
+    dialogCallbackFired(TRUE)
 })
 
 # a modal for pending items in a development environment

@@ -10,6 +10,7 @@ configureJobServer <- function(id, options, bookmark, locks){
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'configureJob' # for reportProgress tracing
 #----------------------------------------------------------------------
+dashReplacement <- "DASH"
 
 #----------------------------------------------------------------------
 # initialize job configuration load, create and select elements at top of page
@@ -149,25 +150,10 @@ pipelineConfig <- reactive({
     jobFile <- activeJobFile()
     req(jobFile)
     if(is.null(pipelineConfigs[[jobFile$pipeline]])){
-
-        # use 'mdi <pipeline> template' to recover the ordered actions list and options sets
-        args <- c(jobFile$pipeline, 'template', "--all-options") 
-        template <- runMdiCommand(args)
-        req(template$success)
-        template <- read_yaml(text = template$results)
-        actions <- template$execute
-
-        # use 'mdi <pipeline> optionsTable' to recover comprehensive information about options
-        # does NOT include default values yet
-        args <- c(jobFile$pipeline, 'optionsTable')
-        optionsTable <- runMdiCommand(args)
-        req(optionsTable$success)
-        optionsTable <- fread(text = optionsTable$results)
-        optionsTable$required <- as.logical(optionsTable$required) 
-
-        # return the results
+        optionsTable <- getPipelineOptionsTable(jobFile$pipeline) # comprehensive metadata about options        
+        template <- getPipelineTemplate(jobFile$pipeline) # ordered actions list and options sets
         pipelineConfigs[[jobFile$pipeline]] <- list(
-            actions = actions, 
+            actions = template$execute, 
             options = optionsTable,
             template = template
         )
@@ -178,9 +164,20 @@ pipelineConfig <- reactive({
 #----------------------------------------------------------------------
 # job file saving and file-path-dependent display elements
 #----------------------------------------------------------------------
-jobFileValues <- reactiveValues() # the values present at the last load of the file, prior to save
-workingValues <- reactiveValues() # the values updated with any user changes in UI
-isPendingChanges <- reactiveValues() # whether each file has changes that need to be saved
+jobFileValues  <- reactiveValues() # the values present at the last load of the file, prior to save
+workingValues  <- reactiveValues() # the values updated with any user changes in UI
+pendingValueChanges <- reactiveValues() # whether each file has changes that need to be saved
+jobFileActions <- reactiveValues() 
+isPendingChanges <- function(path){
+    if(is.null(input$actions) || 
+       is.null(jobFileActions[[path]]) || 
+       is.null(pendingValueChanges[[path]])) return(FALSE)
+    length(pendingValueChanges[[path]]) > 0 ||
+    !identical(
+        sort(input$actions),
+        sort(jobFileActions[[path]])
+    )
+}
 reloadInputs <- reactiveVal(0)
 
 # main save button
@@ -188,7 +185,7 @@ saveJobFileId <- "saveJobFile"
 output$saveJobFileUI <- renderUI({ # dynamically colored button for job file saving
     jobFile <- activeJobFile()
     req(jobFile)
-    disabled <- is.null(isPendingChanges[[jobFile$path]])
+    disabled <- !isPendingChanges(jobFile$path)
     style <- if(disabled) "default" else "success"
     bsButton(ns(saveJobFileId), "Save Job Config", style = style, disabled = disabled)
 })
@@ -203,6 +200,17 @@ output$saveJobFileAsUI <- renderUI({ # dynamically colored button for job file s
 serverSaveFileButtonServer(saveJobFileAsId, input, session, "yml", 
                            default_type = 'job_default', saveFn = saveJobFileAs)
 
+# style discard changes link based on pending changes
+observe({
+    jobFile <- activeJobFile()
+    disabled <- is.null(jobFile) || !isPendingChanges(jobFile$path)
+    toggleClass(
+        id = 'discardChanges',
+        class = 'pr-link-disable',
+        condition = disabled
+    )
+})
+
 #----------------------------------------------------------------------
 # job file main actions
 #----------------------------------------------------------------------
@@ -216,12 +224,25 @@ loadJobFile <- function(jobFile){
         d <- readDataYml(jobFile)
         jobFileValues[[path]] <- d
         workingValues[[path]] <- d
-        isPendingChanges[[path]] <- NULL
+        pendingValueChanges[[path]] <- list()
     }
 }
 observeEvent(activeJobFile(), { loadJobFile(activeJobFile()) })
 
 # *** job file save action ***
+saveDataYaml <- function(newPath, oldPath){
+    jobFile <- activeJobFile()
+    config <- pipelineConfig()
+    writeDataYml(
+        newPath, 
+        jobFile$suite,
+        jobFile$pipeline, 
+        workingValues[[oldPath]],        
+        actions = input$actions, 
+        optionsTable = config$optionsTable,
+        template = config$template
+    )
+}
 observeEvent(input[[saveJobFileId]], {
     path <- activeJobFile()$path
     showUserDialog(
@@ -231,8 +252,12 @@ observeEvent(input[[saveJobFileId]], {
         )), 
         tags$p(path),
         callback = function(parentInput) {
-            write_yaml(parseDataYml(), file = path)
-            isPendingChanges[[path]] <- NULL
+            isolate({
+                saveDataYaml(path, path)
+                jobFileValues[[path]] <- workingValues[[path]]
+                jobFileActions[[path]] <- input$actions 
+                pendingValueChanges[[path]] <- list()                
+            })
         }, 
         type = 'saveCancel',
         size = 'm'
@@ -240,17 +265,18 @@ observeEvent(input[[saveJobFileId]], {
 })
 
 # *** job file save as action ***
-saveJobFileAs <- function(jobFilePath){
+saveJobFileAs <- function(newPath){
     oldPath <- activeJobFile()$path
-    write_yaml(parseDataYml(), file = jobFilePath)
-    loadSourceFile(list(path = jobFilePath))
+    saveDataYaml(newPath, oldPath)
+    loadSourceFile(list(path = newPath))
     workingValues[[oldPath]] <- jobFileValues[[oldPath]]
-    isPendingChanges[[oldPath]] <- NULL
+    pendingValueChanges[[oldPath]] <- list()
 }
 
 # *** job file revert action, i.e., discard changes ***
 observeEvent(input$discardChanges, {
     path <- activeJobFile()$path
+    req(isPendingChanges(path))
     showUserDialog(
         "Confirm Discard Changes", 
         tags$p(paste(
@@ -261,7 +287,7 @@ observeEvent(input$discardChanges, {
         tags$p(path),
         callback = function(parentInput) {
             workingValues[[path]] <- jobFileValues[[path]]
-            isPendingChanges[[path]] <- NULL
+            pendingValueChanges[[path]] <- list()
             reloadInputs( reloadInputs() + 1 )
         }, 
         type = 'discardCancel',
@@ -277,13 +303,17 @@ observe({
     req(config) 
     jobFile <- activeJobFile()
     req(jobFile)
-    values <- jobFileValues[[jobFile$path]]
+    path <- jobFile$path
+    values <- jobFileValues[[path]]
     req(values)
+    actions <- values$execute
+    jobFileActions[[path]] <- actions
+    reloadInputs()
     updateCheckboxGroupInput(
         'actions',
         session  = session,
         choices  = config$actions,
-        selected = values$execute,
+        selected = actions,
         inline = TRUE
     )   
     toggle('actionSelectors', condition = length(config$actions) > 1)  
@@ -298,29 +328,42 @@ prInputNames <- list(
     option = ""
 )
 getOptionInput <- function(value, option){
-    if(requiredOnly() && !option$required) return("")
 
     # common components
     id <- paste(unlist(prInputNames), collapse = "_")
     id <- paste('prInput', id, sep = "__")
-    id <- ns(gsub("-", "~", id))
+    id <- gsub("-", dashReplacement, id)
     requiredId <- paste(id, "required", sep = "_")
     helpId <- paste(id, "help", sep = "_")
+    dirId <- paste(id, "directory", sep = "_")
+    isDirectory <- endsWith(prInputNames$option, "-dir") || grepl("-dir-", prInputNames$option)
+    placeholder <- paste(
+        if(isDirectory) "directory" else option$type, 
+        if(option$required) "REQUIRED" else ""
+    )
     label <- HTML(paste(
         prInputNames$option, 
-        if(option$required) tags$span(id = requiredId, class = "pr-required-icon", icon("asterisk")) else "",
-        tags$span(id = helpId, class = "pr-help-icon", icon("question"))
+        if(option$required) tags$span(id = ns(requiredId), class = "pr-required-icon", icon("asterisk")) else "",
+        tags$span(id = ns(helpId), class = "pr-help-icon", icon("question")),
+        if(isDirectory) {
+            serverChooseDirIconServer(dirId, input, session, chooseFn = handleChooseDir)
+            serverChooseDirIconUI(ns(dirId)) 
+        } else ""
     ))
-    placeholder <- paste(option$type, if(option$required) "REQUIRED" else "")
 
     # custom inputs with a single tracking function/event
     x <- if(option$type == "boolean") 
-        customCheckboxGroupInput(id, label, value, onchangeFn = "prCheckboxOnChange")
+        customCheckboxGroupInput(ns(id), label, value, onchangeFn = "prCheckboxOnChange")
+    else if(option$type == "integer") 
+        customIntegerInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
+    else if(option$type == "double") 
+        customDoubleInput(id, label, value, placeholder, onchangeFn = "prInputOnChange")
     else   
-        customTextInput(id, label, value, placeholder, onchangeFn = "prInputOnChange")
+        customTextInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
     
     # input with tooltip
-    tagList(
+    tags$span(
+        class = if(option$required) "" else "pr-optional-input",
         x,
         bsTooltip(helpId, option$description, placement = "top"),
         # if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
@@ -330,7 +373,7 @@ getOptionTag <- function(option, values = NULL, options = NULL){
     prInputNames$option <<- option
     isLabel <- is.null(options)
     column(
-        width = if(isLabel) 2 else 3,
+        width = if(isLabel) 2 else 5,
         style = if(isLabel) "margin-top: 20px;" else "margin-top: 10px;",
         if(isLabel) tags$p(tags$strong(
             option
@@ -343,13 +386,13 @@ getOptionTag <- function(option, values = NULL, options = NULL){
 getOptionFamilyTags <- function(optionFamilyName, values, options, optionFamilyNames){
     prInputNames$family <<- optionFamilyName
     options <- options[optionFamily == optionFamilyName]
-    if(requiredOnly() && sum(options$required) == 0) return("")    
     border <- if(optionFamilyName != rev(optionFamilyNames)[1]) "border-bottom: 1px solid #ddd;" else ""
     fluidRow(
         style = paste("padding: 0 0 10px 0;", border),
+        class = if(sum(options$required) == 0) "pr-optional-input" else "",
         lapply(seq_len(nrow(options)), function(i){
             tagList(
-                if(i %% 3 == 1) getOptionTag(if(i == 1) optionFamilyName else "") else "",
+                if(i %% 2 == 1) getOptionTag(if(i == 1) optionFamilyName else "") else "",
                 getOptionTag(options[i, optionName], values[[optionFamilyName]], options)
             )
         })
@@ -387,24 +430,49 @@ output$optionFamilies <- renderUI({
 # enable toggle for option visibility
 requiredOnly <- reactiveVal(FALSE)
 observeEvent(requiredOnly(), { 
-    toggle('showRequiredOnly', condition = !requiredOnly())
-    toggle('showAllOptions',   condition =  requiredOnly())
+    reqOnly <- requiredOnly()
+    toggle('showRequiredOnly', condition = !reqOnly)
+    toggle('showAllOptions',   condition =  reqOnly)
+    toggle(selector = ".pr-optional-input", condition = !reqOnly)
 })
 observeEvent(input$showRequiredOnly, { requiredOnly(TRUE) })
 observeEvent(input$showAllOptions,   { requiredOnly(FALSE) })
 
 #----------------------------------------------------------------------
+# handle shinyFile selection of a directory being set into an option
+#----------------------------------------------------------------------
+handleChooseDir <- function(x){
+    x$id <- gsub("_directory", "", x$id)
+    updateTextInput(session, x$id, value = x$dir)
+}
+
+#----------------------------------------------------------------------
 # watch job inputs for changing values with a single observer
 #----------------------------------------------------------------------
 observeEvent(input$prInput, {
+
+    # parse the changing value
     path <- activeJobFile()$path    
-    x <- gsub("~", "-", input$prInput$id)
+    x <- gsub(dashReplacement, "-", input$prInput$id)
     x <- strsplit(x, "_")[[1]]
     action <- x[1]
     family <- x[2]
     option <- x[3]
-    workingValues[[path]][[action]][[family]][[option]] <- input$prInput$value
-    isPendingChanges[[path]] <- TRUE
+
+    # commit the new value to workingValues
+    new <- input$prInput$value
+    workingValues[[path]][[action]][[family]][[option]] <- new
+
+    # record whether the new value is different than the _disk_ value
+    old <- jobFileValues[[path]][[action]][[family]][[option]]
+    if(input$prInput$logical){ # since sometimes the disk value is 0/1
+        new <- as.logical(new)
+        old <- as.logical(old)
+    } else {
+        new <- as.character(new)
+        old <- as.character(old)
+    }
+    pendingValueChanges[[path]][[input$prInput$id]] <- if(identical(old, new)) NULL else 1
 })
 
 #----------------------------------------------------------------------

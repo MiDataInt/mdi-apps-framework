@@ -21,14 +21,14 @@ pipelineSuites    <- getInstalledPipelineSuites(pipelineDirs)
 newFile <- reactiveVal(NULL)
 
 #----------------------------------------------------------------------
-# cascade update to suite and pipeline selectInputs
+# cascade update to the suite and pipeline selectInputs
 #----------------------------------------------------------------------
 isolate({ # input$suite is the full path of the suite directory
     updateSelectInput('suite', choices = pipelineSuites, session = session)
 })
 suiteName <- reactive({ # suiteName() is just the name of the suite, e.g., mdi-johndoe-apps
     req(input$suite)
-    rev(strsplit(input$suite, '/')[[1]])[1]
+    basename(input$suite)
 })
 observeEvent(input$suite, {
     req(input$suite)
@@ -36,7 +36,7 @@ observeEvent(input$suite, {
 })
 
 #----------------------------------------------------------------------
-# cascade update to create new file button
+# cascade update to the create new file button
 #----------------------------------------------------------------------
 output$createJobFileUI <- renderUI({ # dynamically colored button for job file saving
     req(input$pipeline)
@@ -46,10 +46,8 @@ output$createJobFileUI <- renderUI({ # dynamically colored button for job file s
 serverSaveFileButtonServer("createJobFile", input, session, "yml", 
                            default_type = 'job_default', saveFn = createJobFile)
 createJobFile <- function(jobFilePath){
-    args <- c(input$pipeline, 'template') 
-    template <- runMdiCommand(args)
-    req(template$success)
-    cat(template$results, file = jobFilePath)
+    defaults <- getJobEnvironmentDefaults(dirname(jobFilePath), input$pipeline)
+    writeDataYml(jobFilePath, suiteName(), input$pipeline, defaults)
     newFile(list(path = jobFilePath))
 }
 

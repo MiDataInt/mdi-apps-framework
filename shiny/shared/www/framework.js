@@ -129,7 +129,7 @@ let handleActionClick = function(parentId, instanceId, confirmMessage){
 };
 
 /*  ------------------------------------------------------------------------
-    Pipeline Runner, function to simply number of required observers in R
+    Pipeline Runner, functions to simplify the number of required input observers in R
     ------------------------------------------------------------------------*/
 let prInputOnChange = function(x){
     let parts = x.id.split('__');

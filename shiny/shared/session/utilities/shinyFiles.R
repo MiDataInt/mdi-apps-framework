@@ -87,6 +87,48 @@ addServerBookmarkObserver <- function(id, input, saveFn, paths){
 }
 
 #----------------------------------------------------------------------
+# a generic icon to choose a server directory, used by Pipeline Runner
+#----------------------------------------------------------------------
+serverChooseDirIconUI <- function(id, class = "pr-dir-icon"){
+    shinyDirLink(
+        id,
+        NULL,
+        "Select a directory",
+        class = class,
+        icon = icon("folder"),
+        style = "width: 100%",
+        viewtype = "detail"
+    )
+}
+serverChooseDirIconServer <- function(id, input, session,
+                                       default_type = NULL,
+                                       chooseFn = function(dir) NULL){
+    paths <- getAuthorizedServerPaths('write')
+    addServerChooseDirObserver(id, input, chooseFn, paths)
+    shinyDirChoose(
+        input, 
+        id, 
+        session = session,
+        defaultRoot = getAuthorizedRootVolume(default_type),
+        allowDirCreate = TRUE,
+        roots = paths
+    )
+}
+addServerChooseDirObserver <- function(id, input, chooseFn, paths){
+    observeEvent(input[[id]], {
+        dir <- input[[id]]
+        req(dir)
+        dir <- parseSavePath(paths, dir)
+        req(nrow(dir) > 0)  
+        reportProgress('addServerChooseDirObserver')
+        chooseFn(list(
+            id = id,
+            dir = dir$datapath[1] # just the directory string
+        ))
+    })
+}
+
+#----------------------------------------------------------------------
 # generic file saving
 #----------------------------------------------------------------------
 serverSaveFileButtonUI <- function(id, label, filename, filetype, buttonType = "success"){

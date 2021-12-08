@@ -366,13 +366,27 @@ table.dataTable tbody tr.selected {
 /*  ------------------------------------------------------------------------
     Pipeline Runner
     ------------------------------------------------------------------------*/
-.pr-help-icon {
-    font-size: 1rem; 
-    color: #0174BB;    
-    margin-left: 2px; 
+.pr-help-icon i, .pr-required-icon i, .pr-dir-icon i {
+    vertical-align: text-top;    
+}
+.pr-help-icon, .pr-required-icon { 
+    margin-left: 2px;      
 }
 .pr-required-icon {
     font-size: 0.9rem; 
     color: rgb(175,0,0);    
-    margin-left: 2px; 
+}
+.pr-help-icon {
+    font-size: 1rem; 
+    color: #0174BB;    
+}
+.pr-dir-icon {
+    font-size: 1rem;
+    color: #555;
+    margin-left: 5px;
+    cursor: pointer;
+}
+.pr-link-disable {
+    color:#aaaaaa !important;
+    cursor: not-allowed !important;
 }

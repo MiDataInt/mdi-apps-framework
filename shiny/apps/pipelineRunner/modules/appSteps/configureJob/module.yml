@@ -9,7 +9,7 @@ shortLabel: "Configure Options"
 shortDescription: "Select input data file(s) and set options to run Stage 1 Pipeline job(s)."
 
 # label shown at top of appStep tab  
-longLabel: "Enter Stage 1 Pipeline job configuration parameters"
+longLabel: "Stage 1 Pipeline job configuration"
 
 #----------------------------------------------------------------------
 # server
