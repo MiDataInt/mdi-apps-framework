@@ -3,13 +3,13 @@
 #----------------------------------------------------------------------
 
 # label shown on dashboard menu 
-shortLabel: "Run Job"
+shortLabel: "Run Jobs"
 
 # description shown on the Overview page
-shortDescription: "Launch a job in one of several asynchronous execution modes."
+shortDescription: "Launch and monitor jobs in one of several asynchronous execution modes."
 
 # label shown at top of appStep tab  
-longLabel: "Run or queue a Stage 1 Pipeline job"
+longLabel: "Run and monitor Stage 1 Pipeline jobs"
 
 #----------------------------------------------------------------------
 # server

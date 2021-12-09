@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# static components to launch a pipeline job
+# static components to launch and monitor pipeline jobs
 #----------------------------------------------------------------------
 
 # module ui function
@@ -9,11 +9,17 @@ runJobUI <- function(id, options) {
     ns <- NS(id)
     
     # override missing options to defaults
-    options <- setDefaultOptions(options, stepModuleInfo$configureJob)
+    options <- setDefaultOptions(options, stepModuleInfo$runJob)
 
     # incorporate options text into templates
     leaderText <- tagList(
         tags$p(HTML(options$leaderText))
+    )
+
+    # reused elements
+    refreshButton <- function(id) tags$span(
+        style = "font-size: 0.8em; margin-left: 1rem;",
+        actionLink(ns(id), NULL, icon = icon("refresh"))
     )
 
     # return the UI contents
@@ -24,22 +30,12 @@ runJobUI <- function(id, options) {
         span(
             class = "requiresJobFile",
             fluidRow(
-                box(
-                    width = 12,
-                    title = "Jobs status (mdi status ...)", 
-                    status = 'primary',
-                    solidHeader = FALSE,
-                    style = "padding: 0 0 10px 15px;",
-                    DTOutput(ns('statusTable'))
-                ) 
-            ),
-            fluidRow(
                 lapply(list(
-                    c('refresh',    'Refresh',  'success'),
-                    c('dryRun',     'Dry Run',  'info'),
-                    c('submit',     'Submit',   'primary'),
-                    c('rollback',   'Rollback', 'warning'),
-                    c('purge',      'Purge',    'danger')
+                    c('inspect',    'Inspect',  'primary', 'examine the complete set of job configuration options'),
+                    c('submit',     'Submit',   'success', 'queue all required data analysis jobs'),
+                    c('extend',     'Extend',   'success', 'queue only new or deleted/unsatisfied jobs'),
+                    c('rollback',   'Rollback', 'warning', 'revert pipeline to the most recent prior log file'),
+                    c('purge',      'Purge',    'danger',  'remove all log files associated with all jobs')
                 ), function(x){
                     column(
                         width = 2,
@@ -47,15 +43,51 @@ runJobUI <- function(id, options) {
                     )                
                 })
             ),
-            tags$div(
-                style = "height: 400px; overflow: auto; margin-top: 1em;",
-                verbatimTextOutput(ns('output'))   
-            )        
+# # configuration file level
+#     ROW:    status      show the updated status of previously queued jobs
+#     BUTTON: submit      queue all required data analysis jobs on the server
+#     BUTTON: extend      queue only new or deleted/unsatisfied jobs
+#     BUTTON: rollback    revert pipeline to the most recently archived status file
+#     BUTTON: purge       remove all status, script and log files associated with the jobs
+# # individual job level
+#     ROW:    report      show the log file of a previously queued job
+#     UNUSED: script      show the parsed target script for a previously queued job
+#     LINK:   delete      kill jobs that have not yet finished running
+            fluidRow(
+                style = "margin-top: 1.5em;",
+                box(
+                    width = 12,
+                    title = tags$span(
+                        "Job Statuses", 
+                        refreshButton('refreshStatus')
+                    ),
+                    status = 'primary',
+                    solidHeader = FALSE,
+                    style = "padding: 0 0 10px 15px;",
+                    DTOutput(ns('statusTable'))
+                ) 
+            ),
+            fluidRow(
+                style = "margin-top: 1.5em;",
+                box(
+                    width = 12,
+                    title = tags$span(
+                        "Command Output", 
+                        refreshButton('refreshOutput')
+                    ),
+                    status = 'primary',
+                    solidHeader = FALSE,
+                    tags$div(
+                        class = "command-output-wrapper",
+                        verbatimTextOutput(ns('output'))
+                    )
+                ) 
+            )      
         ),
         div(
             class = "requiresJobFileMessage",
             style = "font-size: 1.1em; margin-left: 1em;",
-            tags$p("Please click to select a job configuration file to launch and monitor its jobs.")
+            tags$p("Please click to select a job configuration file and launch and monitor its jobs.")
         )
     ) 
 }

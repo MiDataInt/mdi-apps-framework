@@ -390,3 +390,10 @@ table.dataTable tbody tr.selected {
     color:#aaaaaa !important;
     cursor: not-allowed !important;
 }
+.command-output-wrapper pre{
+    height: 500px;
+    background-color: #fbfbfb;
+}
+.command-output-error {
+    color: rgb(150,0,0);
+}

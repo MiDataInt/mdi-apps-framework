@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# reactive components to launch a pipeline job
+# reactive components to launch and monitor pipeline jobs
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -43,19 +43,7 @@ observe({
 })
 
 #----------------------------------------------------------------------
-# honor the refresh button
-#----------------------------------------------------------------------
-refreshStatus <- reactiveVal(0)
-refreshOutput <- reactiveVal(0)
-observeEvent(input$refresh, {
-    if(is.na(selectedJob()))
-        refreshStatus( refreshStatus() + 1 )
-    else
-        refreshOutput( refreshOutput() + 1 )
-})
-
-#----------------------------------------------------------------------
-# cascade to show the status of the selected job configuration file
+# cascade to show the status of a selected job configuration file
 #----------------------------------------------------------------------
 nullStatusTable <- data.table(
     jobName = "no submitted jobs",
@@ -67,11 +55,11 @@ nullStatusTable <- data.table(
     maxvmem = ""
 )
 statusTable <- reactive({
-    refreshStatus()
+    input$refreshStatus
     jobFile <- activeJobFile()
     req(jobFile)
 
-    # write the status to file using mdi status (but don't use it's return value)
+    # write the status to file using mdi status (but don't use it's formatted return value)
     startSpinner(session, 'mdi status')
     args <- c('status', jobFile$path)
     x <- runMdiCommand(args, collapse = FALSE)
@@ -116,11 +104,30 @@ output$statusTable <- renderDT(
 )
 
 #----------------------------------------------------------------------
-# cascade to show the status of the selected job
+# generic handlers for MDI job-manager commands
+#----------------------------------------------------------------------
+runJobManagerCommand <- function(command, jobId = NULL, dryRun = TRUE, force = FALSE,
+                                 errorString = 'mdi error:'){
+    setOutputData(NULL, NULL, FALSE)
+    jobFile <- activeJobFile()
+    req(jobFile)
+    startSpinner(session, command)
+    jobId  <- if(is.null(jobId)) ""  else c("--job", jobId)
+    dryRun <- if(dryRun) "--dry-run" else ""
+    force  <- if(force)  "--force"   else ""
+    args <- c(command, jobId, dryRun, force, jobFile$path)
+    data <- runMdiCommand(args)
+    if(!data$success) return( setOutputData(command, data) )
+    data$success <- isMdiSuccess(data$results)
+    setOutputData(command, data)
+}
+
+#----------------------------------------------------------------------
+# cascade to show the log report of a selected job
 #----------------------------------------------------------------------
 selectedJob <- rowSelectionObserver('statusTable', input)
-observe({
-    refreshOutput()
+fillOutput_report <- function(){
+    setOutputData(NULL, NULL, FALSE)
     jobFile <- activeJobFile()
     req(jobFile)
     statusTable <- statusTable()
@@ -129,70 +136,85 @@ observe({
     req(rowI)
     jobId <- statusTable[rowI, jobID]
     req(jobId)
-    startSpinner(session, 'mdi report')
-    args <- c('report', '-j', jobId, jobFile$path)
-    x <- runMdiCommand(args)
-    req(x$success)
-    stopSpinner(session, 'mdi report')
-    outputData(list(
-        type = "report",
-        text = x$results
-    ))
+    runJobManagerCommand('report', jobId = jobId, dryRun = FALSE)
+}
+observeEvent(selectedJob(), {
+    fillOutput_report()
+})
+
+#----------------------------------------------------------------------
+# inspect: display the complete set of job configuration options
+# handles by direct calls to launcher.pl
+#----------------------------------------------------------------------
+observeEvent(input$inspect, {
+    setOutputData(NULL, NULL, FALSE)
+    jobFile <- activeJobFile()
+    req(jobFile)
+    command <- 'inspect'
+    startSpinner(session, command)
+    args <- c(jobFile$pipeline, jobFile$path, '--dry-run')
+    data <- runMdiCommand(args)
+    if(!data$success) return( setOutputData(command, data) )
+    data$success <- isMdiSuccess(data$results)
+    setOutputData(command, data)
 })
 
 #----------------------------------------------------------------------
 # dry run and live submit of jobs
 #----------------------------------------------------------------------
-observeEvent(input$dryRun, {
-    jobFile <- activeJobFile()
-    req(jobFile)
-    startSpinner(session, 'mdi dry run')
-    finishUp <- function(data){
-        outputData(list(
-            type = "dryRun",
-            text = data
-        ))
-        stopSpinner(session, 'mdi dry run')        
-    }
-
-    # # pipeline dry run, reports all option values
-    # args <- c(jobFile$pipeline, jobFile$path, '--dry-run')
-    # x1 <- runMdiCommand(args)
-    # if(!x1$success) return( finishUp(x1$results) )
-
-    # finishUp(x1$results)
-
-
-
-    # job manager dry run, reports the job list
-    args <- c('submit', '--dry-run', jobFile$path)
-
-return( finishUp(paste(args, collapse = "\n") ))
-
-    x2 <- runMdiCommand(args)
-    if(!x2$success) return( finishUp(x2$results) )
-
-    finishUp(x2$results)
-
-    # # combine the two reports in out display
-    # finishUp(paste(
-    #     x2$results,
-    #     # "\n",
-    #     # x1$results,
-    #     sep = "\n"
-    # ))
+observeEvent(input$submit, {
+    runJobManagerCommand('submit')
+})
+observeEvent(input$extend, {
+    runJobManagerCommand('extend')
 })
 
+#----------------------------------------------------------------------
+# job configuration file status history rollback and purging
+#----------------------------------------------------------------------
+# observeEvent(input$rollback, {
+#     runJobManagerCommand('rollback', force = TRUE)
+# })
+# observeEvent(input$purge, {
+#     runJobManagerCommand('purge', force = TRUE)
+# })
 
 #----------------------------------------------------------------------
-# render all command outputs (except)
+# render all command outputs
 #----------------------------------------------------------------------
-outputData <- reactiveVal(list(
-    type = "",
-    text = NULL
-))
+nullOutput <- list(type = "", text = NULL)
+outputData <- reactiveVal(nullOutput)
+setOutputData <- function(command, data, stopSpinner = TRUE){
+    if(stopSpinner) stopSpinner(session, command)          
+    outputData(list(
+        command = if(is.null(data)) "" else command,
+        data = data
+    ))
+}
 output$output <- renderText({
-    outputData()$text
+    x <- outputData()$data
+    req(x)
+    toggle('refreshOutput', condition = !is.null(getFillFn()))    
+    toggleClass(
+        selector = ".command-output-wrapper pre", 
+        class = "command-output-error", 
+        condition = !x$success
+    )
+    x$results
+})
+
+#----------------------------------------------------------------------
+# enable output refresh link
+#----------------------------------------------------------------------
+getFillFn <- function(){
+    req(outputData()$command)
+    fn <- paste('fillOutput', outputData()$command, sep = "_")
+    if(exists(fn)) get(fn) else NULL
+}
+observeEvent(input$refreshOutput, {
+    fn <- getFillFn()
+    req(fn)
+    fn()
 })
 
 #----------------------------------------------------------------------

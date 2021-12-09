@@ -86,7 +86,7 @@ configureJobUI <- function(id, options) {
             class = "requiresJobFileMessage",
             style = "font-size: 1.1em; margin-left: 1em;",
             tags$p("Please Load or Create, and then click to select, a job configuration file to show its available options."), # nolint
-            tags$p("You may load multiple configuration files into a job file group that you save together in a bookmark.") # nolint
+            tags$p("You may load multiple configuration files into a job file group and save them together in a bookmark.") # nolint
         )
     ) 
 }
