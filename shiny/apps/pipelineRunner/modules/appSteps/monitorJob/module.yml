@@ -6,7 +6,7 @@
 shortLabel: "Monitor Status"
 
 # description shown on the Overview page
-shortDescription: "Track the state of previously queued analysis jobs."
+shortDescription: "Track the state of previously submitted analysis jobs."
 
 # label shown at top of appStep tab  
 longLabel: "Track the status of pipeline jobs"
@@ -21,4 +21,4 @@ types:
     
 # ... and of its dependencies
 sourceTypes:
-    - runJob
+    - configureJob

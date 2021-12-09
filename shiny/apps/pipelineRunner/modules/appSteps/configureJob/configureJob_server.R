@@ -488,7 +488,9 @@ observe({
 # set return values as reactives that will be assigned to app$data[[stepName]]
 #----------------------------------------------------------------------
 list(
+    input = input,
     outcomes = list(
+        analysisSetName = reactive(NULL),
         jobFiles = reactive(jobFiles$list) # actually a data.frame
     ),
     loadSourceFile = loadSourceFile,

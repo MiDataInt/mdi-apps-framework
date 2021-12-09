@@ -65,10 +65,13 @@ addServerAnalysisSetObserver <- function(){
 
 # contruct a nice, informative, default name for all bookmarks
 getDefaultBookmarkName <- function(suppressExtension = FALSE){
+    reportProgress('getDefaultBookmarkName')
     firstStepName <- names(app$config$appSteps)[1]
     appName <- app$config$name
+    # all app first steps must have a function or reactive outcome called analysisSetName
     analysisSetName <- app[[firstStepName]]$outcomes$analysisSetName()
-    filename <- paste(appName, analysisSetName, input$sidebarMenu, sep = ".")
+    filename <- if(is.null(analysisSetName)) paste(appName, input$sidebarMenu, sep = ".")
+                else paste(appName, analysisSetName, input$sidebarMenu, sep = ".")
     filename <- gsub(' ', '_', filename)
     if(!suppressExtension) filename <- paste(filename, "mdi", sep = ".")
     filename
