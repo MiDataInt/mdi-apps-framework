@@ -17,14 +17,16 @@ CONSTANTS <- list(
 
     # definitions of the file types we accept for upload
     sourceFileTypes = list(
-        manifest  = 'manifest',  # metadata on a collection of samples suitable for a Stage 1 pipeline
+        jobFile   = 'jobFile',   # a previously constructed Stage 1 pipeline job configuration file
+        manifest  = 'manifest',  # DEPRECATED: metadata on a collection of samples suitable for a Stage 1 pipeline
         package   = 'package',   # the output of a Stage 1 pipeline suitable for loading into a Stage 2 app
         dataTable = 'dataTable', # a flat file of data to load directly into an app (bypassing any Stage 1 pipeline)
         bookmark  = 'bookmark',  # a file saved previously by a user working in an app, contains page states but no data
         book      = 'book'       # a bookmark together with all package files required to run it (fully transportable)
     ),
     fileSuffixes = list(
-        manifest  = c('.csv'),
+        jobFile   = c('.yml'),
+        manifest  = c('.csv'), # DEPRECATED
         package   = c('.mdi.package.zip'),        
         dataTable = c('data.csv'), 
         bookmark  = c('.mdi'),

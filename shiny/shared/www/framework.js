@@ -127,3 +127,23 @@ let handleActionClick = function(parentId, instanceId, confirmMessage){
         Shiny.setInputValue(parentId, instanceId + '__' + Math.floor(Math.random() * 1e6)); // random allows repeat clicks
     }
 };
+
+/*  ------------------------------------------------------------------------
+    Pipeline Runner, functions to simplify the number of required input observers in R
+    ------------------------------------------------------------------------*/
+let prInputOnChange = function(x){
+    let parts = x.id.split('__');
+    Shiny.setInputValue(
+        parts[0], 
+        {id: parts[1], value: x.value, logical: false}, 
+        {priority: "event"}
+    );
+}
+let prCheckboxOnChange = function(x){
+    let parts = x.name.split('__');
+    Shiny.setInputValue(
+        parts[0], 
+        {id: parts[1], value: $(x).prop("checked"), logical: true}, 
+        {priority: "event"}
+    );
+}

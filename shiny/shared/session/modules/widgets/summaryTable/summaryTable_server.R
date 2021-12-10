@@ -12,8 +12,9 @@
 summaryTableServer <- function(
     id, parentId, stepNumber, stepLocks, sendFeedback,
     template, type,
-    remove=NULL, names=NULL, parent=NULL,
-    clearLocks=NULL, statusChange=NULL
+    remove = NULL, names = NULL, parent = NULL,
+    clearLocks = NULL, statusChange = NULL,
+    delete = NULL # for when each table row is linked to a single, specific server file
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -27,6 +28,7 @@ summaryTableServer <- function(
 
 # request options
 isRemove   <- !is.null(remove)
+isDelete   <- !is.null(delete)
 isNameEdit <- !is.null(names)
 isJobLauncher <- 'Job_Status' %in% names(template)
 
@@ -56,6 +58,7 @@ dtOptions <- list(
 
 # table control objects
 removeRowId <- 'removeRow'
+deleteRowId <- 'deleteFileAndRow'
 editNameId <- 'editName'
 launchJobId <- 'launchJob'
 buffer <- NULL # used for updating proxy in table with edit boxes
@@ -91,13 +94,24 @@ modifySummary <- function(summary, parentId){
     summary <- summary[rows, ]
     nrow <- nrow(summary)
     
-    # add custom record removal boxes
+    # add custom record removal links
     if(isRemove){
         summary$Remove <- tableRemoveActionLinks(
             stepLocks = stepLocks,
             parentId = parentNS(removeRowId),
             confirmMessage = NULL,
             ids = data$ids[rows]
+        )
+    }
+
+    # add custom source file deletion links
+    if(isDelete){
+        summary$Delete <- tableRemoveActionLinks(
+            stepLocks = stepLocks,
+            parentId = parentNS(deleteRowId),
+            confirmMessage = NULL,
+            ids = data$ids[rows],
+            delete = TRUE
         )
     }
 
@@ -123,10 +137,15 @@ modifySummary <- function(summary, parentId){
 }
 
 #----------------------------------------------------------------------
-# activate record removal action
+# activate record removal action and linked file delete actions
 #----------------------------------------------------------------------
 if(isRemove){
-    addRemoveObserver(input, removeRowId, module, data, sendFeedback, remove)   
+    addRemoveObserver(input, removeRowId, module, data, sendFeedback, 
+                      remove = remove)   
+}
+if(isDelete){
+    addRemoveObserver(input, deleteRowId, module, data, sendFeedback, 
+                      remove = delete, delete = TRUE)   
 }
 
 #----------------------------------------------------------------------

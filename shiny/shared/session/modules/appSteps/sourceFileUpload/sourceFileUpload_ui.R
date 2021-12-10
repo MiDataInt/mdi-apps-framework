@@ -19,10 +19,13 @@ sourceFileUploadUI <- function(id, options) {
     )))
 
     # return the UI contents
-    standardSequentialTabItem(options$longLabel, leaderText, 
+    standardSequentialTabItem(
+        options$longLabel, 
+        leaderText, 
     
         # enable merging additional sample sources into this one
-        tags$div(class = "text-block",
+        tags$div(
+            class = "text-block",
             sourceFileInputUI(ns('fileInput'), appName = appName)
         ),
 

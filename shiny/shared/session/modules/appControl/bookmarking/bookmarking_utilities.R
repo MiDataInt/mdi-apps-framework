@@ -13,6 +13,8 @@ bookmarkInput <- function(type, id, ...){
 
 # create a bookmark for the current state of the app as serialized json
 getBookmarkJson <- function(){
+    reportProgress('getBookmarkJson')
+
     if(is.null(app$NAME) || app$NAME == CONSTANTS$apps$launchPage) return(NULL) # only bookmark from within apps
     bookmark <- list(
         app   = app$NAME,

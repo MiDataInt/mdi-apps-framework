@@ -95,7 +95,9 @@ getSummaryTableData <- function(module, summary, buffer, parent, modify){
 #----------------------------------------------------------------------
 
 # remove record action
-addRemoveObserver <- function(input, inputId, module, data, sendFeedback=NULL, remove=NULL){
+# delete option also allows for deletion of an associated server source file
+addRemoveObserver <- function(input, inputId, module, data, sendFeedback = NULL, 
+                              remove = NULL, delete = FALSE){
     if(is.null(remove)) return(NULL)
     observeEvent(input[[inputId]], {
         reportProgress(inputId, module)
@@ -103,11 +105,16 @@ addRemoveObserver <- function(input, inputId, module, data, sendFeedback=NULL, r
         id <- names(data$list)[selectedRow]
         name <- if(is.character(remove$name)) data$list[[id]][[remove$name]] else remove$name(id)
         showUserDialog(
-            'Confirm Removal',
+            if(delete) 'Confirm File Deletion' else 'Confirm Removal',
             tags$p(remove$message),
             tags$p(name),
-            #size = 'm',
+            size = if(nchar(remove$message) > 100 || nchar(name) > 50) 'm' else 's',
+            type = if(delete) 'deleteCancel' else 'okCancel',
             callback = function(parentInput) {
+                if(delete) {
+                    path <- data$list[[id]]$path
+                    if(!is.null(path) && file.exists(path)) unlink(path)
+                }
                 reportProgress(paste(selectedRow, '=', id))
                 if(!is.null(data$clearLocks)) data$clearLocks(id) # only caller knows how to do lock clearing 
                 if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory # nolint

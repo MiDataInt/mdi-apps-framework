@@ -57,7 +57,9 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
         style = "display: none;", # server.R selects the proper content to show
         includeMarkdown( file.path('static/mdi-intro.md') ),
         uiOutput('mainFileInputUI'),
-        includeMarkdown( file.path('static/launch-page.md') ),
+        if(serverEnv$IS_WINDOWS) ""  
+        else includeMarkdown( file.path('static/launch-page-stage1.md') ), # OS dependent
+             includeMarkdown( file.path('static/launch-page-stage2.md') ), # always present
         uiOutput('bookmarkHistoryList')
     ),
     tags$div( # server busy page

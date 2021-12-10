@@ -28,7 +28,7 @@ setUILoadCounter <- function(){ # every function creating a column of inputs cal
 
 # instanceIds assign a unique id to each row's element, with a common parent prefix
 getInstanceId <- function(parentId, i, j=0){ # i = row number, j = optional item number in row
-    paste(parentId, i, j, tableUILoadCounter, sep=tableUiInputSeparator)
+    paste(parentId, i, j, tableUILoadCounter, sep = tableUiInputSeparator)
 }
 
 # assemble a vector of UI inputs suitable for embedding as a data table column
@@ -40,7 +40,7 @@ tableUiInputs <- function(ShinyUiFun, parentId, nrow, ..., allow=NULL) { # Shiny
     for (i in seq_len(nrow)) {
         instanceId <- getInstanceId(parentId, i)    
         ui <- if(allow[i]) ShinyUiFun(instanceId, ...) else ""
-        inputs[i] <- as.character(tags$div(onmousedown="event.stopPropagation();", ui))
+        inputs[i] <- as.character(tags$div(onmousedown = "event.stopPropagation();", ui))
     }
     inputs 
 }
@@ -50,7 +50,7 @@ tableUiInput <- function(ShinyUiFun, parentId, rowN, ..., allow=NULL, j=0) { # S
     if(is.null(allow)) allow <- TRUE
     instanceId <- getInstanceId(parentId, rowN, j) 
     ui <- if(allow) ShinyUiFun(instanceId, ...) else ""
-    as.character(tags$div(onmousedown="event.stopPropagation();", ui))
+    as.character(tags$div(onmousedown = "event.stopPropagation();", ui))
 }
 
 #----------------------------------------------------------------------
@@ -62,7 +62,7 @@ tableUiInput <- function(ShinyUiFun, parentId, rowN, ..., allow=NULL, j=0) { # S
 tableActionLinks <- function(parentId, nrow, label, ..., confirmMessage=NULL, allow=NULL) {
     if(is.null(confirmMessage)) confirmMessage <- "NO_CONFIRM"
     onclick <- getTableActionOnClick(parentId, confirmMessage)
-    tableUiInputs(actionLink, parentId, nrow, label, ..., onclick=onclick, allow=allow)
+    tableUiInputs(actionLink, parentId, nrow, label, ..., onclick = onclick, allow = allow)
 }
 getTableActionOnClick <- function(parentId, confirmMessage){
     paste0('handleActionClick("', parentId, '", this.id, "', confirmMessage, '")')
@@ -77,10 +77,10 @@ tableCellActionLinks <- function(parentId, rowN, labels, ..., confirmMessage=NUL
     if(is.null(labels) || length(labels) == 0) return("NA")    
     if(is.null(confirmMessage)) confirmMessage <- "NO_CONFIRM"
     onclick <- getTableActionOnClick(parentId, confirmMessage)
-    HTML(paste(unname(sapply(1:length(labels), function(labelN){
+    HTML(paste(unname(sapply(seq_along(labels), function(labelN){
         tableUiInput(actionLink, parentId, rowN, labels[labelN], ...,
-                      onclick=onclick, allow=allow, j=labelN)
-    })), collapse=''))
+                      onclick = onclick, allow = allow, j = labelN)
+    })), collapse = ''))
 }
 # ... and recover the row and item indices when the action is clicked
 getTableActionLinkRowAndItem <- function(input, parentId){
@@ -90,13 +90,14 @@ getTableActionLinkRowAndItem <- function(input, parentId){
 #----------------------------------------------------------------------
 # special action links to prevent inappropriate record removal based on data locks
 #----------------------------------------------------------------------
-tableRemoveActionLinks <- function(stepLocks, parentId, confirmMessage, ids, ...) {
-    label  <- "Remove"
+tableRemoveActionLinks <- function(stepLocks, parentId, confirmMessage, ids, 
+                                   ..., delete = FALSE) {
+    label  <- if(delete) "Delete" else "Remove"
     nrow   <- length(ids)
     locked <- sapply(ids, function(id) !is.null(stepLocks[[id]]) &&
                                        length(stepLocks[[id]]) > 0)
     tableActionLinks(parentId, nrow, label, ...,
-                     confirmMessage=confirmMessage, allow = !locked)
+                     confirmMessage = confirmMessage, allow = !locked)
 }
 
 #----------------------------------------------------------------------
@@ -114,8 +115,8 @@ tableJobActionLinks <- function(parentId, statuses, ...) {
         inputs[i] <- if(is.na(statuses[i])) ""
         else if(statuses[i] == CONSTANTS$jobStatuses$created$value) { # i.e. a pending job
             instanceId <- getInstanceId(parentId, i)
-            as.character(tags$div(onmousedown="event.stopPropagation();",
-                                  actionLink(instanceId, linkName, onclick=onclick, ...)))
+            as.character(tags$div(onmousedown = "event.stopPropagation();",
+                                  actionLink(instanceId, linkName, onclick = onclick, ...)))
         } else CONSTANTS$jobStatuses[[statuses[i] + 3]]$icon
     }
     inputs
@@ -172,9 +173,9 @@ getTableEditBoxData <- function(input, parentId){
 
 # put an identical checkbox in every table row ...
 tableCheckboxes <- function(parentId, defaults, ...){
-    tableEditBoxes(parentId, defaults, createFn=getTableCheckbox, field='checked', ...)
+    tableEditBoxes(parentId, defaults, createFn = getTableCheckbox, field = 'checked', ...)
 }
-getTableCheckbox <- function(parentId, i, default, onchange=NULL){ # need this to replace 1 box when editing
+getTableCheckbox <- function(parentId, i, default, onchange = NULL){ # need this to replace 1 box when editing
     if(is.null(onchange)){
         setUILoadCounter()
         onchange <- getTableEditBoxOnChange(parentId, 'checked')
@@ -196,7 +197,7 @@ getTableCheckbox <- function(parentId, i, default, onchange=NULL){ # need this t
 #----------------------------------------------------------------------
 rowSelectionObserver <- function(parentTable, input){
     selected <- reactiveVal(NA)
-    inputId <- paste(parentTable, "rows_selected", sep="_")
+    inputId <- paste(parentTable, "rows_selected", sep = "_")
     observe({
         row <- input[[inputId]]
         if(is.null(row)) row <- NA

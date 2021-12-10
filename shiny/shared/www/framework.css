@@ -43,6 +43,9 @@ body, html {
 .nav-tabs {
     font-weight: bold;
 }
+#configure-optionFamilies>div {
+    padding: 0;
+}
 
 /*  ------------------------------------------------------------------------
     shinydashboard header styles
@@ -85,7 +88,7 @@ body, html {
     shinydashboard sidebar styles
     ------------------------------------------------------------------------*/
 .skin-blue  .main-sidebar {
-    padding-top: 50px; #0;
+    padding-top: 50px; 
     background-color: #00274C;
     border-top: 1px solid #F2D384;
 }
@@ -112,7 +115,6 @@ body, html {
     text-align: center;
     font-size: 1.2em;
 }
-
 
 .sidebarBookmarking, .sidebarBookmarking:hover, .sidebarBookmarking:focus {
     border: transparent;    
@@ -249,6 +251,20 @@ table i.fa.fa-times-circle {
 }
 
 /*  ------------------------------------------------------------------------
+    tooltip style
+    ------------------------------------------------------------------------*/
+.tooltip.top .tooltip-inner{
+    max-width: 500px;
+    width: auto;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background-color: #eee;
+    color: #001222;
+    border: 1px solid black;
+    text-align: center;
+}
+
+/*  ------------------------------------------------------------------------
     DT data tables
     ------------------------------------------------------------------------*/
 .table-compact-2 th, .table-compact-2 td {
@@ -359,4 +375,39 @@ table.dataTable tbody tr.selected {
 }
 .results-box-header-button:hover {
     color: white !important;
+}
+
+/*  ------------------------------------------------------------------------
+    Pipeline Runner
+    ------------------------------------------------------------------------*/
+.pr-help-icon i, .pr-required-icon i, .pr-dir-icon i {
+    vertical-align: text-top;    
+}
+.pr-help-icon, .pr-required-icon { 
+    margin-left: 2px;      
+}
+.pr-required-icon {
+    font-size: 0.9rem; 
+    color: rgb(175,0,0);    
+}
+.pr-help-icon {
+    font-size: 1rem; 
+    color: #0174BB;    
+}
+.pr-dir-icon {
+    font-size: 1rem;
+    color: #555;
+    margin-left: 5px;
+    cursor: pointer;
+}
+.pr-link-disable {
+    color:#aaaaaa !important;
+    cursor: not-allowed !important;
+}
+.command-output-wrapper pre{
+    /* height: 500px; */
+    background-color: #fbfbfb;
+}
+.command-output-error {
+    color: rgb(150,0,0);
 }

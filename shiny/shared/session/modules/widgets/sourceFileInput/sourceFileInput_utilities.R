@@ -2,6 +2,13 @@
 # source data file upload functions
 #----------------------------------------------------------------
 
+# determine whether to show the shinyFile server file access button
+exposeServerFiles <- function(){
+    if(serverEnv$IS_LOCAL && serverEnv$DEBUG) TRUE
+    else if(serverEnv$REQUIRES_AUTHENTICATION) isAuthorizedUser()
+    else !serverEnv$IS_LOCAL # but do use shinyFiles in remote and ondemand modes
+}
+
 # get the list of allowed incoming file types for a given app
 getAllowedSourceFileTypes <- function(appName = NULL, externalSuffixes = list()){
     fs <- CONSTANTS$fileSuffixes
@@ -9,21 +16,28 @@ getAllowedSourceFileTypes <- function(appName = NULL, externalSuffixes = list())
     # first source file load from the launch page
     # bookmark files only allowed here
     if(is.null(appName)){ 
-        list(manifest  = fs$manifest,
-             package   = fs$package,
-             dataTable = fs$dataTable,             
-             bookmark  = fs$bookmark,
-             book      = fs$book)
-        
+        x <- list(
+            jobFile   = fs$jobFile,
+            # manifest  = fs$manifest, # DEPRECATED
+            package   = fs$package,
+            dataTable = fs$dataTable,             
+            bookmark  = fs$bookmark,
+            book      = fs$book
+        )
+        if(serverEnv$IS_WINDOWS) x$jobFile <- fs$jobFile
+        x
+
     # a chance to upload additional manifest files to submit to a Stage 1 pipeline
     } else if (appName == CONSTANTS$apps$pipelineRunner){
-        list(manifest  = fs$manifest)
+        list(jobFile   = fs$jobFile) # manifest  = fs$manifest DEPRECATED
     
     # a chance to upload additional data source files for a running Stage 2 app
     } else { 
-        list(package   = fs$package,
-             dataTable = fs$dataTable,
-             external  = externalSuffixes)
+        list(
+            package   = fs$package,
+            dataTable = fs$dataTable,
+            external  = externalSuffixes
+        )
     }
 }
 
@@ -36,7 +50,7 @@ isAllowedSourceFileType <- function(file, allowedFileTypes){
 getIncomingFileType <- function(fileName){
     fs  <- CONSTANTS$fileSuffixes
     sft <- CONSTANTS$sourceFileTypes
-    for(type in c('dataTable', 'manifest', 'package', 'bookmark', 'book')){ # order is important 
+    for(type in c('dataTable', 'manifest', 'jobFile', 'package', 'bookmark', 'book')){ # order is important 
         if(endsWith(fileName, fs[[type]])) return( sft[[type]] )
     }
     NULL
@@ -131,8 +145,8 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
             addDataSource(type)
         }
  
-    # sample manifests destined for execution by a Stage 1 pipeline 
-    } else if(type == sft$manifest){
+    # job configuration files (or sample manifests, deprecated) for execution by a Stage 1 pipeline 
+    } else if(type == sft$jobFile || type == sft$manifest){
         if(isLaunchPage){ # first file upload on launch page
             launchApp(type, CONSTANTS$apps$pipelineRunner)
         } else { # additional file upload from within an app

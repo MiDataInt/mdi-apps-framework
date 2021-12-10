@@ -15,6 +15,9 @@ debugMsg <- function(msg = "", module=NULL){
 }
 debugStr <- function(x = "") str(x)
 debugPrint <- function(x = "") print(x) 
+dmsg <- debugMsg
+dstr <- debugStr
+dprint <- debugPrint
 
 # log information about sessions for server management
 logSessionMetadata <- function(sessionData){

@@ -94,7 +94,7 @@ loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
     loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId) # nolint
          else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId)
          else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId) # nolint
-    if(is.null(suppressUnlink) || !suppressUnlink) unlink(incomingFile$path)         
+    if(is.null(suppressUnlink) || !suppressUnlink) unlink(incomingFile$path)    
     sources$list[[sourceId]] <- c(
         loaded,
         list(

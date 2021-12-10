@@ -10,12 +10,12 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
     # initialize namespace
     ns <- NS(id)
 
-# as needed, enable the server-side file browser
-    if(serverEnv$IS_SERVER && isAuthorizedUser()){
+    # as needed, enable the server-side file browser ...
+    if(exposeServerFiles()){
         localWidth <- 9        
         fileServerButton <- column(
             width = 12 - localWidth, 
-            serverFilesButtonUI( ns('serverFileInput') )
+            serverSourceFilesButtonUI( ns('serverFileInput') )
         )
     } else {
         localWidth <- 12        
@@ -23,7 +23,7 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
     }
 
 
-    # file upload input
+    # ... and always the local file upload input
     tags$div(
         fluidRow(
             class = "file-input-controls",    
@@ -37,8 +37,11 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
                     accept = getAllowedSourceFileTypes(appName, externalSuffixes),
                     width = width
                 )
+            ),
+            column(
+                width = 12, 
+                uiOutput(ns('fileInputFeedback'))
             )
-        ),
-        uiOutput(ns('fileInputFeedback'))
+        )
     )                       
 }

@@ -4,7 +4,7 @@
 # description is used when needing to query user for the desired target app
 #----------------------------------------------------------------------
 name: "Pipeline Runner"
-description: "Set parameters and execute a Stage 1 data analysis pipeline on raw data"
+description: "Set parameters and execute a Stage 1 data analysis pipeline"
 
 #----------------------------------------------------------------------
 # project data file type(s) associated with this app
@@ -12,11 +12,6 @@ description: "Set parameters and execute a Stage 1 data analysis pipeline on raw
 #   required files lead to rejection of a project file if missing
 #----------------------------------------------------------------------
 uploadTypes: null
-# uploadTypes:
-#     example-type: 
-#         contentFileTypes: # anything not listed will not be available to the app
-#             example:  
-#                 required: true
 
 #----------------------------------------------------------------------
 # labels and definitions for all sequential analysis steps shown in sidebar
@@ -31,7 +26,7 @@ uploadTypes: null
 #    other options are module specific; see module definitions
 #----------------------------------------------------------------------
 appSteps:
-    upload:
-        module: sourceFileUpload
-        shortLabel: "Adjust Data Sources"
-        shortDescription: "Drag and drop additional sample manifests and edit sample display names."
+    configure:
+        module: configureJob
+    run: 
+        module: runJob

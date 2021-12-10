@@ -18,6 +18,7 @@ for(name in c('DEBUG', 'IS_DEVELOPER', 'IS_HOSTED', 'LAUNCH_BROWSER')) {
 }
 
 # set structured environment variables based on mode
+serverEnv$IS_WINDOWS  <- .Platform$OS.type != "unix"
 serverEnv$IS_LOCAL    <- serverEnv$SERVER_MODE == 'local'
 serverEnv$IS_REMOTE   <- serverEnv$SERVER_MODE == 'remote'
 serverEnv$IS_NODE     <- serverEnv$SERVER_MODE == 'node'
@@ -125,8 +126,8 @@ invisible(unlink(
     force = TRUE
 ))
 
-# set the list of known apps
-source(file.path('global', 'utilities', 'apps.R'))
+# set the list of known apps (let Pipeline Runner load pipeline suites)
+source(file.path('global', 'utilities', 'suites.R'))
 appSuiteDirs <- getAppSuiteDirs()
 appDirs <- getAppDirs(appSuiteDirs)
 appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by installed apps; required prior to app load
