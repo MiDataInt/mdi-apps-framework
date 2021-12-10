@@ -251,6 +251,20 @@ table i.fa.fa-times-circle {
 }
 
 /*  ------------------------------------------------------------------------
+    tooltip style
+    ------------------------------------------------------------------------*/
+.tooltip.top .tooltip-inner{
+    max-width: 500px;
+    width: auto;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background-color: #eee;
+    color: #001222;
+    border: 1px solid black;
+    text-align: center;
+}
+
+/*  ------------------------------------------------------------------------
     DT data tables
     ------------------------------------------------------------------------*/
 .table-compact-2 th, .table-compact-2 td {

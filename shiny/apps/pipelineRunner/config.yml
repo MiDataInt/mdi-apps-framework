@@ -30,5 +30,3 @@ appSteps:
         module: configureJob
     run: 
         module: runJob
-    # monitor: 
-    #     module: monitorJob

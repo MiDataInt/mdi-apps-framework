@@ -267,6 +267,7 @@ executeButtonMetadata <- list(
 output$executeButton <- renderUI({ # render the Execute button
     x <- outputData()$command
     req(x)  
+    if(x == "report") return(downloadPackageButton())
     d <- executeButtonMetadata[[x]]
     req(d)
     label <- paste('Execute', d[1])
@@ -275,6 +276,7 @@ output$executeButton <- renderUI({ # render the Execute button
 observeEvent(input$execute, { # act on the execute button click
     command <- outputData()$command
     req(command)
+    if(command == "report") return()
     args <- outputData()$args
     req(args)
     command <- 'execute'
@@ -287,6 +289,34 @@ observeEvent(input$execute, { # act on the execute button click
     setOutputData(NULL, NULL, NULL)
     invalidateStatusTable( invalidateStatusTable() + 1 )
 })
+
+#----------------------------------------------------------------------
+# download a data package from a job for use in Stage 2 apps
+#----------------------------------------------------------------------
+packageFile <- reactiveVal(NULL)
+downloadPackageButton <- function(){
+    packageFile(NULL)
+    x <- outputData()$data
+    req(x)
+    x <- x$results
+    req(x)
+    x <- strsplit(x, "\n")[[1]]
+    i <- max(which(grepl("writing Stage 2 package file", x)))
+    req(i)
+    i <- i + 1 # this line carries the name of the most recently written data package.zip
+    packageFile(x[i])
+    downloadButton(ns('download'), label = "Download Package", 
+                   icon = NULL, width = "100%", # style mimics bsButton style=primary
+                   style = "color: white; background-color: #3c8dbc; width: 100%; border-radius: 3px;")
+}
+output$download <- downloadHandler(
+    filename = function(){
+        basename(packageFile())
+    },
+    content = function(tmpFile){
+        file.copy(packageFile(), tmpFile)
+    }
+)
 
 #----------------------------------------------------------------------
 # define bookmarking actions

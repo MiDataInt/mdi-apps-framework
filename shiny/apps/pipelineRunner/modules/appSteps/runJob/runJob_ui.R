@@ -19,7 +19,7 @@ runJobUI <- function(id, options) {
     # reused elements
     refreshButton <- function(id) tags$span(
         style = "font-size: 0.8em; margin-left: 1rem;",
-        actionLink(ns(id), NULL, icon = icon("refresh"))
+        actionLink(ns(id), NULL, icon = icon("sync"))
     )
 
     # return the UI contents
@@ -70,14 +70,14 @@ runJobUI <- function(id, options) {
                     fluidRow(
                         style = "margin: 0.5em 0;", 
                         column(
-                            width = 10,
+                            width = 8,
                             tags$strong(
                                 style = "font-size: 1.1em;",                 
                                 textOutput(ns('command'), inline = TRUE)
                             )
                         ),                     
                         column(
-                            width = 2,
+                            width = 4,
                             uiOutput(ns('executeButton'))
                         )
                     ),
@@ -91,7 +91,7 @@ runJobUI <- function(id, options) {
         div(
             class = "requiresJobFileMessage",
             style = "font-size: 1.1em; margin-left: 1em;",
-            tags$p("Please click to select a job configuration file and launch and monitor its jobs.")
+            tags$p(HTML("Please <b>click to select</b> a job configuration file and launch and monitor its jobs."))
         )
     ) 
 }

@@ -13,6 +13,16 @@ configureJobServer <- function(id, options, bookmark, locks){
 dashReplacement <- "DASH"
 
 #----------------------------------------------------------------------
+# add tooltips
+#----------------------------------------------------------------------
+mdiTooltips(
+    ns, 
+    list(
+        c("setName", "Give this configuration set a short, useful name.")
+    )
+)
+
+#----------------------------------------------------------------------
 # initialize job configuration load, create and select elements at top of page
 #----------------------------------------------------------------------
 sourceFileInput  <- sourceFileInputServer('fileInput', appName = 'pipelineRunner')
@@ -365,7 +375,7 @@ getOptionInput <- function(value, option){
     tags$span(
         class = if(option$required) "" else "pr-optional-input",
         x,
-        bsTooltip(helpId, option$description, placement = "top"),
+        mdiTooltip(ns, helpId, option$description, placement = "top", ui = TRUE),
         # if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
     )
 }
@@ -490,7 +500,7 @@ observe({
 list(
     input = input,
     outcomes = list(
-        analysisSetName = reactive(NULL),
+        analysisSetName = reactive(input$analysisSetName),
         jobFiles = reactive(jobFiles$list) # actually a data.frame
     ),
     loadSourceFile = loadSourceFile,

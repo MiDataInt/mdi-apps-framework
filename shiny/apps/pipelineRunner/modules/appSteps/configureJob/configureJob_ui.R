@@ -32,6 +32,18 @@ configureJobUI <- function(id, options) {
         # enable cold creation of a new job config file
         createJobFileUI(ns('create')),
 
+        # name for bookmark files
+        fluidRow(box(
+            status = 'primary',
+            solidHeader = TRUE,
+            width = 4,
+            title = tags$span(
+                id = ns("setName"),
+                'Configuration Set Name'
+            ),
+            textInput(ns('analysisSetName'), NULL, Sys.Date())
+        )),
+
         # tables of the sample sources and samples that are uploaded and ready
         conditionalPanel( condition = paste0("window['", ns('jobFiles-count'), "'] > 0"), 
             summaryTableUI(ns('jobFiles'), 'Job Configuration Files', width = 12, collapsible = TRUE),
@@ -43,7 +55,7 @@ configureJobUI <- function(id, options) {
             fluidRow(
                 box(
                     width = 12,
-                    title = "Working file actions", 
+                    title = "Configuration file actions", 
                     status = 'primary',
                     solidHeader = FALSE,
                     style = "padding: 0 0 10px 15px;",
@@ -85,7 +97,7 @@ configureJobUI <- function(id, options) {
         div(
             class = "requiresJobFileMessage",
             style = "font-size: 1.1em; margin-left: 1em;",
-            tags$p("Please Load or Create, and then click to select, a job configuration file to show its available options."), # nolint
+            tags$p(HTML("Please <b>Load</b> or <b>Create</b>, and then <b>click to select</b>, a job configuration file to show its available options.")), # nolint
             tags$p("You may load multiple configuration files into a job file group and save them together in a bookmark.") # nolint
         )
     ) 
