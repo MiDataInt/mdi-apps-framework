@@ -34,7 +34,7 @@ runJobUI <- function(id, options) {
                     c('inspect',    'Inspect',  'primary', 'examine the complete set of job configuration options'),
                     c('submit',     'Submit',   'success', 'queue all required data analysis jobs'),
                     c('extend',     'Extend',   'success', 'queue only new or deleted/unsatisfied jobs'),
-                    c('rollback',   'Rollback', 'warning', 'revert pipeline to the most recent prior log file'),
+                    c('rollback',   'Rollback', 'danger', 'revert pipeline to the most recent prior log file'),
                     c('purge',      'Purge',    'danger',  'remove all log files associated with all jobs')
                 ), function(x){
                     column(
@@ -43,16 +43,6 @@ runJobUI <- function(id, options) {
                     )                
                 })
             ),
-# # configuration file level
-#     ROW:    status      show the updated status of previously queued jobs
-#     BUTTON: submit      queue all required data analysis jobs on the server
-#     BUTTON: extend      queue only new or deleted/unsatisfied jobs
-#     BUTTON: rollback    revert pipeline to the most recently archived status file
-#     BUTTON: purge       remove all status, script and log files associated with the jobs
-# # individual job level
-#     ROW:    report      show the log file of a previously queued job
-#     UNUSED: script      show the parsed target script for a previously queued job
-#     LINK:   delete      kill jobs that have not yet finished running
             fluidRow(
                 style = "margin-top: 1.5em;",
                 box(
@@ -77,6 +67,20 @@ runJobUI <- function(id, options) {
                     ),
                     status = 'primary',
                     solidHeader = FALSE,
+                    fluidRow(
+                        style = "margin: 0.5em 0;", 
+                        column(
+                            width = 10,
+                            tags$strong(
+                                style = "font-size: 1.1em;",                 
+                                textOutput(ns('command'), inline = TRUE)
+                            )
+                        ),                     
+                        column(
+                            width = 2,
+                            uiOutput(ns('executeButton'))
+                        )
+                    ),
                     tags$div(
                         class = "command-output-wrapper",
                         verbatimTextOutput(ns('output'))

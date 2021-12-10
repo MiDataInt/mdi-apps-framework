@@ -54,8 +54,10 @@ nullStatusTable <- data.table(
     walltime = "",
     maxvmem = ""
 )
+invalidateStatusTable <- reactiveVal(0)
 statusTable <- reactive({
     input$refreshStatus
+    invalidateStatusTable()
     jobFile <- activeJobFile()
     req(jobFile)
 
@@ -80,7 +82,7 @@ statusTable <- reactive({
     x <- paste(x[i1:length(x)], collapse = "\n")
     x <- fread(text = x)
     stopSpinner(session, 'mdi status')
-    x[, .(
+    x <- x[, .(
         jobName,
         jobID,
         array,
@@ -88,7 +90,12 @@ statusTable <- reactive({
         exit_status,
         walltime,
         maxvmem
-    )]    
+    )]   
+    y <- data.table(
+        delete = tableActionLinks(ns(deleteLinkId), nrow(x), 'Delete', 
+                                  allow = !is.numeric(x$exit_status))  
+    )
+    cbind(y, x)
 })
 output$statusTable <- renderDT(
     { statusTable() },
@@ -97,18 +104,43 @@ output$statusTable <- renderDT(
         searching = FALSE            
     ),
     class = "display table-compact-4",
-    escape = TRUE, 
+    escape = FALSE, 
     selection = 'single', 
     editable = FALSE, 
     rownames = FALSE # must be true for editing to work, not sure why (datatables peculiarity)
 )
 
 #----------------------------------------------------------------------
-# generic handlers for MDI job-manager commands
+# enable job deletetion from within the status table
+#----------------------------------------------------------------------
+deleteLinkId <- 'deleteLink'
+observeEvent(input[[deleteLinkId]], {
+    statusTable <- statusTable()
+    req(statusTable)
+    row <- getTableActionLinkRow(input, deleteLinkId)
+    dmsg(row)
+    jobName <- statusTable[row, jobName]
+    jobId   <- statusTable[row, jobID]
+    showUserDialog(
+        "Confirm Job Deletion", 
+        tags$p("Delete / kill / cancel this job from the cluster job queue?"),
+        tags$p(jobName), 
+        tags$p(jobId),
+        callback = function(parentInput) {
+            # runJobManagerCommand('delete', jobId = jobId, dryRun = FALSE, force = TRUE)
+            invalidateStatusTable( invalidateStatusTable() + 1 )
+        },
+        size = "s", 
+        type = 'deleteCancel'
+    )
+})
+
+#----------------------------------------------------------------------
+# generic handler for MDI job-manager commands
 #----------------------------------------------------------------------
 runJobManagerCommand <- function(command, jobId = NULL, dryRun = TRUE, force = FALSE,
                                  errorString = 'mdi error:'){
-    setOutputData(NULL, NULL, FALSE)
+    setOutputData(NULL, NULL, NULL, FALSE)
     jobFile <- activeJobFile()
     req(jobFile)
     startSpinner(session, command)
@@ -117,9 +149,9 @@ runJobManagerCommand <- function(command, jobId = NULL, dryRun = TRUE, force = F
     force  <- if(force)  "--force"   else ""
     args <- c(command, jobId, dryRun, force, jobFile$path)
     data <- runMdiCommand(args)
-    if(!data$success) return( setOutputData(command, data) )
+    if(!data$success) return( setOutputData(command, args, data) )
     data$success <- isMdiSuccess(data$results)
-    setOutputData(command, data)
+    setOutputData(command, args, data)
 }
 
 #----------------------------------------------------------------------
@@ -127,7 +159,7 @@ runJobManagerCommand <- function(command, jobId = NULL, dryRun = TRUE, force = F
 #----------------------------------------------------------------------
 selectedJob <- rowSelectionObserver('statusTable', input)
 fillOutput_report <- function(){
-    setOutputData(NULL, NULL, FALSE)
+    setOutputData(NULL, NULL, NULL, FALSE)
     jobFile <- activeJobFile()
     req(jobFile)
     statusTable <- statusTable()
@@ -144,23 +176,23 @@ observeEvent(selectedJob(), {
 
 #----------------------------------------------------------------------
 # inspect: display the complete set of job configuration options
-# handles by direct calls to launcher.pl
+# handled by direct call to launcher.pl
 #----------------------------------------------------------------------
 observeEvent(input$inspect, {
-    setOutputData(NULL, NULL, FALSE)
+    setOutputData(NULL, NULL, NULL, FALSE)
     jobFile <- activeJobFile()
     req(jobFile)
     command <- 'inspect'
     startSpinner(session, command)
     args <- c(jobFile$pipeline, jobFile$path, '--dry-run')
     data <- runMdiCommand(args)
-    if(!data$success) return( setOutputData(command, data) )
+    if(!data$success) return( setOutputData(command, args, data) )
     data$success <- isMdiSuccess(data$results)
-    setOutputData(command, data)
+    setOutputData(command, args, data)
 })
 
 #----------------------------------------------------------------------
-# dry run and live submit of jobs
+# dry run job submission buttons
 #----------------------------------------------------------------------
 observeEvent(input$submit, {
     runJobManagerCommand('submit')
@@ -170,7 +202,7 @@ observeEvent(input$extend, {
 })
 
 #----------------------------------------------------------------------
-# job configuration file status history rollback and purging
+# status history rollback and purging
 #----------------------------------------------------------------------
 # observeEvent(input$rollback, {
 #     runJobManagerCommand('rollback', force = TRUE)
@@ -184,14 +216,20 @@ observeEvent(input$extend, {
 #----------------------------------------------------------------------
 nullOutput <- list(type = "", text = NULL)
 outputData <- reactiveVal(nullOutput)
-setOutputData <- function(command, data, stopSpinner = TRUE){
+setOutputData <- function(command, args, data, stopSpinner = TRUE){
     if(stopSpinner) stopSpinner(session, command)          
     outputData(list(
         command = if(is.null(data)) "" else command,
+        args = args,
         data = data
     ))
 }
-output$output <- renderText({
+output$command <- renderText({ # show a simplified version of the command output being displayed
+    x <- outputData()$args
+    req(x)  
+    paste(sapply(c("mdi", x), basename), collapse = " ")
+})
+output$output <- renderText({ # the output returned by 'mdi <command>'
     x <- outputData()$data
     req(x)
     toggle('refreshOutput', condition = !is.null(getFillFn()))    
@@ -215,6 +253,39 @@ observeEvent(input$refreshOutput, {
     fn <- getFillFn()
     req(fn)
     fn()
+})
+
+#----------------------------------------------------------------------
+# enable final execution, i.e., after (from within) a --dry-run display
+#----------------------------------------------------------------------
+executeButtonMetadata <- list(
+    submit   = c("Submit",   "success"),
+    extend   = c("Extend",   "success"),
+    rollback = c("Rollback", "danger"),
+    purge    = c("Purge",    "danger")
+)
+output$executeButton <- renderUI({ # render the Execute button
+    x <- outputData()$command
+    req(x)  
+    d <- executeButtonMetadata[[x]]
+    req(d)
+    label <- paste('Execute', d[1])
+    bsButton(ns('execute'), label, style = d[2], width = "100%")
+})
+observeEvent(input$execute, { # act on the execute button click
+    command <- outputData()$command
+    req(command)
+    args <- outputData()$args
+    req(args)
+    command <- 'execute'
+    startSpinner(session, command)
+    args <- args[args != "--dry-run"]
+    # data <- runMdiCommand(args)
+    # if(!data$success) return( setOutputData(command, args, data) )
+    # data$success <- isMdiSuccess(data$results)
+    # if(!data$success) return( setOutputData(command, args, data) )
+    setOutputData(NULL, NULL, NULL)
+    invalidateStatusTable( invalidateStatusTable() + 1 )
 })
 
 #----------------------------------------------------------------------

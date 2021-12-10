@@ -391,7 +391,7 @@ table.dataTable tbody tr.selected {
     cursor: not-allowed !important;
 }
 .command-output-wrapper pre{
-    height: 500px;
+    /* height: 500px; */
     background-color: #fbfbfb;
 }
 .command-output-error {

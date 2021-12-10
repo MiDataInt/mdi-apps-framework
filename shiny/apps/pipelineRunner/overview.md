@@ -7,8 +7,8 @@ You can run pipeline jobs on this web server or, if supported by the
 computer running this web page, submit your work to a cluster
 job scheduler.
 
-The Pipeline Runner further helps you monitor the status of running jobs 
+Pipeline Runner also helps you monitor the status of running jobs 
 via this web page.
 
 The output of a Stage 1 Pipeline is typically a MDI data package
-suitable for interactive analysis in Stage 2 apps.
+suitable for interactive analysis in one or more Stage 2 apps.
