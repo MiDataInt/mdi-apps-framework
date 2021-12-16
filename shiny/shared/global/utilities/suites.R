@@ -15,8 +15,10 @@ suiteTargetPaths <- list(
 getSuiteDirs <- function(targetPath, isApps = FALSE){
     getForkSuiteDirs <- function(fork) {
         dirs <- list.dirs(file.path(serverEnv$SUITES_DIR, fork), recursive = FALSE, full.names = TRUE)
-        isTargetSuite <- sapply(dirs, function(dir) dir.exists(file.path(dir, targetPath)))
-        dirs <- dirs[isTargetSuite]
+        if(length(dirs) > 0){
+            isTargetSuite <- sapply(dirs, function(dir) dir.exists(file.path(dir, targetPath)))
+            dirs <- dirs[isTargetSuite]
+        }
         if(isApps) dirs <- c(dirs, file.path(serverEnv$FRAMEWORKS, fork, 'mdi-apps-framework'))
         dirs
     }
@@ -51,8 +53,9 @@ parseToolDir <- function(toolDir, targetPath){
     )
 }
 
-# get a list of all installed suites of a types
+# get a list of all installed suites of a type
 getInstalledSuites <- function(toolDirs, targetPath){
+    if(length(toolDirs) == 0) return(character())
     d <- lapply(toolDirs, function(x) parseToolDir(x, targetPath))
     suites <- sapply(d, function(x) x$suite)
     forks  <- sapply(d, function(x) x$fork)
