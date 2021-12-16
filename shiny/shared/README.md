@@ -59,7 +59,6 @@ Specifically:
 
 - **appControl** - control overall framework behavior
 - **appSteps** - common analysis steps used by apps, e.g., to load files
-- **developerTools** - UI components only added during MDI development
 - **widgets** - UI components to embed on pages, e.g., plot boxes
 
 **packages** holds files that declare and load the various R packages
