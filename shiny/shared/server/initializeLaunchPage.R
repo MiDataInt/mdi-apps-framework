@@ -11,6 +11,15 @@ if(!restricted){
     })
 
     # user status, dataDir and logout in navbar / page header
+    insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
+        ui = {
+            id <- 'configEditorLink'
+            configEditorLinkServer(id)
+            configEditorLinkUI(id)
+        }
+    )
+
+    # user status, dataDir and logout in navbar / page header
     insertUI(".navbar-static-top",  where = "beforeEnd", immediate = TRUE,   
         ui = {
             id <- 'headerStatus'
