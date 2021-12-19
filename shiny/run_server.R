@@ -2,6 +2,11 @@
 # launch the MDI Stage 2 apps server; sourced by mdi::run()
 #----------------------------------------------------------------------
 
+#----------------------------------------------------------------------
+# server auto-restarts when stopApp is called at session end, or upon config change
+while(TRUE){
+#----------------------------------------------------------------------
+
 # load environment variables
 serverEnv <- as.list(Sys.getenv()) # thus, can access values as serverEnv$VARIABLE_NAME
 setServerEnv <- function(name, default = NULL, type = as.character){
@@ -132,14 +137,15 @@ appSuiteDirs <- getAppSuiteDirs()
 appDirs <- getAppDirs(appSuiteDirs)
 appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by installed apps; required prior to app load
 
-# start the server
-# with auto-restart when stopApp is called at session end
-while(TRUE){
-    runApp(
-        appDir = '.',
-        host = serverEnv$HOST,   
-        port = serverEnv$SERVER_PORT,
-        launch.browser = serverEnv$LAUNCH_BROWSER
-    )
-    dbDisconnect(sessionCacheDb)
+# launch the Shiny app, a blocking action until/unless stopApp() is called
+runApp(
+    appDir = '.',
+    host = serverEnv$HOST,   
+    port = serverEnv$SERVER_PORT,
+    launch.browser = serverEnv$LAUNCH_BROWSER
+)
+
+#----------------------------------------------------------------------
+# end auto-restart loop
 }
+#----------------------------------------------------------------------

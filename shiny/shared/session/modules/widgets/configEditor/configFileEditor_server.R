@@ -100,11 +100,8 @@ saveConfigFiles <- function(){
             cat(gsub("\\r", "", edited), file = file.path(baseDir, filename))
         }   
     }
-    if(configChanged){
-        # TODO: cascade to force reboot of server?  from what stage (would like not to reboot the server...)
-        # need to review runServer.R to understand how to set all new config options with simple page refresh
-        # page refresh should likely be the same as clicking MDI, i.e., reload the dynamically saved page state
-    }
+    # TODO: need to provide a confirmation modal to user
+    if(configChanged) stopApp()
 }
 list(
     save = function(...){ # this function is the Save button callback on the modal popup
