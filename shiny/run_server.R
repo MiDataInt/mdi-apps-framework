@@ -2,11 +2,6 @@
 # launch the MDI Stage 2 apps server; sourced by mdi::run()
 #----------------------------------------------------------------------
 
-#----------------------------------------------------------------------
-# server auto-restarts when stopApp is called at session end, or upon config change
-while(TRUE){
-#----------------------------------------------------------------------
-
 # load environment variables
 serverEnv <- as.list(Sys.getenv()) # thus, can access values as serverEnv$VARIABLE_NAME
 setServerEnv <- function(name, default = NULL, type = as.character){
@@ -81,6 +76,11 @@ if(serverEnv$DEBUG) message(paste('serverId', serverId))
 
 # declare that we are the parent process ('future' child processes override this to FALSE)
 isParentProcess <- TRUE
+
+#----------------------------------------------------------------------
+# server auto-restarts when stopApp is called at session end, or upon config change
+while(TRUE){
+#----------------------------------------------------------------------
 
 # load the Stage 2 apps config
 source(file.path('global', 'packages', 'packages.R'))

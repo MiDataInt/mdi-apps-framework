@@ -100,8 +100,18 @@ saveConfigFiles <- function(){
             cat(gsub("\\r", "", edited), file = file.path(baseDir, filename))
         }   
     }
-    # TODO: need to provide a confirmation modal to user
-    if(configChanged) stopApp()
+    if(configChanged){
+        showUserDialog(
+            "Server Restart Required", 
+            tags$p("The server configuration has changed, the server must reboot now."),
+            tags$p("You must reload a fresh web page to start a new session once the server restarts."),
+            callback = function(...) stopApp(),
+            size = "s", 
+            type = 'okOnlyCallback', 
+            footer = NULL, 
+            easyClose = TRUE
+        )
+    }
 }
 list(
     save = function(...){ # this function is the Save button callback on the modal popup
