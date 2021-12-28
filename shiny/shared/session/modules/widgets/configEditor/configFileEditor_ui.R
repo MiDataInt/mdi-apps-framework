@@ -6,7 +6,8 @@
 configFileEditorUI <- function(id) {
     ns <- NS(id)
     tags$div(
-        tags$p("Please select and edit the desired MDI installation configuration files."),
+        tags$p("Please select and edit the desired MDI configuration files."),
+        tags$p(textOutput(ns('configFilePath'))),
         fluidRow(
             box(
                 width = 3,

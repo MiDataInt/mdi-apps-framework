@@ -25,7 +25,14 @@ currentFileContents <- reactiveValues() # as potentially edited by the user
 workingFile <- reactiveVal(NULL) # the member of configFile() currently displayed in the editor
 
 #----------------------------------------------------------------------
-# initialize file selector tree
+# show the path where we are editing files
+#----------------------------------------------------------------------
+output$configFilePath <- renderText({
+    baseDir
+})
+
+#----------------------------------------------------------------------
+# file selector tree
 #----------------------------------------------------------------------
 
 # render the file tree; one level deep, i.e., just the MDI config files
@@ -92,20 +99,29 @@ observeEvent(input[[editorContentsId]], {
 #----------------------------------------------------------------------
 saveConfigFiles <- function(){
     configChanged <- FALSE
+    installationRequired <- FALSE
     for(filename in names(diskFileContents)){
         disk   <- paste0(trimws(diskFileContents[[filename]]),    "\n\n")
         edited <- paste0(trimws(currentFileContents[[filename]]), "\n\n")
         if(disk != edited){
             configChanged <- TRUE
+            if(filename == "suites.yml") installationRequired <- TRUE
             cat(gsub("\\r", "", edited), file = file.path(baseDir, filename))
         }   
     }
     if(configChanged){
         showUserDialog(
             "Server Restart Required", 
-            tags$p("The server configuration has changed, the server must reboot now."),
-            tags$p("You must reload a fresh web page to start a new session once the server restarts."),
-            callback = function(...) stopApp(),
+            tags$p(paste(
+                "The server configuration has changed, the server must",
+                if(installationRequired) "reinstall and" else "",
+                "restart now."
+            )),
+            tags$p("Please reload a fresh web page to start a new session once the server restarts."),
+            callback = function(...) {
+                if(installationRequired) Sys.setenv(MDI_FORCE_REINSTALLATION = "TRUE")
+                stopApp()
+            },
             size = "s", 
             type = 'okOnlyCallback', 
             footer = NULL, 

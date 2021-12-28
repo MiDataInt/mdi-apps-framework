@@ -37,10 +37,7 @@ session$onSessionEnded(function(){
     purgeSessionCache()
 
     # restart the server if residual RAM is growing (i.e. memory is leaking) and user-safe
-
-    #####################
-    if(!serverEnv$IS_SERVER) return(NULL)
-    
+    # if(!serverEnv$IS_SERVER) return(NULL)
     if(nActiveShinySessions == 0 && # i.e., no other session is currently using this R process
        sessionData$MbRAM_afterEnd > serverEnv$MAX_MB_RAM_AFTER_END) { # i.e., leaky memory has bloated this shiny
         print("server memory threshold exceeded, no active session, restarting server")

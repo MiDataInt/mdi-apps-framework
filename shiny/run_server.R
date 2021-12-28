@@ -138,12 +138,33 @@ appDirs <- getAppDirs(appSuiteDirs)
 appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by installed apps; required prior to app load
 
 # launch the Shiny app, a blocking action until/unless stopApp() is called
+Sys.setenv(SHINY_SERVER_VERSION = '999.999.999') # suppress a baseless Shiny Server upgrade warning: https://rdrr.io/cran/shiny/src/R/runapp.R # nolint
 runApp(
     appDir = '.',
     host = serverEnv$HOST,   
     port = serverEnv$SERVER_PORT,
     launch.browser = serverEnv$LAUNCH_BROWSER
 )
+
+# check if framework has requested a re-installation prior to server restart
+if(Sys.getenv('MDI_FORCE_REINSTALLATION') != ""){
+    Sys.setenv(MDI_FORCE_REINSTALLATION = "")
+    mdi::run( # reinstalls and relaunches shiny server entirely anew (NB: can't use parallel::mcfork on Windows)
+        mdiDir  = serverEnv$MDI_DIR,
+        dataDir = serverEnv$DATA_DIR,
+        hostDir = if(is.null(serverEnv$HOST_DIR) || 
+                     serverEnv$HOST_DIR == "NULL" || 
+                     serverEnv$HOST_DIR == "") NULL else serverEnv$HOST_DIR,  
+        mode = serverEnv$SERVER_MODE,   
+        install = TRUE, 
+        url = serverEnv$SERVER_URL,
+        port = as.integer(serverEnv$SERVER_PORT),
+        browser = as.logical(serverEnv$LAUNCH_BROWSER),
+        debug = as.logical(serverEnv$DEBUG),
+        developer = as.logical(serverEnv$IS_DEVELOPER)       
+    )
+    stop("no")
+}
 
 #----------------------------------------------------------------------
 # end auto-restart loop
