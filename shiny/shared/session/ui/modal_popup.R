@@ -55,6 +55,9 @@ showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
         okOnly = tagList( # an "information only" dialog
             modalButton("OK")
         ),
+        okOnlyCallback = tagList( # an "information only" dialog
+            actionButton("userDialogOk", "OK")
+        ),
         okCancel = tagList( # an action that require input and/or confirmation
             modalButton("Cancel"),
             actionButton("userDialogOk", "OK")

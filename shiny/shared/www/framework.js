@@ -100,9 +100,11 @@ Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
     window[editorId].setTheme("ace/theme/crimson_editor");
     window[editorId].session.setMode("ace/mode/r");
 });
-Shiny.addCustomMessageHandler('getAceCodeContents', function(editorId) {
-    let code = window[editorId].getValue() + "\n#" + Math.random() + "\n\n"; // force output update every time
-    Shiny.setInputValue(editorId + "-contents", code);
+Shiny.addCustomMessageHandler('getAceCodeContents', function(options) {
+    let code = window[options.editorId].getValue();
+    Shiny.setInputValue(options.editorId + "-contents", 
+                        {file: options.file, code: code, flag: options.flag}, 
+                        {priority: "event"});
 });
 Shiny.addCustomMessageHandler('setAceCodeContents', function(options) {
     window[options.editorId].session.setValue(options.code);

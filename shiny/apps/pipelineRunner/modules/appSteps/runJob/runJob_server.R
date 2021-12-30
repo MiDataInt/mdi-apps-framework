@@ -118,7 +118,6 @@ observeEvent(input[[deleteLinkId]], {
     statusTable <- statusTable()
     req(statusTable)
     row <- getTableActionLinkRow(input, deleteLinkId)
-    dmsg(row)
     jobName <- statusTable[row, jobName]
     jobId   <- statusTable[row, jobID]
     showUserDialog(

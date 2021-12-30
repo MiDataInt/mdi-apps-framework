@@ -67,14 +67,21 @@ body, html {
     cursor: pointer;
 }
 .skin-blue .main-header .logo:hover {
-    background-color: #00274C !important;
+    background-color: #0d3255 !important;
 }
-.skin-blue .main-header .navbar .sidebar-toggle {
+.skin-blue .main-header .navbar .sidebar-toggle, 
+.header-large-icon {
     color: #F2D384;
 }
-.skin-blue .main-header .navbar .sidebar-toggle:hover {
+.skin-blue .main-header .navbar .sidebar-toggle:hover, 
+.header-large-icon:hover {
     color: #F2D384 !important;
     background: #ffffff11;
+}
+.header-large-icon {
+    float: left;
+    line-height: 50px;
+    padding: 0 10px;    
 }
 .header-status {
     float: right;
