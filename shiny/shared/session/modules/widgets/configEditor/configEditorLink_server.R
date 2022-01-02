@@ -17,7 +17,7 @@ observeEvent(input$open, {
     editorId <- paste0("configFileEditor", sample(1e8, 1))
     configFileContents( configFileEditorServer(editorId, id) )
     showUserDialog(
-        "MDI Configuration Editor", 
+        "Configuration Editor", 
         configFileEditorUI(ns(editorId)), 
         callback = configFileContents()$save,
         size = "l", 

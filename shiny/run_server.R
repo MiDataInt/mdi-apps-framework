@@ -86,6 +86,7 @@ while(TRUE){
 source(file.path('global', 'packages', 'packages.R'))
 loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
+if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
 
 # ensure that we have required server-level information for user authentication
 serverEnv$IS_GLOBUS <- FALSE
