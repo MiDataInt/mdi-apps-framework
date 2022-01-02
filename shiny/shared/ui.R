@@ -15,6 +15,9 @@ htmlHeadElements <- tags$head(
 )
 
 # LOGIN PAGE CONTENT: prompt for user authentication in server mode
+defaultLaunchHeader <- file.path('static', 'mdi-intro.md')
+customLaunchHeader  <- file.path(serverEnv$MDI_DIR, 'config', 'launch-page-header.md')
+uiLaunchHeader <- if(file.exists(customLaunchHeader)) customLaunchHeader else defaultLaunchHeader
 loginControls <- function(buttonId, buttonLabel, helpFile, includeKey = FALSE){
     alignment <- if(includeKey) 'left' else 'center'
     tagList(
@@ -39,7 +42,7 @@ loginControls <- function(buttonId, buttonLabel, helpFile, includeKey = FALSE){
 userLoginTabItem <- tabItem(tabName = "loginTab", tags$div(class = "text-block",
     tags$div(
         id = CONSTANTS$apps$loginPage,
-        includeMarkdown( file.path('static/mdi-intro.md') ),
+        includeMarkdown( uiLaunchHeader ),
         if(serverEnv$IS_GLOBUS) 
             loginControls('oauth2LoginButton', 'Globus', 'globus-help.md')
         else if(serverEnv$IS_GOOGLE)
@@ -55,7 +58,7 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
     tags$div( # main launch page and file upload
         id = CONSTANTS$apps$launchPage,
         style = "display: none;", # server.R selects the proper content to show
-        includeMarkdown( file.path('static/mdi-intro.md') ),
+        includeMarkdown( uiLaunchHeader ),
         uiOutput('mainFileInputUI'),
         if(serverEnv$IS_WINDOWS) ""  
         else includeMarkdown( file.path('static/launch-page-stage1.md') ), # OS dependent
@@ -85,7 +88,7 @@ getLaunchPage <- function(cookie, restricted = FALSE){
     # assemble the dashboard page style
     dashboardPage(
         dashboardHeader(
-            title = "MDI",
+            title = serverConfig$site_name,
             titleWidth = "175px"
             #dropdownMenu(type = "messages", badgeStatus = "success",
             #    messageItem("Support Team", "This is the content of a message.", time = "5 mins")
