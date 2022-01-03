@@ -15,7 +15,7 @@ htmlHeadElements <- tags$head(
 )
 
 # LOGIN PAGE CONTENT: prompt for user authentication in server mode
-defaultLaunchHeader <- file.path('static', 'mdi-intro.md')
+defaultLaunchHeader <- file.path('static', 'launch-page-header.md')
 customLaunchHeader  <- file.path(serverEnv$MDI_DIR, 'config', 'launch-page-header.md')
 uiLaunchHeader <- if(file.exists(customLaunchHeader)) customLaunchHeader else defaultLaunchHeader
 loginControls <- function(buttonId, buttonLabel, helpFile, includeKey = FALSE){
