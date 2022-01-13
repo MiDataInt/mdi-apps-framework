@@ -1,16 +1,19 @@
 #----------------------------------------------------------------------
 # configure the global environment
 #----------------------------------------------------------------------
+# global.R is sourced:
+#     once when the web server starts, by run_server.R > Shiny::runApp()
+#     once in every job execution child process (when running as a promise)
+# thus, it is not re-sourced by page reload, but is by a call to stopApp()
+# via the restart loop in run_server.R (it is not necessary to recall mdi::run())
+#----------------------------------------------------------------------
 # keep global.R minimal to avoid possibilities for session memory leaks
-# and to allow maximum possibility for hotfixes and rolling updates without relaunching servers
+# and to allow maximum possibility for code updates without restarting servers
 # script includes just what is needed to load the framework launch page
 #----------------------------------------------------------------------
-# regardless of how Shiny::runApp was called, it runs in .../mdi-apps-framework/shiny/shared
+# the web server runs in .../mdi-apps-framework/shiny/shared
 #----------------------------------------------------------------------
-# global.R is called:
-#       once when the web server starts
-#       once in every job execution child process (when running as a promise)
-#----------------------------------------------------------------------
+# message('--------- SOURCING shared/global.R ---------')
 
 # steps only required in the parent process, not job execution children
 if(isParentProcess){

@@ -1,9 +1,11 @@
 #----------------------------------------------------------------------
-# server function is called once per user session by run_server.R > Shiny::runApp
-# nearly all other scripts are sourced by the serverFn function
+# top level app server code
+# re-sourced by run_server.R > Shiny::runApp() whenever this script changes
+# server() function called once per Shiny session
 #----------------------------------------------------------------------
+# message('--------- SOURCING shared/server.R ---------')
 
-# called by server function (below) based on priorCookie status
+# serverFn called by server() below based on priorCookie status
 serverFn <- function(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted=FALSE){
@@ -26,13 +28,21 @@ serverFn <- function(input, output, session,
     source("server/initializeLaunchPage.R", local = TRUE)
     source("server/observeLoadRequest.R", local = TRUE)
     source("server/onSessionEnded.R", local = TRUE)
+    # observeEvent(input$loadDebugRestart, {
+    #     # Sys.setenv(MDI_FORCE_RESTART = "TRUE")
+    #     stopApp()
+    # })
+    # observeEvent(input$loadDebugMessage, {
+    #     message('input$loadDebugMessage 222')
+    # })
 }
 
 #----------------------------------------------------------------------
-# set/get session cookie and act on its values
-# this server function must come last in server.R, it is the main shiny server function
+# MAIN SERVER function: set/get session cookie and act on its values
 #----------------------------------------------------------------------
 server <- function(input, output, session){
+    # message('--------- RUNNING shared/server.R::server() ---------')
+    # message()
 
     # send message to javascript to set the session key (won't override an existing session)
     session$sendCustomMessage('initializeSession', list(
@@ -56,7 +66,7 @@ server <- function(input, output, session){
             serverFn(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted = TRUE)
-      
+        
         # definitive page load
         } else {
             if(isLoggedIn && is.null(cookie$hasLoggedIn)) session$sendCustomMessage(
@@ -70,5 +80,5 @@ server <- function(input, output, session){
                      sessionKey, sessionFile,
                      cookie, restricted = FALSE) 
         }
-    })
+    })  
 }

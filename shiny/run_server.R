@@ -1,6 +1,21 @@
 #----------------------------------------------------------------------
-# launch the MDI Stage 2 apps server; sourced by mdi::run()
+# launch the MDI Stage 2 apps server
+# sourced by mdi::run()
 #----------------------------------------------------------------------
+# thus, this script is re-sourced when MDI_FORCE_RESTART is set, followed
+# by a call to stopApp() (stopApp() alone is not sufficient)
+# if MDI_FORCE_REINSTALLATION is also set, git repos are pulled and R packages installed
+#----------------------------------------------------------------------
+# to summarize:
+#   soft ui+server refresh  = triggered by page (re)load, (re)runs ui() and server() functions
+#   hard ui+server refresh  = triggered by page (re)load, re-sources ui.r+server.R if changed, but not global.R
+#   soft server restart     = triggered by stopApp(), re-sources everything except run_server.R <<<<< IMPACTS OTHER USERS <<<<<
+#   hard server restart     = triggered by MDI_FORCE_RESTART+stopApp(), re-sources everything in apps framework
+#   re-installation restart = triggered by MDI_FORCE_RESTART+MDI_FORCE_REINSTALLATION+stopApp(), also updates repos+packages
+#----------------------------------------------------------------------
+# the web server runs in .../mdi-apps-framework/shiny/shared
+#----------------------------------------------------------------------
+# message('--------- SOURCING run_server.R ---------')
 
 # load environment variables
 serverEnv <- as.list(Sys.getenv()) # thus, can access values as serverEnv$VARIABLE_NAME
@@ -140,6 +155,7 @@ appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by install
 
 # launch the Shiny app, a blocking action until/unless stopApp() is called
 Sys.setenv(SHINY_SERVER_VERSION = '999.999.999') # suppress a baseless Shiny Server upgrade warning: https://rdrr.io/cran/shiny/src/R/runapp.R # nolint
+# message('--------- CALLING run_server.R::runApp() ---------')
 runApp(
     appDir = '.',
     host = serverEnv$HOST,   
@@ -147,8 +163,11 @@ runApp(
     launch.browser = serverEnv$LAUNCH_BROWSER
 )
 
-# check if framework has requested a re-installation prior to server restart
-if(Sys.getenv('MDI_FORCE_REINSTALLATION') != ""){
+# check if framework has requested a hard server restart/reinstallation
+# if not, loop will perform a soft restart by recalling runApp(), but not mdi::run()
+if(Sys.getenv('MDI_FORCE_RESTART') != ""){
+    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""
+    Sys.setenv(MDI_FORCE_RESTART = "")
     Sys.setenv(MDI_FORCE_REINSTALLATION = "")
     mdi::run( # reinstalls and relaunches shiny server entirely anew (NB: can't use parallel::mcfork on Windows)
         mdiDir  = serverEnv$MDI_DIR,
@@ -157,7 +176,7 @@ if(Sys.getenv('MDI_FORCE_REINSTALLATION') != ""){
                      serverEnv$HOST_DIR == "NULL" || 
                      serverEnv$HOST_DIR == "") NULL else serverEnv$HOST_DIR,  
         mode = serverEnv$SERVER_MODE,   
-        install = TRUE, 
+        install = install, 
         url = serverEnv$SERVER_URL,
         port = as.integer(serverEnv$SERVER_PORT),
         browser = as.logical(serverEnv$LAUNCH_BROWSER),
