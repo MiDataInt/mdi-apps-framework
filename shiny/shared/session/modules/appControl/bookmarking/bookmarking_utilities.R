@@ -17,7 +17,8 @@ getBookmarkJson <- function(){
 
     if(is.null(app$NAME) || app$NAME == CONSTANTS$apps$launchPage) return(NULL) # only bookmark from within apps
     bookmark <- list(
-        app   = app$NAME,
+        app = app$NAME,
+        versions = list(framework = NA, suite = NA, app = NA),
         input = list(),        
         settings = list(),
         outcomes = list(),
