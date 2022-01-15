@@ -14,7 +14,7 @@ sibebarInfoBoxServer <- function(id, value, ...) {
 #----------------------------------------------------------------------
 # show the location of the current git HEAD
 #----------------------------------------------------------------------
-output$value <- renderText({
+output$value <- renderUI({
     if(typeof(value) == 'character') value
     else value(...)
 })

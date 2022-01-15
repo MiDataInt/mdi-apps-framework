@@ -116,6 +116,7 @@ body, html {
 }
 
 /* custom widgets for the sidebar */
+/* app name */
 .app-name {
     color: #FFCB05;
     padding: 0 20px 0 0;
@@ -123,6 +124,7 @@ body, html {
     font-size: 1.2em;
 }
 
+/* bookmarking */
 .sidebarBookmarking, .sidebarBookmarking:hover, .sidebarBookmarking:focus {
     border: transparent;    
     background-color: transparent;    
@@ -138,13 +140,16 @@ body, html {
     margin-top: 2em;
 }
 
+/* git status */
 .sidebar-status {
     color: white;
     padding: 10px;
     width: 100%;
     margin: 0;
-    border-top: 2px solid #334e68;
-    margin-top: 25px;
+    /* border-top: 2px solid #334e68;
+    margin-top: 25px; */
+    position: absolute;
+    bottom: 0;
 }
 .sidebar-status a {
     color: #aaaaaa !important;
@@ -158,15 +163,17 @@ body, html {
     color: #aaaaaa;
     padding: 5px;
     margin: 5px 0;
+    font-size: 0.9em;
     /*border: 1px solid #334e68;*/
     /*border-radius: 5px;*/
 }
-.sidebar-info-box-supertitle {
-    font-size: 0.9em;
-    font-style: italic;
-}
-.sidebar-info-box-value {
-    margin-left: 10px;
+/* .sidebar-info-box-supertitle {
+    /* font-size: 0.9em; */
+    /* font-style: italic; */
+/* } */
+.sidebar-info-box-value-line {
+    margin: 0;
+    margin-left: 5px;
 }
 
 /*  ------------------------------------------------------------------------

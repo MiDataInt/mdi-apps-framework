@@ -29,7 +29,21 @@ if(!restricted){
             headerStatusUI(id)
         }
     )
-    
+
+    # git repository status in sidebar
+    insertUI(".main-sidebar",  where = "beforeEnd", immediate = TRUE,   
+        ui = {
+            id <- 'gitStatus'
+            sibebarGitStatusServer(id, function(){
+                list(
+                    name = "TEST-suite",
+                    dir = NULL
+                )
+            })            
+            sibebarGitStatusUI(id)
+        }
+    )
+
     # bookmarks cached on user's local computer
     bookmarkHistory <- NULL
     output$bookmarkHistoryList <- if(isAuthorizedUser()) renderUI({
