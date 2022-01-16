@@ -1,78 +1,47 @@
 #----------------------------------------------------------------------
-# reactive components to list the working version and branch status of:
+# reactive components to list the working version or branch status of:
 #   the mdi-apps-framework
 #   the tools suite carring the running app
+#   the running app
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-sibebarGitStatusServer <- function(id, suiteFn = function() NULL) {
+sibebarGitStatusServer <- function(id) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'sibebarGitStatus' # for reportProgress tracing
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# initialize info boxes
+# status utilities
 #----------------------------------------------------------------------
-#sibebarInfoBoxServer('version', serverEnv$PORTAL_VERSION)
-# sibebarInfoBoxServer('repo', getCurrentGitRepo)
-# sibebarInfoBoxServer('branch', function(){
-#     sessionEnv$invalidateGitBranch() # trigger to update the UI
-#     getCurrentGitHead()
-# })
-
-
-output$suite <- renderUI({
-    suite <- suiteFn()
-    if(is.null(suite)) return()
-    if(is.null(suite$name)) return()
-    sibebarInfoBoxUI(ns("suite"), suite$name)
-})
-
-repositoryStatus <- function(dir){
-    if(is.null(dir)) return(NULL)
-    tagList(
-        if(serverEnv$IS_DEVELOPER) 
-            tags$p(class = "sidebar-info-box-value-line", 
-                   if(grepl('/developer-forks/', dir)) "developer-forks" else "definitive")
-        else "",
-        tags$p(class = "sidebar-info-box-value-line", 
-               getGitHead(dir) )    
-    )
+repositoryStatus <- function(repo){
+    if(is.null(repo)) return()
+    if(is.null(repo$head)) return(NULL)
+    x <- paste0(repo$name, ': ', repo$head)
+    if(isDeveloperFork(repo$dir)) x <- paste(x, '#')
+    tags$p(x)
 }
+
+#----------------------------------------------------------------------
+# fill the status information
+# ------------------------------------------------------
+sibebarInfoBoxServer("app", function(...){
+    # sessionEnv$invalidateGitBranch() # trigger to update the UI    
+    app <- gitStatusData$app
+    if(is.null(app)) return()
+    if(is.null(app$name)) return()
+    tags$p( paste0(app$name, ': ', app$version) )
+})
+sibebarInfoBoxServer("suite", function(...){
+    # sessionEnv$invalidateGitBranch() # trigger to update the UI
+    repositoryStatus(gitStatusData$suite)
+})
 sibebarInfoBoxServer('framework', function(...){
-    # sessionEnv$invalidateGitBranch() # trigger to update the UI
-    repositoryStatus(serverEnv$APPS_FRAMEWORK_DIR)
+    repositoryStatus(gitStatusData$framework)
 })
-sibebarInfoBoxServer(ns("suite"), function(...){
-    # sessionEnv$invalidateGitBranch() # trigger to update the UI
-    suite <- suiteFn()
-    if(is.null(suite)) return()
-    if(is.null(suite$dir)) return()
-    repositoryStatus(suite$dir)
-})
-
-# if isTag
-# mdi-apps-framework
-# v0.0.0 [v1.0.0]
-
-# if isBranch
-# mdi-apps-framework
-# pre-release
-
-# mdi-apps-framework
-# myBranch
-
-# wilsontelab-mdi-tools
-# developer-fork
-# workingBranch
-
-# if isCommit (!isTag, !isBranch)
-# mdi-apps-framework
-# asf0s9af
-
 
 # #----------------------------------------------------------------------
 # # update code elements used by framework

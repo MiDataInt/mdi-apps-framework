@@ -18,7 +18,21 @@ getBookmarkJson <- function(){
     if(is.null(app$NAME) || app$NAME == CONSTANTS$apps$launchPage) return(NULL) # only bookmark from within apps
     bookmark <- list(
         app = app$NAME,
-        versions = list(framework = NA, suite = NA, app = NA),
+        versions = list(
+            app = list(
+                name    = gitStatusData$app$name,
+                version = if(gitStatusData$app$version == "na") NA else gitStatusData$app$version
+            ),
+            suite = list(
+                name = gitStatusData$suite$name,
+                head = gitStatusData$suite$head
+                # TODO: add commit and any associated version tag that matches it
+            ),
+            framework = list(
+                name = gitStatusData$framework$name,
+                head = gitStatusData$framework$head
+            )
+        ),
         input = list(),        
         settings = list(),
         outcomes = list(),

@@ -59,6 +59,9 @@ observe({
     reportProgress(data$file)
     json <- loadResourceText(data$file) # from the file upload widget
     bookmark <- unserializeJSON(json)
+
+dstr(bookmark$version)
+
     data$input <- bookmark$input # and we fill the contents for consumers
     data$settings <- bookmark$settings
     data$outcomes <- bookmark$outcomes

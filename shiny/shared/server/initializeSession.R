@@ -35,7 +35,14 @@ authenticatedUserData <- list() # authenticated user info+token/key (session-spe
 headerStatusData <- reactiveValues( # for UI display
     userDisplayName = if(serverEnv$REQUIRES_AUTHENTICATION) "" 
                       else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
-    dataDir = serverEnv$DATA_DIR
+    dataDir = R.utils::getAbsolutePath(serverEnv$DATA_DIR)
+)
+gitStatusData <- reactiveValues(
+    app   = list(name = NULL, version = NULL),
+    suite = list(name = NULL, dir = NULL, head = NULL),
+    framework = list(name = 'mdi-apps-framework', 
+                     dir = R.utils::getAbsolutePath(serverEnv$APPS_FRAMEWORK_DIR), 
+                     head = NULL)
 )
 
 # load support scripts required to run the framework

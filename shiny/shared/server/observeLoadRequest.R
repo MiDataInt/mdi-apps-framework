@@ -24,6 +24,13 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     app$DIRECTORY <<- DIRECTORY
     app$sources <<- parseAppDirectory(app$DIRECTORY)
     app$config <<- read_yaml(file.path(DIRECTORY, 'config.yml'))
+    gitStatusData$app$name <- NAME
+    gitStatusData$app$version <- if(is.null(app$config$version)) "na" else app$config$version
+    gitStatusData$suite$dir <- R.utils::getAbsolutePath( file.path(app$DIRECTORY, '..', '..', '..') )
+    gitStatusData$suite$name <- basename(gitStatusData$suite$dir)
+    gitStatusData$suite$head <- getGitHead(gitStatusData$suite$dir)
+    gitStatusData$framework$head <- getGitHead(gitStatusData$framework$dir)
+    # TODO: check working version, bookmark version, latest version, etc.
 
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
@@ -143,9 +150,15 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     # enable a universal action to close any modal dialog/popup
     addRemoveModalObserver(input)        
     
-    # enable additional feedback in the sidebar
-    #if(serverEnv$IS_DEVELOPER) sibebarStatusServer('frameworkStatus')    
-    
+    # enable git repository status in sidebar
+    insertUI(".main-sidebar", where = "beforeEnd", immediate = TRUE,   
+        ui = {
+            id <- 'gitStatus'
+            sibebarGitStatusServer(id)            
+            sibebarGitStatusUI(id)
+        }
+    )
+
     # push the initial file upload to the app via it's first step module
     if(loadRequest()$file$type == CONSTANTS$sourceFileTypes$bookmark){
         bookmark$file <- loadRequest()$file$path

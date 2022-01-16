@@ -13,8 +13,17 @@ sibebarGitStatusUI <- function(id) {
     # return the UI contents
     fluidRow(
         class = "sidebar-status",  
-        uiOutput(ns("suite")),
-        sibebarInfoBoxUI(ns("framework"), 'mdi-apps-framework')
-    )  
-    # actionLink(ns('updateCode'), '-Update Code', icon = icon('sync-alt')),   
+        tags$div(
+            class = "sidebar-status-section",
+            sibebarInfoBoxUI(ns("app"))
+        ),
+        tags$div(
+            class = "sidebar-status-section",
+            sibebarInfoBoxUI(ns("suite"))
+        ), 
+        tags$div(
+            class = "sidebar-status-section",
+            sibebarInfoBoxUI(ns("framework"))
+        )  
+    )   
 }
