@@ -37,13 +37,6 @@ headerStatusData <- reactiveValues( # for UI display
                       else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
     dataDir = R.utils::getAbsolutePath(serverEnv$DATA_DIR)
 )
-gitStatusData <- reactiveValues(
-    app   = list(name = NULL, version = NULL),
-    suite = list(name = NULL, dir = NULL, head = NULL),
-    framework = list(name = 'mdi-apps-framework', 
-                     dir = R.utils::getAbsolutePath(serverEnv$APPS_FRAMEWORK_DIR), 
-                     head = NULL)
-)
 
 # load support scripts required to run the framework
 # note that scripts are loaded at the session, not the global, level
@@ -67,6 +60,12 @@ loadAppScriptDirectory <- function(dir, local=NULL){
 }
 loadAllRScripts('global', recursive = TRUE)
 loadAppScriptDirectory('session')
+
+# initialize git repository tracking
+gitStatusData <- reactiveValues(
+    app   = list(name = NULL, version = NULL),
+    suite = list(name = NULL, dir = NULL, head = NULL)
+)
 
 # activate our custom page reset action; reloads the page as is, to update all code
 observeEvent(input$resetPage, {

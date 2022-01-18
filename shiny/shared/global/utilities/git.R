@@ -1,16 +1,33 @@
 #----------------------------------------------------------------------
 # manipulate an MDI git repository by calls to git2r
-# primarily to check out and report on repository versions in running app server
+# to check out and report on repository versions in the running app server
 #----------------------------------------------------------------------
 
-# get the name of the current branch, tag or commit, i.e., the location of HEAD
-# returns a simple character value
-getGitHead <- function(dir){
-    if(is.null(dir) || !file.exists(dir)) return(NULL)
-    head <- git2r::repository_head(dir)
-    detached <- git2r::is_detached(dir)
-    if(detached) head$sha # when head is detached, git2r gives the commit id as sha (not the tag name)
-    else head$name # when head is branch, git2r just gives name, not a commit or associated tags
+# get the current branch, tag, or commit, i.e., the location of HEAD
+getGitHead <- function(repo){ # repo = gitStatusData$suite|framework, with dir and versions filled
+    if(is.null(repo$dir) || !file.exists(repo$dir)) return(NULL)
+    head <- git2r::repository_head(repo$dir)
+    if(git2r::is_detached(repo$dir)){
+        if(is.null(repo$versions)) return(NULL)
+        if(head$sha %in% repo$versions){
+            list(
+                type = 'version',
+                version = names(repo$versions)[repo$versions == head$sha],
+                sha = head$sha
+            )
+        } else {
+            list(
+                type = 'commit',
+                commit = substr(head$sha, 1, 10),
+                sha = head$sha
+            )
+        }
+    } else {
+        list(
+            type = 'branch',
+            branch = head$name
+        )        
+    }
 }
 
 # checkout (i.e. change to) a specific branch
@@ -78,34 +95,25 @@ semVerToSortableInteger <- Vectorize(function(semVer){ # expects vMajor.Minor.Pa
 })
 # getLatestVersion <- function(tags){ # return most recent version tag as vMajor.Minor.Patch
 #     if(length(tags) == 0) return(NA)
-#     isSemVer <- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', tags, perl = TRUE)
+#     isSemVer )<- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', tags, perl = TRUE)
 #     semVer <- tags[isSemVer]
 #     if(length(semVer) == 0) return(NA)
 #     semVerI <- semVerToSortableInteger(semVer)
 #     semVer[ which.max(semVerI) ]
 # }
 getAllVersions <- function(dir) {
-
-# git fetch upstream --tags
-# git push origin --tags
-# if(dir is forked) fetch(dir, "upstream")
-    if(isDeveloperFork(dir))  dstr(git2r::tags(getMatchingDefinitiveRepo(dir)))
-
-
+    if(isDeveloperFork(dir)) dir <- getMatchingDefinitiveRepo(dir)
     tags <- git2r::tags(dir) # tag (name) = commit data list (value)
     if(length(tags) == 0) return(character())
-    tags <- names(tags)
-    isSemVer <- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', tags, perl = TRUE)
+    isSemVer <- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', names(tags), perl = TRUE)
     semVer <- tags[isSemVer]
     if(length(semVer) == 0) return(character())
-    semVerI <- semVerToSortableInteger(semVer)
-    rev( semVer[ rank(semVerI) ] ) # thus, latest release tag is always first in list
+    semVerI <- rank(semVerToSortableInteger(semVer))
+    # thus, latest release tag is always first in list
+    # name = version, value = commit id/sha
+    sapply(rev( semVer[semVerI] ), function(x) x$sha)
 }
 
 # utilities to parse and examine git directories/repos
-isDeveloperFork <- function(dir){
-    grepl('/developer-forks/', dir)
-}
-getMatchingDefinitiveRepo <- function(dir){
-    gsub('/developer-forks/', '/definitive/', dir)
-}
+isDeveloperFork <- function(dir) grepl('/developer-forks/', dir)
+getMatchingDefinitiveRepo <- function(dir) gsub('/developer-forks/', '/definitive/', dir)

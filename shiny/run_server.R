@@ -147,6 +147,16 @@ invisible(unlink(
     force = TRUE
 ))
 
+# initialize git repository tracking
+source(file.path('global', 'utilities', 'git.R'))
+frameworkDir_ <- R.utils::getAbsolutePath(serverEnv$APPS_FRAMEWORK_DIR)
+gitFrameworkStatus <- list(
+    name = 'mdi-apps-framework',
+    dir  = frameworkDir_,
+    versions = getAllVersions(frameworkDir_)
+)
+gitFrameworkStatus$head <- getGitHead(gitFrameworkStatus)
+
 # set the list of known apps (let Pipeline Runner load pipeline suites)
 source(file.path('global', 'utilities', 'suites.R'))
 appSuiteDirs <- getAppSuiteDirs()

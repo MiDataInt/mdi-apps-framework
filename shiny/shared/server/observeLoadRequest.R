@@ -28,8 +28,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     gitStatusData$app$version <- if(is.null(app$config$version)) "na" else app$config$version
     gitStatusData$suite$dir <- R.utils::getAbsolutePath( file.path(app$DIRECTORY, '..', '..', '..') )
     gitStatusData$suite$name <- basename(gitStatusData$suite$dir)
-    gitStatusData$suite$head <- getGitHead(gitStatusData$suite$dir)
-    gitStatusData$framework$head <- getGitHead(gitStatusData$framework$dir)
+    gitStatusData$suite$head <- getGitHead(gitStatusData$suite)
     # TODO: check working version, bookmark version, latest version, etc.
 
     # load all relevant session scripts in reverse precedence order

@@ -20,7 +20,7 @@ sibebarGitStatusServer <- function(id) {
 repositoryStatus <- function(repo){
     if(is.null(repo)) return()
     if(is.null(repo$head)) return(NULL)
-    x <- paste0(repo$name, ': ', repo$head)
+    x <- paste0(repo$name, ': ', repo$head[[repo$head$type]])
     if(isDeveloperFork(repo$dir)) x <- paste(x, '#')
     tags$p(x)
 }
@@ -40,7 +40,7 @@ sibebarInfoBoxServer("suite", function(...){
     repositoryStatus(gitStatusData$suite)
 })
 sibebarInfoBoxServer('framework', function(...){
-    repositoryStatus(gitStatusData$framework)
+    repositoryStatus(gitFrameworkStatus)
 })
 
 # #----------------------------------------------------------------------
