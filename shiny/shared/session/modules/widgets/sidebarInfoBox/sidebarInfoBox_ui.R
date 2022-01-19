@@ -11,7 +11,13 @@ sibebarInfoBoxUI <- function(id, supertitle = "") {
     # return the UI contents
     tags$div(
         class = "sidebar-info-box",
-        tags$div(supertitle, class = "sidebar-info-box-supertitle"),        
-        tags$div(textOutput(ns('value')), class = "sidebar-info-box-value")
+        tags$div(
+            supertitle, 
+            class = "sidebar-info-box-supertitle"
+        ),        
+        tags$div(
+            uiOutput(ns('value')), 
+            class = "sidebar-info-box-value"
+        )
     )         
 }

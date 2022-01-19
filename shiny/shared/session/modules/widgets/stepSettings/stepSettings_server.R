@@ -4,16 +4,17 @@
 #----------------------------------------------------------------------
 # user click of a gear icon opens a dynamically populated popup
 #----------------------------------------------------------------------
-# settings are read from module.yml; see other modules for format examples
+# settings are read from module.yml; see bottom other modules for format examples
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
 stepSettingsServer <- function(
-    id, parentId, 
-    size=NULL,
-    cacheKey=NULL # a reactive/reactiveVal that returns an id for the current settings state
+    id, 
+    parentId, 
+    size = NULL,
+    cacheKey = NULL # a reactive/reactiveVal that returns an id for the current settings state
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -167,3 +168,25 @@ retval
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+# settings: use camel case and '_' in names (it is replaced with a space in the UI)
+#----------------------------------------------------------------------
+# settings:
+#     Tab_Name_1:
+#         Setting_Name_1:
+#             type:   numericInput
+#             value:  2
+#             min:    1
+#             max:    4
+#             step:   1
+#     Tab_Name_2: 
+#         Setting_Name_1:
+#             type:   selectInput
+#             choices:
+#                 - xxx
+#                 - yyy
+#             value:  xxx  
+#         Setting_Name_3:
+#             type:   textInput
+#             value:  "some text"

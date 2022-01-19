@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------
 R:
 #----------------------------------------------------------------------
-    # packages in this section are general to all apps and are attached during page start
+    # nearly all packages in this section are general to all apps and are attached during page start
     # therefore, their functions can be called directly (e.g., read_yaml())
     # the named yaml sections are for clarity in this file and to organize the loading process
     tools:
@@ -40,6 +40,9 @@ R:
     async:
         - future
         - promises
+    # packages in this subsection are NOT attached, must use git2r::tags, etc.
+    unattached:
+        - git2r # has function name conflicts with simple names like 'tags'
 #----------------------------------------------------------------------
     # prefer NOT to attach developer packages, but some don't work unless you do
     developer:

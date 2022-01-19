@@ -65,6 +65,7 @@ observe({
     data$locks <- bookmark$locks
     data$step  <- bookmark$step
     activateTab(bookmark$step)
+    stopSpinner(session, paste(module, 'loadBookmarkFile'))    
 })
 
 #----------------------------------------------------------------------

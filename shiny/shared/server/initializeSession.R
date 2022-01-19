@@ -35,7 +35,7 @@ authenticatedUserData <- list() # authenticated user info+token/key (session-spe
 headerStatusData <- reactiveValues( # for UI display
     userDisplayName = if(serverEnv$REQUIRES_AUTHENTICATION) "" 
                       else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
-    dataDir = serverEnv$DATA_DIR
+    dataDir = R.utils::getAbsolutePath(serverEnv$DATA_DIR)
 )
 
 # load support scripts required to run the framework
@@ -60,6 +60,12 @@ loadAppScriptDirectory <- function(dir, local=NULL){
 }
 loadAllRScripts('global', recursive = TRUE)
 loadAppScriptDirectory('session')
+
+# initialize git repository tracking
+gitStatusData <- reactiveValues(
+    app   = list(name = NULL, version = NULL),
+    suite = list(name = NULL, dir = NULL, head = NULL)
+)
 
 # activate our custom page reset action; reloads the page as is, to update all code
 observeEvent(input$resetPage, {

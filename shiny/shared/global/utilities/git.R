@@ -1,349 +1,112 @@
 #----------------------------------------------------------------------
-# manipulate an MDI git repository
-#----------------------------------------------------------------------
-# this version uses system calls to git, instead of git2r
-# system git gives nicer output (and git2r had some less-than-optimal behavior)
-#----------------------------------------------------------------------
-# some commands require that user be known to git to associate with the commit
-# mdi::develop() ensures that user info is present in --local (i.e., in git repo)
-# that info can be changed by developer as needed with:
-#       git config --local user.name  "xx xx"
-#       git config --local user.email "xx@xx.xx"
+# manipulate an MDI git repository by calls to git2r
+# to check out and report on repository versions in the running app server
 #----------------------------------------------------------------------
 
-
-# TODO: very little of this is relevant now, due to:
-#   1) need to run on cluster nodes without internet access (no push pull)
-#   2) separation of forks and frameworks/suites
-#   3) simplification of branching model (only main on definitive repoe)
-#   4) relaxation of branching model requirements (leave developer-fork branching to developer)
-#   5) desire to check out branches on definitive suites forks on systems without git installed??
-#         thus, change back to using git2r for pretty much its checkout function only??
-
-# git actions for apps are still required to:
-#   1) switch framework to a specific definitive tag on main (should be done by mdi::run())
-#   2) switch apps suite to a specific definitive tag (must be done in running page once app is selected, etc.)
-
-# thus, the manager/framework only needs to worry about _tag_ checkout on definitive main
-#   some of this has to be done at launch time (framework) others on app load (suite)
-# we always let/expect the developer manage branching, committing, etc. on their fork (e.g., via VS Code)
-
-# best plan is probably to have switch to legacy code tags/version occur in a session _copy_ of the repo
-# this allows definitive and forked repos to always maintain expected code states
-# it also essentially prevent people from trying to edit code on legacy tag commit
-
-# last thing not yet accounted for in refactoring is merging upstream/main into developer fork branches
-# this is a nice feature to offer to developers, that way, they always stay up to date with
-# code changes committed by others, etc.
-# the manager would do this anytime it pulls from server, last action would merge definitive into developer-fork
-
-
-#----------------------------------------------------------------------
-# the core function that makes calls to git on the system
-#----------------------------------------------------------------------
-# systemGit <- function(args){
-#     if(!serverEnv$IS_DEVELOPER) return(list(success = FALSE, results = "denied"))
-#     wdTmp <- setwd(serverEnv$MAGC_PORTAL_APPS_DIR) # just in case someone has changed wd
-#     expr <- quote(system2('git', args = args, stdout = TRUE, stderr = TRUE))
-#     success <- TRUE
-#     results <- tryCatch({
-#         eval(expr)
-#     }, warning = function(w){
-#         success <<- FALSE
-#         eval(expr) # if git itself fails, the git error is reported as output with an R warning
-#     }, error = function(e){
-#         success <<- FALSE
-#         e$message # if the call to git fails on the system, it is reported as an R error
-#     })
-#     setwd(wdTmp) # restore any prior working directory (although changing it is NOT recommended)
-#     list(
-#         success = success,
-#         results = results
-#     )    
-# }
-
-#----------------------------------------------------------------------
-# top-level action called by server.R to initialize a branch on app change in developer mode
-#----------------------------------------------------------------------
-# switchGitBranch <- function(appName, session, sessionEnv, CONSTANTS){
-    
-#     # determine the target branch
-#     BRANCH <- appName 
-#     currentBranch <- getCurrentGitBranch()
-#     if(BRANCH != currentBranch && # FALSE if already on the branch of interest (no change is needed)
-#        currentBranch == CONSTANTS$defaultEditBranch){ # do not force developer off of some other preferred branch
-
-#         # assess whether branch change is possible
-#         reportProgress(paste('switching to branch:', BRANCH))
-#         if(sessionEnv$pendingChangesRefusal(
-#             message = tagList(
-#                 tags$p('You cannot switch git branches because you have uncommitted code changes that would be overwritten.'), # nolint
-#                 tags$p(HTML(paste('You may continue working, but BE AWARE that you are still on the', tags$strong(currentBranch), 'branch!'))) # nolint
-#             ),
-#             suffix = 'to enable branch switching'
-#         )){
-#             reportProgress('branch switch failed due to uncommitted changes')
-#             stopSpinner(session)
-#             return(FALSE) # refuse to act on the app selection; UI remains unchanged
-#         }
-        
-#         # if possible, execute the switch via git checkout
-#         checkoutGitBranch(CONSTANTS$developerBranch, eval = TRUE) # ensure that all new branches come off of develop
-#         checkout <- checkoutGitBranch(BRANCH, create = TRUE, eval = TRUE)
-        
-#         # finally, make sure new branch is up to date with interim changes on develop branch
-#         if(checkout$success) updateDevelopIntoBranch(BRANCH, CONSTANTS)
-#         checkout$success
-#     } else {
-#         TRUE        
-#     }
-# }
-# # this function updates an app branch with any commits into UMAGC:develop
-# # that have occurred since our app branch was intially declared
-# gitMergeInProgress <- NULL
-# updateDevelopIntoBranch <- function(BRANCH, CONSTANTS){
-#     reportProgress(paste('updating branch from develop:', BRANCH))
-
-#     # merge succeeds silently if:
-#     #   already up to date, no merge required (i.e. no interim changes on develop)
-#     #   BRANCH could be fast-forwarded to incorporate all interim changes on develop (i.e. no edits on BRANCH)
-#     #   there were no merge conflicts between the diverged branches
-#     merge <- mergeFromBranch(CONSTANTS$developerBranch, eval = TRUE)
-#     if(!merge$success) {
-#         gitMergeInProgress <<- list(
-#             recipientBranch = BRANCH,
-#             sourceBranch = CONSTANTS$developerBranch,
-#             BRANCH = BRANCH,
-#             CONSTANTS = CONSTANTS,
-#             continue = FALSE
-#         )
-#         showGitMergeConflicts()
-#     }
-# }
-# # if merge conflicts exist, show them to user and demand either --abort or --continue to restore a proper state
-# showGitMergeConflicts <- function(){
-#     conflictFiles <- systemGit(c('diff', '--name-only', '--diff-filter=U'))
-#     files <- conflictFiles$results
-#     files <- files[!grepl(' ', files)] # discard some warning messages like CRLF in the systemGit output 
-#     showUserDialog(    
-#         'Merge conflicts must be resolved',
-#         if(gitMergeInProgress$continue) tags$p('Merge conflicts are still present.') else "",
-#         tags$p(HTML(paste(
-#             'Other developers made code changes that must be merged into your repository fork.',
-#             paste('However, conflicts between branches',
-#                   tags$strong(gitMergeInProgress$recipientBranch),
-#                   'and',
-#                   tags$strong(gitMergeInProgress$sourceBranch),
-#                   'are preventing merging from being completed.'
-#             )
-#         ))),    
-#         tags$p('These files are currently in a conflicted state:'),
-#         tags$p(HTML(paste(files, '<br>')), style = "color: blue;"),
-#         tags$p(paste(
-#             'Please manually edit all files to resolve the conflicts and then Continue.',
-#             'Abort to stop merging, but you eventually have to complete the merge.'
-#         )),
-#         size = 'm',
-#         easyClose = FALSE,
-#         type = 'custom',
-#         footer = tagList( # an action that require input and/or confirmation
-#             actionButton("abortGitMerge", "Abort"),
-#             actionButton("continueGitMerge", "Continue")
-#         )
-#     )  
-# }
-# observeEvent(input$abortGitMerge, {
-#     systemGit(c('merge', '--abort'))
-#     removeModal()
-# })
-# observeEvent(input$continueGitMerge, {
-#     message <- paste(gitMergeInProgress$sourceBranch, gitMergeInProgress$recipientBranch, sep = " into ")
-#     message <- paste('merge conflicts resolved by user from branch', message)
-#     commitAllGitBranch(message, eval = TRUE)
-#     removeModal()
-#     gitMergeInProgress$continue <<- TRUE
-#     updateDevelopIntoBranch(gitMergeInProgress$BRANCH, gitMergeInProgress$CONSTANTS)
-# })
-
-#----------------------------------------------------------------------
-# these functions return values (by calling expressions below)
-#----------------------------------------------------------------------
-
-# # get the name of the current repository, i.e. the fork of magc-portal-apps
-# getCurrentGitRepo <- function(){
-#     x <- systemGit(c('config', '--get', 'remote.origin.url'))
-#     if(x$success) {
-#         x <- sub('https://github.com/', '', x$results)
-#         x <- sub('/magc-portal-apps.git', '', x)
-#         x
-#     } else 'ERROR'
-# }
-
-# get the name of the current branch, i.e. location of HEAD
-# returns a simple character value
-getCurrentGitBranch <- function(){
-    git <- listGitBranches(localOnly = TRUE, eval = TRUE)
-    if(!git$success) '**ERROR**'
-    else {
-        x <- git$results[which(startsWith(git$results, '*'))]
-        strsplit(x, ' ')[[1]][2]
-    }   
-}
-
-# get the names of all branches
-listGitBranchNames <- function(localOnly = TRUE){
-    git <- listGitBranches(localOnly = localOnly, eval = TRUE)
-    if(!git$success) return('**ERROR**')
-    else {
-        sapply(strsplit(git$results, ' '), function(v) v[length(v)])
-    }    
-}
-
-# determine whether the current branch is fully committed (return TRUE if so)
-isGitCommitted <- function(){
-    length(getGitBranchStatus(short = TRUE, eval = TRUE)$results) == 1
-}
-
-#----------------------------------------------------------------------
-# these functions return unevaluated expressions (unless requested to evaluate)
-#----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
-# remote actions (user most already be authorized for these actions on their system)
-#----------------------------------------------------------------------
-
-# # update the local clone from the remote repository
-# pullRepositoryBranch <- function(eval = FALSE){
-#     reportProgress('pull', 'git')
-#     expr <- quote(
-#         systemGit(c('pull'))
-#     )
-#     if(eval) eval(expr) else expr
-# }
-
-# # update the remote repository from the local clone
-# # action always sends the current branch plus main and develop (which may have been updated from UMAGC)
-# pushRepositoryBranches <- function(eval = FALSE){
-#     reportProgress('push', 'git')
-#     branches <- c(
-#         CONSTANTS$mainBranch,
-#         CONSTANTS$developerBranch,            
-#         getCurrentGitBranch() # last to ensure that we don't change branches by this action
-#     )
-#     for(i in 1:3){
-#         branch <- branches[i]
-#         systemGit(c('checkout', branch))
-#         if(i == 3){ # make sure git knows the remote for app branches and prepar for output display in UI
-#             expr <- substitute(
-#                 systemGit(c('push', '--set-upstream', CONSTANTS$originRemote, branch)),
-#                 list(branch = branch)
-#             )           
-#         } else { # main and develop are pushed silently
-#             systemGit(c('push'))
-#         }
-#     } 
-#     if(eval) eval(expr) else expr # thus the final action reflects the current app branch
-# }
-
-#----------------------------------------------------------------------
-# local actions
-#----------------------------------------------------------------------
-
-# # git config (to show --local config)
-# showGitRepoConfig <- function(eval = FALSE){
-#     reportProgress('config', 'git')
-#     expr <- quote(
-#         systemGit(c('config', '--local', '--list'))
-#     )
-#     if(eval) eval(expr) else expr
-# }
-
-# # get branches, with a label on HEAD
-# listGitBranches <- function(localOnly = TRUE, eval = FALSE){
-#     reportProgress('branch', 'git')
-#     expr <- substitute(
-#         systemGit(c('branch', if(localOnly) '' else '-a')),
-#         list(localOnly = localOnly)
-#     )
-#     if(eval) eval(expr) else expr
-# }
-
-# # show the status on the current branch
-# getGitBranchStatus <- function(short = FALSE, eval = FALSE){
-#     reportProgress('status', 'git')
-#     expr <- substitute(
-#         systemGit(c('status', '-b', if(short) '-s' else '')), # if short format, first line is branch information
-#         list(short = short)
-#     )
-#     if(eval) eval(expr) else expr
-# }
-
-# change to a specific branch
-checkoutGitBranch <- function(branch, create = FALSE, eval = FALSE){
-    reportProgress('checkout', 'git')
-    expr <- substitute(
-        {
-            create_ <- if(create) !(branch %in% listGitBranchNames()) else FALSE
-            systemGit(c('checkout', if(create_) '-b' else '', branch))
-        }, 
-        list(branch = branch, create = create)
-    )
-    if(eval) eval(expr) else expr
-}
-pendingChangesRefusal <- function(message, suffix = 'first'){
-    pendingChanges <- !isGitCommitted()
-    if(pendingChanges){
-        showUserDialog(
-            type = 'okOnly',
-            'Changes are pending',
-            tags$p(message),
-            tags$p(HTML(paste0('Please use <strong>Stash Changes</strong> or <strong>Commit Changes</strong> ', suffix, '.'))) # nolint
-        )
+# get the current branch, tag, or commit, i.e., the location of HEAD
+getGitHead <- function(repo){ # repo = gitStatusData$suite|framework, with dir and versions filled
+    if(is.null(repo$dir) || !file.exists(repo$dir)) return(NULL)
+    head <- git2r::repository_head(repo$dir)
+    if(git2r::is_detached(repo$dir)){
+        if(is.null(repo$versions)) return(NULL)
+        if(head$sha %in% repo$versions){
+            list(
+                type = 'version',
+                version = names(repo$versions)[repo$versions == head$sha],
+                sha = head$sha # always return the commit is, i.e., sha
+            )
+        } else {
+            list(
+                type = 'commit',
+                commit = substr(head$sha, 1, 8), # abbreviated for display purposes
+                sha = head$sha
+            )
+        }
+    } else {
+        list(
+            type = 'branch',
+            branch = head$name,
+            sha = git2r::branch_target(head) 
+        )        
     }
-    pendingChanges # i.e. return true if we refused the action based on pending changes
 }
 
-# # stash all code changes (required to change branches, etc.)
-# stashAllGitBranch <- function(message, eval = FALSE){
-#     reportProgress('stash', 'git')
-#     expr <- substitute(
-#         {
-#             msg <- message
-#             systemGit(c('stash', '-a', '-m', shQuote(msg)))
-#         },
-#         list(message = message)
-#     )
-#     if(eval) eval(expr) else expr
-# }
+# checkout (i.e. change to) a specific branch
+# do not check or set repo locks here, caller must manage locks as needed
+checkoutGitBranch <- function(dir, branch = 'main', create = FALSE, silent = FALSE) {
+    if(!silent) message(paste('setting', dir, 'head to', branch))
+    git2r::checkout(
+        object = dir,
+        branch = branch, # git2r calls it 'branch', but can be anything that can be checked out
+        force = FALSE,
+        create = create
+    )
+    x <- list() # record the current branch of all repos in environment for rapid checking later
+    x[[dir]] <- branch       
+    do.call(Sys.setenv, x)
+}
 
-# # stage and commit all local code changes in one step
-# # does not support granular control
-# commitAllGitBranch <- function(message, eval = FALSE){
-#     reportProgress('commit', 'git')
-#     expr <- substitute(
-#         {
-#             msg <- message
-#             systemGit(c('add', '.'))
-#             systemGit(c('commit', '-a', '-m', shQuote(msg)))  
-#         },
-#         list(message = message)
-#     )
-#     if(eval) eval(expr) else expr
-# }
+# set and clear MDI locks on git repositories
+# use same format as mdi-pipelines-framework so locks are shared between Stages 1 and 2
+# locks are _not_ fork-specific, i.e., a lock applies equally to definitive and developer-forks
+getMdiLockFile <- function(repoDir){
+    parts <- rev(strsplit(repoDir, '/')[[1]])
+    repo <- parts[1]
+    fork <- parts[2] # definitive or developer-forks
+    type <- parts[3] # suites or frameworks
+    lockFile <- paste(repo, 'lock', sep = ".")
+    mdiDir <- paste(rev(parts[4:length(parts)]), collapse = "/")
+    file.path(mdiDir, type, lockFile)
+}
+waitForRepoLock <- function(lockFile = NULL, repoDir = NULL){
+    if(is.null(lockFile)) lockFile <- getMdiLockFile(repoDir)
+    if(!file.exists(lockFile)) return()  
+    message(paste("waiting for lock to clear:", lockFile))  
+    maxLockWaitSec <- 30
+    cumLockWaitSec <- 0
+    while(file.exists(lockFile) && cumLockWaitSec <= maxLockWaitSec){ # wait for others to release their lock
+        cumLockWaitSec <- cumLockWaitSec + 1
+        Sys.sleep(1);
+    }
+    if(file.exists(lockFile)){
+        message(paste0(
+            "\nrepository is locked:\n    ", 
+                repoDir,
+            "\nif you know the repository is not in use, try deleting its lock file:\n    ", 
+                lockFile, "\n"
+        ))
+        stop('no')
+    }
+}
+setMdiGitLock <- Vectorize(function(repoDir){ # expect that caller has used waitForRepoLock as needed
+    lockFile <- getMdiLockFile(repoDir)
+    waitForRepoLock(lockFile)
+    file.create(lockFile)
+})
+releaseMdiGitLock <- Vectorize(function(repoDir){
+    lockFile <- getMdiLockFile(repoDir)
+    if(file.exists(lockFile)) unlink(lockFile)
+})
 
-# # merge a specific source branch into the current recipient branch
-# # NB: upstream code must ensure the we have already checked out the recipient branch
-# mergeFromBranch <- function(sourceBranch, fastForwardOnly = FALSE, eval = FALSE){
-#     reportProgress('merge', 'git')
-#     expr <- substitute(
-#         {
-#             if(fastForwardOnly){ # fails if branches are diverged
-#                 systemGit(c('merge', '--ff-only', sourceBranch))
-#             } else {
-#                 systemGit(c('merge', sourceBranch))
-#             }
-#         },
-#         list(sourceBranch = sourceBranch, fastForwardOnly = fastForwardOnly)
-#     )
-#     if(eval) eval(expr) else expr
-# }
+# get the latest/all semantic version tags, i.e., release, of upstream, definitive repos
+semVerToSortableInteger <- Vectorize(function(semVer){ # expects vMajor.Minor.Patch
+    x <- gsub('v', '', semVer) # Major.Minor.Patch (no 'v')
+    x <- as.integer(strsplit(x, "\\.")[[1]])
+    x[1] * 1e10 + x[2] * 1e5 + x[3] # thus, most recent versions have the highest integer value
+})
+getAllVersions <- function(dir) {
+    if(isDeveloperFork(dir)) dir <- getMatchingDefinitiveRepo(dir)
+    tags <- git2r::tags(dir) # tag (name) = commit data list (value)
+    if(length(tags) == 0) return(character())
+    isSemVer <- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', names(tags), perl = TRUE)
+    semVer <- tags[isSemVer]
+    if(length(semVer) == 0) return(character())
+    semVerI <- rank(semVerToSortableInteger(semVer))
+    # thus, latest release tag is always first in list
+    # name = version, value = commit id/sha
+    sapply(rev( semVer[semVerI] ), function(x) x$sha)
+}
+
+# utilities to parse and examine git directories/repos
+isDeveloperFork <- function(dir) grepl('/developer-forks/', dir)
+getMatchingDefinitiveRepo <- function(dir) gsub('/developer-forks/', '/definitive/', dir)

@@ -5,6 +5,7 @@
 #----------------------------------------------------------------------
 name: "Pipeline Runner"
 description: "Set parameters and execute a Stage 1 data analysis pipeline"
+version: 0.0.1
 
 #----------------------------------------------------------------------
 # project data file type(s) associated with this app

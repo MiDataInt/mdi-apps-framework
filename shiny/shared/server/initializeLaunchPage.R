@@ -29,7 +29,7 @@ if(!restricted){
             headerStatusUI(id)
         }
     )
-    
+
     # bookmarks cached on user's local computer
     bookmarkHistory <- NULL
     output$bookmarkHistoryList <- if(isAuthorizedUser()) renderUI({

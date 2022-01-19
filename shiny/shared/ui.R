@@ -1,6 +1,9 @@
 #----------------------------------------------------------------------
 # set up the UI dashboard and launch page (i.e., the interface for first file upload)
+# re-sourced by run_server.R > Shiny::runApp() whenever this script changes
+# ui() function called once per Shiny session
 #----------------------------------------------------------------------
+# message('--------- SOURCING shared/ui.R ---------')
 
 # STYLES AND SCRIPTS, loaded into html <head>
 htmlHeadElements <- tags$head(
@@ -70,12 +73,14 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
         style = "display: none;",
         includeMarkdown( file.path('static/server-busy.md') )
     ),
+    # actionButton('loadDebugRestart', 'loadDebugRestart'),
+    # actionButton('loadDebugMessage', 'loadDebugMessage 222'),
     plotlyOutput('nullPlotly', height = "0px", width = "0px") # must do now so plotly.js etc. are loaded  
 ))
 
 # LAUNCH PAGE ASSEMBLY: called by ui function (below) as needed
 getLaunchPage <- function(cookie, restricted = FALSE){
-
+    
     # enforce content restrictions on first encounter of a new user while providing login help
     if(restricted){
         firstMenuItem <- menuItem(tags$div('1 - Login',  class = "app-step"), tabName = "loginTab")
@@ -160,9 +165,11 @@ parseAuthenticationRequest <- function(request, cookie){
     }
 }
 
-# MAIN UI FUNCTION: determine what type of page request this is and act accordingly
-# this is the function called by Shiny RunApp
+#----------------------------------------------------------------------
+# MAIN UI function: determine what type of page request this is and act accordingly
+#----------------------------------------------------------------------
 ui <- function(request){
+    # message('--------- RUNNING shared/ui.R::ui() ---------')
     cookie <- parseCookie(request$HTTP_COOKIE) # parseCookie is an MDI-encoded helper function
     if(serverEnv$REQUIRES_AUTHENTICATION){ # public servers demand a valid identity
         parseAuthenticationRequest(request, cookie)

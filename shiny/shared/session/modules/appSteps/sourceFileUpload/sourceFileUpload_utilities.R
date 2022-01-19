@@ -74,3 +74,14 @@ getSourceFilePackageName <- Vectorize(function(sourceId){
     source <- getSourceFromId(sourceId)
     source$unique$Project[1]
 })
+
+# get information about a data package from its source ID
+getSourcePackageOption <- function(sourceId, optionFamily, option){
+    source <- getSourceFromId(sourceId)
+    req(source)
+    req(source$sourceType == "package")
+    action <- source$config$action
+    options <- source$config$task[[action]]
+    req(options[[optionFamily]])
+    options[[optionFamily]][[option]]
+}

@@ -24,6 +24,16 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     app$DIRECTORY <<- DIRECTORY
     app$sources <<- parseAppDirectory(app$DIRECTORY)
     app$config <<- read_yaml(file.path(DIRECTORY, 'config.yml'))
+    gitStatusData$app$name <- NAME
+    gitStatusData$app$version <- if(is.null(app$config$version)) "na" else app$config$version
+    gitStatusData$suite$dir <- R.utils::getAbsolutePath( file.path(app$DIRECTORY, '..', '..', '..') )
+    gitStatusData$suite$name <- basename(gitStatusData$suite$dir)
+    gitStatusData$suite$head <- getGitHead(gitStatusData$suite)
+
+    # TODO: check working version, bookmark version, latest version, etc.
+    # offer user the option to swithc to matching legacy or latest version, after checking for breaking changes
+    # if bookmark being loaded, check bookmark versions against latest (and working if different)
+    # if date file being loaded (i.e, without prior version info), check working against latest
 
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
@@ -42,16 +52,6 @@ observeLoadRequest <- observeEvent(loadRequest(), {
         return( stopSpinner(session) )
     }
     initializeDescendants()
-
-    # TODO: continue streamlining git; only switch to legacy tags, no developer switching, etc.
-    # remove deprecated in-app developer tools; only a few remain (e.g., keep sandbox, lose git manager)
-    # update sidebar status reporting (all apps can report suite/app/version even in run()?)
-
-    # key target scripts still needing work are utilities/git.R and developer/*
-
-    # reinstate developer tools addition (below) later, once apps are running in new framework
-
-    # this includes sidebarStatusUI and Server in lines further below
 
     # # enable developer interface in private modes only
     # if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
@@ -88,7 +88,6 @@ observeLoadRequest <- observeEvent(loadRequest(), {
             menuItem(tags$div(app$config$name, class = "app-name"), tabName = "appName"), # app name, links to Overview
             if(nAppSteps > 0) lapply(1:nAppSteps, sequentialMenuItem), # app-specific steps
             saveYourWorkLinks()  # enable state bookmarking
-            # if(serverEnv$IS_DEVELOPER) sibebarStatusUI('frameworkStatus') else ""
         )
     )      
 
@@ -141,11 +140,17 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     updateTabItems(session, 'sidebarMenu', selected = selectedStep) 
     
     # enable a universal action to close any modal dialog/popup
-    addRemoveModalObserver(input)        
+    addRemoveModalObserver(input)    
     
-    # enable additional feedback in the sidebar
-    #if(serverEnv$IS_DEVELOPER) sibebarStatusServer('frameworkStatus')    
-    
+    # enable git repository status in sidebar
+    insertUI(".main-sidebar", where = "beforeEnd", immediate = TRUE,   
+        ui = {
+            id <- 'gitStatus'
+            sibebarGitStatusServer(id)            
+            sibebarGitStatusUI(id)
+        }
+    )
+
     # push the initial file upload to the app via it's first step module
     if(loadRequest()$file$type == CONSTANTS$sourceFileTypes$bookmark){
         bookmark$file <- loadRequest()$file$path

@@ -119,7 +119,10 @@ saveConfigFiles <- function(){
             )),
             tags$p("Please reload a fresh web page to start a new session once the server restarts."),
             callback = function(...) {
-                if(installationRequired) Sys.setenv(MDI_FORCE_REINSTALLATION = "TRUE")
+                if(installationRequired){
+                    Sys.setenv(MDI_FORCE_RESTART = "TRUE")
+                    Sys.setenv(MDI_FORCE_REINSTALLATION = "TRUE")
+                }
                 stopApp()
             },
             size = "s", 
