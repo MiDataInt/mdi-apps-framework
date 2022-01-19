@@ -95,10 +95,17 @@ Shiny.addCustomMessageHandler('toggleSpinner', function(visibility) {
 /*  ------------------------------------------------------------------------
     handle Ace Code Editor
     ------------------------------------------------------------------------*/
-Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
+let initializeAceCodeEditor = function(editorId, readOnly){
     window[editorId] = ace.edit(editorId);    
     window[editorId].setTheme("ace/theme/crimson_editor");
     window[editorId].session.setMode("ace/mode/r");
+    window[editorId].setReadOnly(readOnly);
+}
+Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
+    initializeAceCodeEditor(editorId, false);
+});
+Shiny.addCustomMessageHandler('initializeAceCodeReader', function(editorId) {
+    initializeAceCodeEditor(editorId, true);
 });
 Shiny.addCustomMessageHandler('getAceCodeContents', function(options) {
     let code = window[options.editorId].getValue();
