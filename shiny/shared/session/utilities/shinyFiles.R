@@ -24,6 +24,7 @@ serverSourceFilesButtonServer <- function(id, input, session,
                                     rw = "read", filetypes = NULL,
                                     loadFn = function(file) NULL){
     paths <- getAuthorizedServerPaths(rw)
+    if(length(paths) == 0) return()
     addServerSourceFilesObserver(id, input, loadFn, paths)
     shinyFileChoose(
         input,
@@ -64,6 +65,7 @@ serverBookmarkButtonUI <- function(id, label, class, filename = NULL){
 serverBookmarkButtonServer <- function(id, input, session,
                                        saveFn = function(file) NULL){
     paths <- getAuthorizedServerPaths('write')
+    if(length(paths) == 0) return()
     addServerBookmarkObserver(id, input, saveFn, paths)
     shinyFileSave(
         input, 
@@ -104,6 +106,7 @@ serverChooseDirIconServer <- function(id, input, session,
                                        default_type = NULL,
                                        chooseFn = function(dir) NULL){
     paths <- getAuthorizedServerPaths('write')
+    if(length(paths) == 0) return()
     addServerChooseDirObserver(id, input, chooseFn, paths)
     shinyDirChoose(
         input, 
@@ -156,6 +159,7 @@ serverSaveFileButtonServer <- function(id, input, session, filetype,
                                        default_type = NULL,
                                        saveFn = function(file) NULL){
     paths <- getAuthorizedServerPaths('write')
+    if(length(paths) == 0) return()
     addServerSaveFileObserver(id, input, saveFn, paths)
     shinyFileSave(
         input, 

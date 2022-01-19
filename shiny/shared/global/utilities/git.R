@@ -101,7 +101,7 @@ getAllVersions <- function(dir) {
     isSemVer <- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', names(tags), perl = TRUE)
     semVer <- tags[isSemVer]
     if(length(semVer) == 0) return(character())
-    semVerI <- rank(semVerToSortableInteger(semVer))
+    semVerI <- rank(semVerToSortableInteger(names(semVer)))
     # thus, latest release tag is always first in list
     # name = version, value = commit id/sha
     sapply(rev( semVer[semVerI] ), function(x) x$sha)

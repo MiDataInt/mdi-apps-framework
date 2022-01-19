@@ -119,7 +119,6 @@ Shiny.addCustomMessageHandler('setAceCodeContents', function(options) {
 
 /*  ------------------------------------------------------------------------
     handle Summernote Editor
-    ------------------------------------------------------------------------*/
 Shiny.addCustomMessageHandler('getSummernoteCodeContents', function(editorId) {
     let code = $("#" + editorId).summernote('code');
     Shiny.setInputValue(editorId + "-contents", code, {priority: "event"});
@@ -127,6 +126,7 @@ Shiny.addCustomMessageHandler('getSummernoteCodeContents', function(editorId) {
 Shiny.addCustomMessageHandler('setSummernoteCodeContents', function(options) {
     $("#" + options.editorId).summernote('code', options.code);
 });
+    ------------------------------------------------------------------------*/
 
 /*  ------------------------------------------------------------------------
     DT table action links

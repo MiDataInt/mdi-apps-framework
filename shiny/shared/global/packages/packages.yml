@@ -34,6 +34,7 @@ R:
         - tippy      # tooltips
         - shinyjs
         - shinyFiles # for server-side file browsing, etc.
+        - shinyTree
             #- shinycssloaders
             #- readxl
             #- writexl
@@ -47,9 +48,8 @@ R:
     # prefer NOT to attach developer packages, but some don't work unless you do
     developer:
         unattached: null      
-        attached: 
-            - shinyTree
-            - styler # attach so that developer is prompted to create a cache
+        attached: null
+            # - styler # attach so that developer is prompted to create a cache
 #----------------------------------------------------------------------
     # installed but not attached unless library() called by an app or module
     # prefer to not attach Bioconductor but to always use in full syntax, e.g., GenomicRanges::GRanges
