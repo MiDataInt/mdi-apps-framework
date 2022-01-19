@@ -4,6 +4,12 @@
 #----------------------------------------------------------------------
 # user click of a gear icon opens a dynamically populated popup
 #----------------------------------------------------------------------
+# usage in appStepUI:
+#    standardSequentialTabItem(
+#        HTML(paste( options$longLabel, stepSettingsUI(ns('settings')) )),
+#        options$leaderText,
+#        ...
+#----------------------------------------------------------------------
 
 # module ui function
 stepSettingsUI <- function(id, isHeader=TRUE) {

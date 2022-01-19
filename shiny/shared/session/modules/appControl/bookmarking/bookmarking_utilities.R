@@ -26,7 +26,6 @@ getBookmarkJson <- function(){
             suite = list(
                 name = gitStatusData$suite$name,
                 head = gitStatusData$suite$head
-                # TODO: add commit and any associated version tag that matches it
             ),
             framework = list(
                 name = gitFrameworkStatus$name,

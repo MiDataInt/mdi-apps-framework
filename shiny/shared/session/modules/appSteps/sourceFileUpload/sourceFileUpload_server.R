@@ -91,7 +91,7 @@ loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
     sourceId <- tools::md5sum(incomingFile$path) # treat md5 sums as "effectively unique" identifiers
     sourceType <- incomingFile$type
     sft <- CONSTANTS$sourceFileTypes
-    loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId) # nolint
+    loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId, incomingFile$name) # nolint
          else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId)
          else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId) # nolint
     if(is.null(suppressUnlink) || !suppressUnlink) unlink(incomingFile$path)    
@@ -122,7 +122,7 @@ badSourceFile <- function(filePath, msg=""){
 #----------------------------------------------------------------------
 # load an incoming Stage 1 pipeline output package file
 #----------------------------------------------------------------------
-loadPackageFile <- function(packagePath, packageId){ # packagePath validated upstream as package usable by app
+loadPackageFile <- function(packagePath, packageId, packageFileName){ # packagePath validated upstream as package usable by app
     dataDir <- getPackageDir(packageId)
 
     # extract the contents declared to be in the package file
@@ -152,10 +152,10 @@ loadPackageFile <- function(packagePath, packageId){ # packagePath validated ups
         }, error = function(e) badSourceFile(packagePath, paste("could not extract file from package:", fileName)) )
     } 
 
-    # load the sample manifest file
+    # load the sample manifest file, if present
     manifestFile <- packageConfig$files[[manifestFileType]]
     manifest <- if(is.null(manifestFile)) {
-        getNullManifest(packagePath) # some pipeline outputs may not be sample-based
+        getNullManifest(packageFileName) # some pipeline outputs may not be sample-based
     } else {  
         if(is.null(manifestFile$manifestType))
             badSourceFile(packagePath, 'missing manifest type in package')
@@ -205,21 +205,20 @@ parseManifestFile <- function(manifestPath, manifestType, errorPath = NULL){
         unique   = manifest$unique       
     )
 }
-getNullManifest <- function(filePath){
-    name <- rev(strsplit(filePath, '/')[[1]])[1]
+getNullManifest <- function(fileName){
     manifest <- data.frame(
-        Project = name,
-        Sample_ID = name,
-        Description = name,
+        Project = gsub(CONSTANTS$fileSuffixes$package, "", fileName), # required to parse project names list
+        Sample_ID = NA,
+        Description = NA,
         Yield = NA,
         Quality = NA
     )
     list(
-        manifestType = 'null',        
-        nSamples = 1,
+        manifestType = NA,      
+        nSamples = 0,
         manifest = manifest,
-        unique   = manifest       
-    )
+        unique   = manifest
+    ) 
 }
 
 #----------------------------------------------------------------------
@@ -246,6 +245,7 @@ observe({
         sourceId <- names(sources$list)[i]
         reportProgress(sourceId)    
         source <- sources$list[[sourceId]]
+        hasSamples <- source$nSamples > 0
 
         # save aggregated projects across the entire package
         qcReport <- source$config$files[[qcReportFileType]]
@@ -256,14 +256,14 @@ observe({
             FileName    = source$fileName,
             Project     = if(length(projectNames) > 1) "various" else projectNames, 
             N_Samples   = source$nSamples,
-            Avg_Yield   = round(mean(source$unique$Yield),   0),
-            Avq_Quality = round(mean(source$unique$Quality), 1),
+            Avg_Yield   = if(hasSamples) round(mean(source$unique$Yield),   0) else "NA",
+            Avq_Quality = if(hasSamples) round(mean(source$unique$Quality), 1) else "NA",
             QC_Report   = tableCellActionLinks(ns(qcReportParentId), i, qcReport),
                 stringsAsFactors = FALSE
         ))
 
         # save samples twice, once for UI, once for sharing with other modules
-        for(i in seq_len(nrow(source$unique))){ 
+        if(hasSamples) for(i in seq_len(nrow(source$unique))){ 
             sample <- source$unique[i, ]
             ss <- rbind(ss, data.frame(
                 Name         = "",
@@ -337,6 +337,7 @@ list(
         samples         = reactive(samples$list), # actually a data.frame
         sampleNames     = reactive(samples$names)        
     ),
+    sourcesSummary = reactive(sources$summary),
     loadSourceFile = loadSourceFile,
     isReady = reactive({ getStepReadiness(options$source, samples$list) })
 )

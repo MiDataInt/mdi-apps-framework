@@ -13,19 +13,20 @@ getGitHead <- function(repo){ # repo = gitStatusData$suite|framework, with dir a
             list(
                 type = 'version',
                 version = names(repo$versions)[repo$versions == head$sha],
-                sha = head$sha
+                sha = head$sha # always return the commit is, i.e., sha
             )
         } else {
             list(
                 type = 'commit',
-                commit = substr(head$sha, 1, 10),
+                commit = substr(head$sha, 1, 8), # abbreviated for display purposes
                 sha = head$sha
             )
         }
     } else {
         list(
             type = 'branch',
-            branch = head$name
+            branch = head$name,
+            sha = git2r::branch_target(head) 
         )        
     }
 }
@@ -93,14 +94,6 @@ semVerToSortableInteger <- Vectorize(function(semVer){ # expects vMajor.Minor.Pa
     x <- as.integer(strsplit(x, "\\.")[[1]])
     x[1] * 1e10 + x[2] * 1e5 + x[3] # thus, most recent versions have the highest integer value
 })
-# getLatestVersion <- function(tags){ # return most recent version tag as vMajor.Minor.Patch
-#     if(length(tags) == 0) return(NA)
-#     isSemVer )<- grepl('^v{0,1}\\d+\\.\\d+\\.\\d+$', tags, perl = TRUE)
-#     semVer <- tags[isSemVer]
-#     if(length(semVer) == 0) return(NA)
-#     semVerI <- semVerToSortableInteger(semVer)
-#     semVer[ which.max(semVerI) ]
-# }
 getAllVersions <- function(dir) {
     if(isDeveloperFork(dir)) dir <- getMatchingDefinitiveRepo(dir)
     tags <- git2r::tags(dir) # tag (name) = commit data list (value)

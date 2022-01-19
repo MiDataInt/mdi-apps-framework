@@ -30,7 +30,8 @@ sourceFileUploadUI <- function(id, options) {
         ),
 
         # tables of the sample sources and samples that are uploaded and ready
-        conditionalPanel( condition = paste0("window['", ns('sources-count'), "'] > 0"),
+        conditionalPanel( 
+            condition = paste0("window['", ns('sources-count'), "'] > 0"),
             tags$hr(),
             tags$p("Give this analysis set a short, useful name."),
             fluidRow(box(
@@ -40,10 +41,13 @@ sourceFileUploadUI <- function(id, options) {
                 width = 4,
                 textInput(ns('analysisSetName'), NULL, paste(appName, Sys.Date(), sep = "."))
             )),
-            tags$p(HTML("Click to filter the samples table or to remove a sample source from this analysis set.")),    
-            summaryTableUI(ns('sources'), 'Sample Sources', width = 12),
+            tags$p(HTML("Click to remove a data source from this analysis set or filter the samples table.")),    
+            summaryTableUI(ns('sources'), 'Data Sources', width = 12)
+        ), 
+        conditionalPanel( 
+            condition = paste0("window['", ns('samples-count'), "'] > 0"),
             tags$p(HTML("If desired, edit samples to provide more human-readable names.")),                         
-            summaryTableUI(ns('samples'), 'Samples',  width = 12)
-        )                              
+            summaryTableUI(ns('samples'), 'Samples',  width = 12)            
+        ) 
     )
 }

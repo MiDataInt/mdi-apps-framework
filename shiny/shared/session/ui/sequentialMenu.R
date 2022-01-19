@@ -64,7 +64,8 @@ sequentialTabItem <- function(stepI){
                 getStepOptionValue(step, 'shortLabel'), 
                 "will be available when Step #", stepI - 1, "has been completed."
             ))
-        )
+        ),
+        ""
     )
 }
 
