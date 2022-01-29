@@ -54,14 +54,14 @@ R:
     # installed but not attached unless library() called by an app or module
     # prefer to not attach Bioconductor but to always use in full syntax, e.g., GenomicRanges::GRanges
     bioconductor:
-        - BiocManager            
-        - RMariaDB    # used by function makeTxDbFromUCSC
-        - rtracklayer
-        - Biostrings
-        - SummarizedExperiment
-        - GenomicRanges
-        - GenomicFeatures
-        - GenomeInfoDb
+        - BiocManager
+        # - Biostrings
+        # - SummarizedExperiment                
+        # - RMariaDB    # used by function makeTxDbFromUCSC
+        # - rtracklayer
+        # - GenomicRanges
+        # - GenomicFeatures
+        # - GenomeInfoDb
             #VariantAnnotation
             #Rsamtools
             #GenomicAlignments
