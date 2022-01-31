@@ -1,9 +1,9 @@
 #----------------------------------------------------------------------
 # functions to check and load R package dependencies as listed in
 #    packages.yml
-# and installed into/read from:
-#       serverEnv$LIBRARY_DIR
-#       i.e., mdiDir/library/serverEnv$BioconductorRelease
+# and installed into/read from .libPath(), which contains:
+#    serverEnv$LIBRARY_DIR, i.e., mdiDir/library/serverEnv$BioconductorRelease
+#    plus any paths set in suite or base Singularity containers
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -25,7 +25,6 @@ loadFrameworkPackages <- function(packages){
         sapply(
             packages,
             library,
-            lib.loc = serverEnv$LIBRARY_DIR,
             character.only = TRUE
         )
     })
