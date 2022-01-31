@@ -79,9 +79,13 @@ setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr', check = FALSE, create = 
 setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache', check = FALSE, create = TRUE)
 setwd(serverEnv$SHARED_DIR)
 
-# declare a version-specific R library from which all packages are loaded
-.libPaths(serverEnv$LIBRARY_DIR)
-if(serverEnv$DEBUG) message(paste("LIBRARY_DIR =", serverEnv$LIBRARY_DIR))
+# declare version-specific R library(s) from which all packages are loaded
+.libPaths(c(
+    serverEnv$LIBRARY_DIR,
+    if(serverEnv$STATIC_R_LIBRARY != "") serverEnv$STATIC_R_LIBRARY else NULL,
+    if(serverEnv$MDI_SYSTEM_R_LIBRARY != "") serverEnv$MDI_SYSTEM_R_LIBRARY else NULL
+))
+if(serverEnv$DEBUG) message(paste(".libPaths =", .libPaths(), collapse = "\n"))
 
 # set counters for sessions over the lifetime of this server
 nServerSessions <- 0 # all sessions ever served since startup
