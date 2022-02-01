@@ -19,7 +19,7 @@ R:
         - jsonlite
         - yaml
         - storr # key-value storage on disk or via Redis
-        - zoo   # useful rolling value functions
+        # - zoo   # useful rolling value functions
         #- RSQLite
         #- DBI
     graphics:
@@ -44,12 +44,12 @@ R:
     # packages in this subsection are NOT attached, must use git2r::tags, etc.
     unattached:
         - git2r # has function name conflicts with simple names like 'tags'
+        - R.utils
 #----------------------------------------------------------------------
     # prefer NOT to attach developer packages, but some don't work unless you do
     developer:
         unattached: null      
         attached: null
-            # - styler # attach so that developer is prompted to create a cache
 #----------------------------------------------------------------------
     # installed but not attached unless library() called by an app or module
     # prefer to not attach Bioconductor but to always use in full syntax, e.g., GenomicRanges::GRanges

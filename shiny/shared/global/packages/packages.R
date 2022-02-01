@@ -2,7 +2,7 @@
 # functions to check and load R package dependencies as listed in
 #    packages.yml
 # and installed into/read from .libPath(), which contains:
-#    serverEnv$LIBRARY_DIR, i.e., mdiDir/library/serverEnv$BioconductorRelease
+#    serverEnv$LIBRARY_DIR
 #    plus any paths set in suite or base Singularity containers
 #----------------------------------------------------------------------
 
@@ -56,28 +56,3 @@ loadAsyncPackages <- function(session = NULL){
   
     if(!is.null(session)) stopSpinner(session)
 }
-
-# #----------------------------------------------------------------------
-# # load and attach packages for use during job execution (i.e., not for running the UI)
-# #   handled on demand by the server framework since loading is sometimes time/resource intensive
-# #----------------------------------------------------------------------
-
-# # install (if required) and load Bioconductor packages
-# installAndLoad_Bioconductor <- Vectorize(function(package){
-#     tryCatch({
-#         require(package, lib.loc=serverEnv$LIBRARY_DIR, character.only=TRUE) # if not installed, Bioconductor package is unknown to R # nolint
-#     }, warning = function(w){
-
-#         # sometimes there are other warnings about installed packages, e.g. regarding R version number
-#         # only install if the package is truly missing
-#         if(grepl('there is no package called', tolower(w$message))){
-#             if(serverEnv$IS_SERVER) stop(paste("missing required package:", package))
-#             BiocManager::install(
-#                 package,
-#                 lib     = serverEnv$LIBRARY_DIR,
-#                 lib.loc = serverEnv$LIBRARY_DIR 
-#             )
-#             loadFrameworkPackages(package)   
-#         }
-#     })   
-# })
