@@ -80,10 +80,11 @@ setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache', check = FALSE, create = 
 setwd(serverEnv$SHARED_DIR)
 
 # declare version-specific R library(s) from which all packages are loaded
+getLibPath <- function(lib) if(!is.null(lib) && lib != "") lib else NULL
 .libPaths(c(
     serverEnv$LIBRARY_DIR,
-    if(serverEnv$STATIC_R_LIBRARY != "") serverEnv$STATIC_R_LIBRARY else NULL,
-    if(serverEnv$MDI_SYSTEM_R_LIBRARY != "") serverEnv$MDI_SYSTEM_R_LIBRARY else NULL
+    getLibPath(serverEnv$STATIC_R_LIBRARY),
+    getLibPath(serverEnv$MDI_SYSTEM_R_LIBRARY)
 ))
 if(serverEnv$DEBUG) message(paste(".libPaths =", .libPaths(), collapse = "\n"))
 
