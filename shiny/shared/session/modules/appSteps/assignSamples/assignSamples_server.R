@@ -27,7 +27,7 @@ summaryTemplate <- data.frame(
     N_Samples   = integer(),    
         stringsAsFactors = FALSE
 )
-isCategory <- sapply(1:2, function(i) !is.null(options$categories[[i]]) )
+isCategory <- setAssignmentCategories(options)
 for(i in 1:2){
     if(isCategory[i]) summaryTemplate[[options$categories[[i]]$plural]] <- character()
 }
@@ -220,8 +220,11 @@ observeEvent(input$autofillGrid, {
     # collect needed information for parsing
     names <- sort(getSampleNames(makeUnique = TRUE))
     spans <- lapply(names, function(name) tags$span(name) )
-    inputs     <- sapply(1:2, function(i) input[[paste0('nLevels', i)]] )
-    nLevels    <- sapply(1:2, function(i) if(!is.null(inputs[i])) as.integer(inputs[i]) else 1 )
+    inputs <- sapply(1:2, function(i) {
+        x <- input[[paste0('nLevels', i)]]
+        if(is.null(x)) NA else x
+    })
+    nLevels <- sapply(1:2, function(i) if(is.na(inputs[i])) 1 else as.integer(inputs[i]) )
     isCategory <- sapply(1:2, function(i) nLevels[i] > 1 )
     nLevelsNeeded <- sum(isCategory)
 
@@ -358,53 +361,82 @@ observeEvent(input$saveRecord, {
 
     # fill in the grid assignments (not all grid cells need to be assigned)
     names <- getSampleNames(makeUnique = TRUE)
+    hasData <- array(TRUE, d$nLevels)
     for(i in 1:d$nLevels[1]){
         for(j in 1:d$nLevels[2]){        
             id_ <- getSortableGridId(assignSamplesId, i, j, useNS = FALSE)
             samplesIs <- which(names %in% input[[id_]])
             N <- length(samplesIs)
-            if(N == 0) sendFeedback('incomplete sample grid', TRUE)
+            if(N == 0) {
+                hasData[i, j] <- FALSE
+                next
+            }
             d$nSamples <- d$nSamples + N
             d$assignments[samplesIs, 'Category1'] <- i # numeric category indices, i.e. factor levels
             d$assignments[samplesIs, 'Category2'] <- j
         }
     }
 
-    # remove the rows for samples not assigned to any category1+category2
-    # thus, sample set is independent of the samples list in force at the time of its creation
-    d$assignments <- d$assignments[!is.na(d$assignments$Category1), ]
-    
-    # create a ~unique identifying signature to prevent record duplicates
-    #   defining values:
-    #       Project, Sample_ID, category1 and category2 index 
-    r <- initializeRecordEdit(d, workingId, data$list, 'Sample Set', 'sample set', sendFeedback)
-    
-    # continue filling non-defining record values
-    d$name <- r$name
-    d$categoryNames <- lapply(1:2, function(categoryN){
-        sapply(1:d$nLevels[categoryN], function(i){
-            id_ <- paste(getSampleCategoryClass(categoryN), i, sep = "-")
-            x <- if(is.null(input[[id_]])) "" else input[[id_]]
-            if(x == "") paste0(options$categories[[categoryN]]$singular, " #", i) else x               
-        })
-    })
+    # prepared to finish saving the sample set if complete or approved (see below)
+    finishSave <- function(...){
+        
+        # remove the rows for samples not assigned to any category1+category2
+        # thus, sample set is independent of the samples list in force at the time of its creation
+        d$assignments <- d$assignments[!is.na(d$assignments$Category1), ]
 
-    # if requested by the calling app, validate the sample assignment set
-    if(!validateSampleAssignments__(options$validationFn, d, sendFeedback)) {
+        # create a ~unique identifying signature to prevent record duplicates
+        #   defining values:
+        #       Project, Sample_ID, category1 and category2 index 
+        r <- initializeRecordEdit(d, workingId, data$list, 'Sample Set', 'sample set', sendFeedback)
+        # continue filling non-defining record values
+        d$name <- r$name
+        nullNames <- c('Column', 'Row')
+        d$categoryNames <- lapply(1:2, function(categoryN){
+            sapply(1:d$nLevels[categoryN], function(i){
+                id_ <- paste(getSampleCategoryClass(categoryN), i, sep = "-")
+                x <- if(is.null(input[[id_]])) "" else input[[id_]]
+                if(x == "") {
+                    singular <- if(isCategory[categoryN]) options$categories[[categoryN]]$singular 
+                                else nullNames[categoryN]
+                    paste0(singular, " #", i) 
+                } else x              
+            })
+        })
+
+        # if requested by the calling app, validate the sample assignment set
+        if(!validateSampleAssignments__(options$validationFn, d, sendFeedback)) {
+            workingId <<- NULL
+            return()
+        }
+
+        # save our work
+        saveEditedRecord(d, workingId, data, r)
+
+        # place a lock on the parent source of all samples in the set
+        if(r$isEdit) changeLocks(workingId, clearRecordLocks)
+        changeLocks(r$id, placeRecordLocks)        
+        
+        # report success
         workingId <<- NULL
-        return()
+        sendFeedback("sample set saved")    
     }
 
-    # save our work
-    saveEditedRecord(d, workingId, data, r)
-
-    # place a lock on the parent source of all samples in the set
-    if(r$isEdit) changeLocks(workingId, clearRecordLocks)
-    changeLocks(r$id, placeRecordLocks)        
-    
-    # report success
-    workingId <<- NULL
-    sendFeedback("sample set saved")        
+    # check for missing data and reject or prompt as appropriate
+    if(all(!hasData)) sendFeedback('the grid is empty', TRUE)
+    if(d$nLevels[1] > 1 && any(rowSums(hasData) == 0)) sendFeedback('one or more grids columns are empty', TRUE)
+    if(d$nLevels[2] > 1 && any(colSums(hasData) == 0)) sendFeedback('one or more grids rows are empty',    TRUE)
+    if(d$nLevels[1] > 1 && d$nLevels[2] > 1 && any(!hasData)){
+        if(is.null(options$allowEmptyCells)) options$allowEmptyCells <- FALSE
+        if(!options$allowEmptyCells) sendFeedback('one or more grids cells are empty', TRUE)
+        showUserDialog(
+            "Confirm Empty Cells", 
+            tags$p("One or more grid cells are empty."), 
+            tags$p("Click OK to accept the partially filled grid."), 
+            callback = finishSave
+        )
+        return()
+    }
+    finishSave() 
 })
 
 #----------------------------------------------------------------------

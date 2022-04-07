@@ -48,8 +48,8 @@ showHtmlModal <- function(file, type, title){
 # a small format modal popup for getting user input or confirmation
 dialogCallback <- function(parentInput) NULL
 dialogCallbackFired <- reactiveVal(TRUE)
-showUserDialog <- function(title, ..., callback=function(parentInput) NULL,
-                           size="s", type='okCancel', footer=NULL, easyClose=TRUE){
+showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
+                           size = "s", type = 'okCancel', footer = NULL, easyClose = TRUE){
     dialogCallback <<- callback
     footer <- switch(type,
         okOnly = tagList( # an "information only" dialog

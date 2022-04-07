@@ -17,16 +17,14 @@ assignSamplesUI <- function(id, options) {
     parseNLevels <- function(nLevels){
         if(is.character(nLevels)) eval(parse(text = nLevels)) else nLevels
     }
-    isCategory <- c(FALSE, FALSE)
-    nLevelChoices <- c(1, 1)
+    isCategory <- setAssignmentCategories(options)
     isLevelsSelector <- c(FALSE, FALSE)
+    nLevelChoices    <- c(1,     1)
     for(i in 1:2){
-        isCategory[i] <- !is.null(options$categories[[i]])
-        if(isCategory[i]){
-            options$categories[[i]]$nLevels <- parseNLevels(options$categories[[i]]$nLevels)
-            nLevelChoices[i] <- length(options$categories[[i]]$nLevels)
-            isLevelsSelector[i] <- nLevelChoices[i] > 1
-        }
+        if(!isCategory[i]) next
+        options$categories[[i]]$nLevels <- parseNLevels(options$categories[[i]]$nLevels)
+        nLevelChoices[i] <- length(options$categories[[i]]$nLevels)
+        isLevelsSelector[i] <- nLevelChoices[i] > 1
     }
 
     # override missing options to defaults
@@ -42,7 +40,7 @@ assignSamplesUI <- function(id, options) {
             options$categories[[1]]$plural, "</strong>. What comprises a",
             options$categories[[1]]$singular, leaderTail
         ) else
-            "Please <strong>drag and drop</strong> your samples to select those you would like to include in your analysis." # nolint
+            "Please <strong>drag and drop</strong> your samples to select those you would like to include in an analysis." # nolint
     options <- setDefaultOptions(options, stepModuleInfo$assignSamples)
 
     # incorporate options text into templates
@@ -77,7 +75,7 @@ assignSamplesUI <- function(id, options) {
         fluidRow( if(isLevelsSelector[1]){
             box(width = if(isLevelsSelector[2]) 6 else 4, 
                 fluidRow(
-                    column(width = controlColWidth, nLevelsSelector(1)),
+                    if(isLevelsSelector[1]) column(width = controlColWidth, nLevelsSelector(1)) else "",
                     if(isLevelsSelector[2]) column(width = controlColWidth, nLevelsSelector(2)) else "",
                     column(width = controlColWidth, selectInput(ns("autofillDelimiter"), label = 'Name Delimiter',
                             c('fixed width', '- (dash)', '_ (underscore)', ': (colon)', ' (whitespace)')))

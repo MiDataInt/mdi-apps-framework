@@ -8,6 +8,15 @@
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
+# parse assignment grid configuration options
+#----------------------------------------------------------------------
+setAssignmentCategories <- function(options){
+         if(is.null(options$categories)) c(FALSE, FALSE) 
+    else if( length(options$categories) == 1) c(TRUE, FALSE) 
+    else c(TRUE, TRUE) 
+}
+
+#----------------------------------------------------------------------
 # if requested by calling app, validate a sampleSet assignment
 #----------------------------------------------------------------------
 
