@@ -10,10 +10,11 @@
 
 # get the working sample names, either automated or overridden by user
 # ensure that these are unique by adding project/run only as needed
-getSampleNames <- function(rows=TRUE, sampleIds=NULL, makeUnique=FALSE){
+getSampleNames <- function(rows = TRUE, sampleIds = NULL, sampleUniqueIds = NULL, makeUnique = FALSE){
     stepName <- appStepNamesByType$upload
     samples <- app[[stepName]]$outcomes$samples()
     if(!is.null(sampleIds)) rows <- samples$Sample_ID %in% sampleIds
+    if(!is.null(sampleUniqueIds)) rows <- getSampleUniqueIds() %in% sampleUniqueIds
     samples <- samples[, c('Project', 'Sample_ID', 'Description')]
     names <- app[[stepName]]$outcomes$sampleNames()
     names <- apply(samples, 1, function(v){
@@ -58,17 +59,22 @@ getSourceFromId <- function(sourceId){
     sources[[ names(sources) == sourceId ]]
 }
 
-# get a file from a source by type
+# get a file from a source by type or name
 getSourceFile <- function(source, fileType){ # just the file name
     if(is.null(source) || is.null(fileType)) return(NULL)
     source$config$files[[fileType]]
 }
-getSourceFilePath <- function(sourceId, fileType, parentDir=NULL){
+getSourceFilePath <- function(sourceId, fileType, parentDir=NULL){ # when we know a file by type
     if(is.null(parentDir)) parentDir <- file.path(serverEnv$DATA_DIR, 'packages')
     source <- getSourceFromId(sourceId)
     dir <- getKeyedDir(parentDir, sourceId)
     file <- getSourceFile(source, fileType)
     file.path(dir, file$file)
+}
+expandSourceFilePath <- function(sourceId, fileName, parentDir=NULL){ # when we know a file by name
+    if(is.null(parentDir)) parentDir <- file.path(serverEnv$DATA_DIR, 'packages')
+    dir <- getKeyedDir(parentDir, sourceId)
+    file.path(dir, fileName)
 }
 getSourceFilePackageName <- Vectorize(function(sourceId){
     source <- getSourceFromId(sourceId)
