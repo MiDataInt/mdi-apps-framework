@@ -56,7 +56,7 @@ getSourceFromId <- function(sourceId){
     stepName <- appStepNamesByType$upload
     sources <- if(isParentProcess) app[[stepName]]$outcomes$sources()
                  else jobParameters$sources # workers must have converted reactive to static
-    sources[[ names(sources) == sourceId ]]
+    sources[[sourceId]]
 }
 
 # get a file from a source by type or name

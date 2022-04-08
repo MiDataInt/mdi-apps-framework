@@ -41,31 +41,34 @@ assignments <- reactive({
 #----------------------------------------------------------------------
 # open a dialog to enable sample selection from among the samples in the selected set
 #----------------------------------------------------------------------
+selectedSamples <- reactiveValues()
 commitSelectedSamples <- function(parentInput){
-    dprint(names(parentInput))
-    # "sampleSelector-selectSample-1-1-1"
+    assignments <- assignments()
+    nCol <- assignments[, max(Category1)]
+    nRow <- assignments[, max(Category2)]
+    for(row in 1:nRow) for (col in 1:nCol){
+        uniqueIds <- assignments[Category2 == row & Category1 == col, paste(Project, Sample_ID, sep = ":")]
+        nSamples <- length(uniqueIds)
+        if(nSamples == 0) next
+        for(i in 1:nSamples){ # "sampleSelector-selectSample-1-1-1"
+            inputId <- paste('sampleSelector', 'selectSample', row, col, i, sep = "-")
+            selectedSamples[[uniqueIds[i]]] <- parentInput[[inputId]]
+        } 
+    }
 }
 observeEvent(input$selectSamples, {
     assignments <- assignments()
     req(assignments)
-# Classes 'data.table' and 'data.frame':  6 obs. of  5 variables:
-#  $ Source_ID: chr  "6741c8f40c01f6ed4760406898b1607c" "6741c8f40c01f6ed4760406898b1607c" "6741c8f40c01f6ed4760406898b1607c" "6741c8f40c01f6ed4760406898b1607c" ...
-#  $ Project  : chr  "high_APH_040422" "high_APH_040422" "high_APH_040422" "high_APH_040422" ...
-#  $ Sample_ID: chr  "HCT_0.2APH_2APH_M" "HCT_0.2APH_G2" "HCT_0.2APH__M" "HCT_2APH_M" ...
-#  $ Category1: int  2 1 2 2 1 2
-#  $ Category2: int  4 2 2 3 1 1
+
+    # collect sample grid metadata
     nCol <- assignments[, max(Category1)]
     nRow <- assignments[, max(Category2)]
     colWidth <- floor(12 / (nCol + 1))
-    categoryNames <- getCategoryNames()
-
     stepName <- appStepNamesByType$assign
     sampleSet <- app[[stepName]]$outcomes$sampleSets()[[input$sampleSet]]
-    dstr(sampleSet)
 
-    # dstr(getSampleSetAssignments(input$sampleSet, categoryNames = TRUE)) #, category1=NULL, category2=NULL, categoryNames=FALSE)
-
-    table <- fluidRow(
+    # assemble the selection grid
+    grid <- fluidRow(
         style = "margin: 0 15px;",
         fluidRow(
             column(width = colWidth, ""),
@@ -73,40 +76,44 @@ observeEvent(input$selectSamples, {
                 column(
                     style = "border-left: 1px solid grey; text-align: center;",
                     width = colWidth,
-                    tags$strong(categoryNames$Category1)
+                    tags$strong(sampleSet$categoryNames[[1]][col])
                 )
             })              
         ),
         lapply(1:nRow, function(row){
             fluidRow(
                 style = "border-top: 1px solid grey;",
-                column(
-                    style = "text-align: right;",
+                column( 
+                    style = "text-align: right;", 
                     width = colWidth, 
-                    tags$strong(categoryNames$Category2)
+                    tags$strong(sampleSet$categoryNames[[2]][row]) 
                 ),
                 lapply(1:nCol, function(col){
-                    sampleNames <- assignments[
-                        Category2 == row & Category1 == col, 
-                        getSampleNames(sampleUniqueIds = paste(Project, Sample_ID, sep = ":"))
-                    ]
-                    dstr(sampleNames)
-                    nSamples <- length(sampleNames)
+                    uniqueIds <- assignments[Category2 == row & Category1 == col, paste(Project, Sample_ID, sep = ":")]
+                    sampleNames <- getSampleNames(sampleUniqueIds = uniqueIds)
+                    nSamples <- length(uniqueIds)
                     column(
                         style = "border-left: 1px solid grey;",
                         width = colWidth,
                         if(nSamples == 0) "-" else lapply(1:nSamples, function(i){
                             id <- paste('selectSample', row, col, i, sep = "-")
-                            checkboxInput(ns(id), label = sampleNames[i], value = FALSE)
+                            selected <- selectedSamples[[uniqueIds[i]]]
+                            checkboxInput(
+                                ns(id), 
+                                label = sampleNames[i], 
+                                value = if(is.null(selected)) FALSE else selected
+                            )
                         })
                     )
                 })
             )
         })
     )
+
+    # show grid for sample selection via modal
     showUserDialog(
         "Select Samples", 
-        table, 
+        grid, 
         callback = commitSelectedSamples,
         size = if(nCol > 3) "l" else "m"
     )
@@ -116,7 +123,14 @@ observeEvent(input$selectSamples, {
 # provide feedback on the selected samples
 #----------------------------------------------------------------------
 output$selectedSamples <- renderText({
-    "PENDING"
+
+    # TODO: finish this
+    req(selectedSamples)
+    str(selectedSamples)
+    nSamples <- length(names(selectedSamples))
+    req(names)
+    nSelectedSamples <- sum(sapply(selectedSamples, sum))
+    paste(nSelectedSamples, 'of', nSamples, 'samples are selected')
 })
 
 #----------------------------------------------------------------------
