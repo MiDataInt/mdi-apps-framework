@@ -29,40 +29,25 @@ observeEvent({
     req(length(x) > 0)
     updateSelectInput(session, 'sampleSet', choices = setNames(names(x), x))
 })
-
-#----------------------------------------------------------------------
-# react to user set selection by setting a reactive
-#----------------------------------------------------------------------
-assignments <- reactive({
+allAssignments <- reactive({ # all assignments for the selected sample set (not just the selected samples)
     req(input$sampleSet)
-    getSampleSetAssignments(input$sampleSet) # all assignment for this is sample set (i.e, all groups and types)
+    x <- getSampleSetAssignments(input$sampleSet)
+    x[, uniqueId := paste(Project, Sample_ID, sep = ":")]
+    x
 })
 
 #----------------------------------------------------------------------
 # open a dialog to enable sample selection from among the samples in the selected set
 #----------------------------------------------------------------------
-selectedSamples <- reactiveValues()
-commitSelectedSamples <- function(parentInput){
-    assignments <- assignments()
-    nCol <- assignments[, max(Category1)]
-    nRow <- assignments[, max(Category2)]
-    for(row in 1:nRow) for (col in 1:nCol){
-        uniqueIds <- assignments[Category2 == row & Category1 == col, paste(Project, Sample_ID, sep = ":")]
-        nSamples <- length(uniqueIds)
-        if(nSamples == 0) next
-        for(i in 1:nSamples){ # "sampleSelector-selectSample-1-1-1"
-            inputId <- paste('sampleSelector', 'selectSample', row, col, i, sep = "-")
-            selectedSamples[[uniqueIds[i]]] <- parentInput[[inputId]]
-        } 
-    }
-}
+selectedSamples <- reactiveVal(list()) # logical, TRUE if selected, NULL if not selected
 observeEvent(input$selectSamples, {
-    assignments <- assignments()
-    req(assignments)
+    allAssignments <- allAssignments()
+    req(allAssignments)
+    selectedSamples <- selectedSamples()
 
     # collect sample grid metadata
-    nCol <- assignments[, max(Category1)]
-    nRow <- assignments[, max(Category2)]
+    nCol <- allAssignments[, max(Category1)]
+    nRow <- allAssignments[, max(Category2)]
     colWidth <- floor(12 / (nCol + 1))
     stepName <- appStepNamesByType$assign
     sampleSet <- app[[stepName]]$outcomes$sampleSets()[[input$sampleSet]]
@@ -78,7 +63,7 @@ observeEvent(input$selectSamples, {
                     width = colWidth,
                     tags$strong(sampleSet$categoryNames[[1]][col])
                 )
-            })              
+            })
         ),
         lapply(1:nRow, function(row){
             fluidRow(
@@ -89,7 +74,7 @@ observeEvent(input$selectSamples, {
                     tags$strong(sampleSet$categoryNames[[2]][row]) 
                 ),
                 lapply(1:nCol, function(col){
-                    uniqueIds <- assignments[Category2 == row & Category1 == col, paste(Project, Sample_ID, sep = ":")]
+                    uniqueIds <- allAssignments[Category2 == row & Category1 == col, uniqueId]
                     sampleNames <- getSampleNames(sampleUniqueIds = uniqueIds)
                     nSamples <- length(uniqueIds)
                     column(
@@ -120,24 +105,48 @@ observeEvent(input$selectSamples, {
 })
 
 #----------------------------------------------------------------------
+# react to user set selection by setting a reactive
+#----------------------------------------------------------------------
+commitSelectedSamples <- function(parentInput){
+    allAssignments <- allAssignments()
+    nCol <- allAssignments[, max(Category1)]
+    nRow <- allAssignments[, max(Category2)]
+    selectedSamples <- selectedSamples()
+    for(row in 1:nRow) for (col in 1:nCol){
+        uniqueIds <- allAssignments[Category2 == row & Category1 == col, uniqueId]
+        nSamples <- length(uniqueIds)
+        if(nSamples == 0) next
+        for(i in 1:nSamples){ # "sampleSelector-selectSample-1-1-1"
+            inputId <- paste('sampleSelector', 'selectSample', row, col, i, sep = "-")
+            selectedSamples[[uniqueIds[i]]] <- if(parentInput[[inputId]]) TRUE else NULL
+        } 
+    }  
+    selectedSamples(selectedSamples)
+}
+selectedAssignments <- reactive({ # the subset of assignments for just the selected samples
+    allAssignments <- allAssignments()
+    req(allAssignments)
+    allAssignments[uniqueId %in% names(selectedSamples())]
+})
+
+#----------------------------------------------------------------------
 # provide feedback on the selected samples
 #----------------------------------------------------------------------
-output$selectedSamples <- renderText({
-
-    # TODO: finish this
-    req(selectedSamples)
-    str(selectedSamples)
-    nSamples <- length(names(selectedSamples))
-    req(names)
-    nSelectedSamples <- sum(sapply(selectedSamples, sum))
-    paste(nSelectedSamples, 'of', nSamples, 'samples are selected')
+output$selectedSampleCount <- renderText({
+    allAssignments <- allAssignments()
+    req(allAssignments)
+    nSamples <- nrow(allAssignments)    
+    nSelected <- length(names(selectedSamples()))
+    paste(nSelected, 'of', nSamples, 'samples are selected')
 })
 
 #----------------------------------------------------------------------
 # set return value
 #----------------------------------------------------------------------
 list(
-    assignments = assignments, # the set of sample sources assigned to the selected sampleSet+group+type
+    allAssignments      = allAssignments, # all assignments for the selected sample set
+    selectedAssignments = selectedAssignments, # the subset of assignments for the selected samples
+    selectedSamples     = reactive({ names(selectedSamples()) }), # unique IDs (Project:Sample_ID) for the selected samples # nolint
     input = input
 )
 

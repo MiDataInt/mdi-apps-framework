@@ -21,7 +21,7 @@ sampleSelectorUI <- function(id) {
                 bsButton(ns('selectSamples'), "Select Samples", style = "primary"),
                 tags$span(
                     style = "margin-left: 10px;",
-                    textOutput(ns('selectedSamples'), inline = TRUE)
+                    textOutput(ns('selectedSampleCount'), inline = TRUE)
                 )
             )
         )
