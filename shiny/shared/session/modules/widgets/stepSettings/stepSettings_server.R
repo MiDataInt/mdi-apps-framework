@@ -107,10 +107,38 @@ getTabInputs <- function(id, tab){
     t$label <- gsub('_', ' ', id)
     id <- parentNs(id)
     getOption <- function(name, default=NA) if(is.null(x[[name]])) default else x[[name]]
+    getInline   <- function() if(!is.null(t$inline)) t$inline else TRUE
+    getSelected <- function() if(!is.null(x$value)) x$value else if(!is.null(t$selected)) t$selected else NULL
     div(switch(
         t$type,
-        selectInput = selectInput(id, t$label, choices = t$choices, selected = x$value),
-        numericInput = numericInput(id, t$label, x$value, getOption('min'), getOption('max'), getOption('step')),
+        numericInput = numericInput(
+            id, 
+            t$label, 
+            x$value, 
+            getOption('min'), 
+            getOption('max'), 
+            getOption('step')
+        ),        
+        selectInput = selectInput(
+            id, 
+            t$label, 
+            choices = t$choices, 
+            selected = getSelected()
+        ),
+        radioButtons = radioButtons(
+            id, 
+            t$label, 
+            choices = t$choices, 
+            selected = getSelected(),
+            inline = getInline()
+        ),
+        checkboxGroupInput = checkboxGroupInput(
+            id, 
+            t$label, 
+            choices = t$choices, 
+            selected = getSelected(), 
+            inline = getInline()
+        ),
         get(x$type)(id, t$label, x$value)
     ), style = "margin-bottom: 5px;")          
 }

@@ -147,6 +147,8 @@ list(
     allAssignments      = allAssignments, # all assignments for the selected sample set
     selectedAssignments = selectedAssignments, # the subset of assignments for the selected samples
     selectedSamples     = reactive({ names(selectedSamples()) }), # unique IDs (Project:Sample_ID) for the selected samples # nolint
+    setSampleSet = function(x) updateSelectInput(session, 'sampleSet', selected = x),
+    setSelectedSamples  = function(x) selectedSamples( as.list(sapply(x, function(x) TRUE)) ),
     input = input
 )
 
