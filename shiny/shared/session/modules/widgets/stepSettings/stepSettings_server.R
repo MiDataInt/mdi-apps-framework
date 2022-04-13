@@ -4,7 +4,7 @@
 #----------------------------------------------------------------------
 # user click of a gear icon opens a dynamically populated popup
 #----------------------------------------------------------------------
-# settings are read from module.yml; see bottom other modules for format examples
+# settings are read from module.yml; see bottom and other modules for format examples
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -14,7 +14,8 @@ stepSettingsServer <- function(
     id, 
     parentId, 
     size = NULL,
-    cacheKey = NULL # a reactive/reactiveVal that returns an id for the current settings state
+    cacheKey = NULL, # a reactive/reactiveVal that returns an id for the current settings state
+    fade = NULL
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -92,7 +93,8 @@ observeEvent(input[[gearId]], {
         "Set Parameters",
         toInputs(),
         size = if(!is.null(size)) size else if(nTabs <= 3) 's' else if(nTabs <= 6) 'm' else 'l',        
-        callback = fromInputs
+        callback = fromInputs,
+        fade = fade
     )
 })
 
@@ -107,8 +109,7 @@ getTabInputs <- function(id, tab){
     t$label <- gsub('_', ' ', id)
     id <- parentNs(id)
     getOption <- function(name, default=NA) if(is.null(x[[name]])) default else x[[name]]
-    getInline   <- function() if(!is.null(t$inline)) t$inline else TRUE
-    getSelected <- function() if(!is.null(x$value)) x$value else if(!is.null(t$selected)) t$selected else NULL
+    getInline <- function() if(!is.null(t$inline)) t$inline else TRUE
     div(switch(
         t$type,
         numericInput = numericInput(
@@ -123,20 +124,20 @@ getTabInputs <- function(id, tab){
             id, 
             t$label, 
             choices = t$choices, 
-            selected = getSelected()
+            selected = x$value
         ),
         radioButtons = radioButtons(
             id, 
             t$label, 
             choices = t$choices, 
-            selected = getSelected(),
+            selected = x$value,
             inline = getInline()
         ),
         checkboxGroupInput = checkboxGroupInput(
             id, 
             t$label, 
             choices = t$choices, 
-            selected = getSelected(), 
+            selected = x$value,
             inline = getInline()
         ),
         get(x$type)(id, t$label, x$value)
@@ -203,18 +204,35 @@ retval
 # settings:
 #     Tab_Name_1:
 #         Setting_Name_1:
+#             type:   textInput
+#             value:  "some text"
+#         Setting_Name_2:
 #             type:   numericInput
-#             value:  2
 #             min:    1
 #             max:    4
 #             step:   1
+#             value:  2
 #     Tab_Name_2: 
-#         Setting_Name_1:
+#         Setting_Name_3:
 #             type:   selectInput
 #             choices:
 #                 - xxx
 #                 - yyy
 #             value:  xxx  
-#         Setting_Name_3:
-#             type:   textInput
-#             value:  "some text"
+#         Setting_Name_4:
+#             type:   radioButtons
+#             choices:
+#                 - xxx
+#                 - yyy
+#             value: xxx
+#             inline: true 
+#         Setting_Name_5:
+#             type:   checkboxGroupInput
+#             choices:
+#                 - xxx
+#                 - yyy
+#                 - zzz
+#             value: 
+#                 - xxx
+#                 - yyy
+#             inline: true 

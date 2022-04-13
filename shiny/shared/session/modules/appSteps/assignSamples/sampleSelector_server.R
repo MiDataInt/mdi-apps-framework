@@ -35,6 +35,11 @@ allAssignments <- reactive({ # all assignments for the selected sample set (not 
     x[, uniqueId := paste(Project, Sample_ID, sep = ":")]
     x
 })
+allSamples <- reactive({
+    allAssignments <- allAssignments()
+    req(allAssignments)
+    allAssignments[, unique(uniqueId)]
+})
 
 #----------------------------------------------------------------------
 # open a dialog to enable sample selection from among the samples in the selected set
@@ -146,6 +151,7 @@ output$selectedSampleCount <- renderText({
 list(
     allAssignments      = allAssignments, # all assignments for the selected sample set
     selectedAssignments = selectedAssignments, # the subset of assignments for the selected samples
+    allSamples          = allSamples,    
     selectedSamples     = reactive({ names(selectedSamples()) }), # unique IDs (Project:Sample_ID) for the selected samples # nolint
     setSampleSet = function(x) updateSelectInput(session, 'sampleSet', selected = x),
     setSelectedSamples  = function(x) selectedSamples( as.list(sapply(x, function(x) TRUE)) ),
