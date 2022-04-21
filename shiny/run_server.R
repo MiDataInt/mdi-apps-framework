@@ -108,6 +108,12 @@ loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
 
+# create the persistent cache object shared across all sessions
+# not for sensitive data in public server modes, etc.
+assign("persistentCache", list(), .GlobalEnv)
+if(is.null(serverConfig$default_ttl)) serverConfig$default_ttl <- 60 * 60 * 24 # i.e., 1 day
+if(is.null(serverConfig$max_ttl))     serverConfig$max_ttl     <- 60 * 60 * 24
+
 # ensure that we have required server-level information for user authentication
 serverEnv$IS_GLOBUS <- FALSE
 serverEnv$IS_GOOGLE <- FALSE

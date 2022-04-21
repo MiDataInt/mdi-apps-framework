@@ -1,26 +1,30 @@
 #----------------------------------------------------------------------
 # reactive components for caching and only occasionally displaying a set 
-# of input parameters for controlling how an application step behaves
+# of input parameters for controlling how an application step or component behaves
 #----------------------------------------------------------------------
 # user click of a gear icon opens a dynamically populated popup
 #----------------------------------------------------------------------
-# settings are read from module.yml; see bottom and other modules for format examples
+# settings are read from module.yml, settings.yml or as a list
+# see bottom and other modules for format examples
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-stepSettingsServer <- function(
+settingsServer <- function(
     id, 
     parentId, 
+    template = parentId, # for component settings, supply path(s) to settings.yml or a matching list
     size = NULL,
     cacheKey = NULL, # a reactive/reactiveVal that returns an id for the current settings state
-    fade = NULL
+    fade = FALSE,
+    title = "Set Parameters",
+    immediate = FALSE # if TRUE, setting changes are transmitted in real time
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         parentNs <- NS(parentId)
-        module <- 'stepSettings' # for reportProgress tracing
+        module <- 'settings' # for reportProgress tracing
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -47,14 +51,35 @@ setCachedValues <- function(d){
 } 
 
 # settings template
-template <- stepModuleInfo[[ app$config$appSteps[[parentId]]$module ]]$settings
-if(is.null(template)) template <- list()
+if(is.character(template)){ # one ore more template sources to concatenate
+    keys <- template
+    template <- list()
+    for(key in keys){
+        if(!is.null(app$config$appSteps[[key]])){ # appStep settings
+            template <- c(template, stepModuleInfo[[ app$config$appSteps[[key]]$module ]]$settings)
+        } else if(file.exists(key)){ # component module settings
+            template <- c(template, read_yaml(key))
+        } else { # bad call, proceed with no template
+            reportProgress(paste("failed to load settings template:", key))
+            template <- list()
+        }        
+    }
+} else if(is.null(template)) {
+    template <- list()
+} # otherwise, caller can supply a template as a pre-assembled list
 nTabs <- 1
 isTabbed <- FALSE
+workingSize <- size
+inputWidth <- "s"
 initializeTemplate <- function(t){
     template <<- t
     nTabs <<- length(t) # template forces these, not any override coming from a potentially stale bookmark
     isTabbed <<- nTabs > 1
+    maxTabSize <- max(sapply(template, length))
+    workingSize <<- if(!is.null(size)) size 
+               else if(nTabs > 6 || maxTabSize > 16) 'l' 
+               else if(nTabs > 3 || maxTabSize > 8) 'm' else 's'
+    inputWidth <<- if(workingSize == "l") 4 else if(workingSize == "m") 6 else 12
     toggle(
         id = fullGearId, 
         asis = TRUE, # does not work consistently to let shinyjs handle id resolution (not sure why)
@@ -90,11 +115,12 @@ initializeSettings(template)
 observeEvent(input[[gearId]], {
     req(nTabs > 0)
     showUserDialog(
-        "Set Parameters",
+        title,
         toInputs(),
-        size = if(!is.null(size)) size else if(nTabs <= 3) 's' else if(nTabs <= 6) 'm' else 'l',        
+        size = workingSize,        
         callback = fromInputs,
-        fade = fade
+        fade = fade,
+        type = if(immediate) "okOnly" else "okCancel"
     )
 })
 
@@ -107,13 +133,14 @@ getTabInputs <- function(id, tab){
     x <- settings[[tab]][[id]]
     t <- template[[tab]][[id]]
     t$label <- gsub('_', ' ', id)
-    id <- parentNs(id)
+    fullId <- parentNs(id)
+    if(immediate) observeEvent(sessionInput[[fullId]], setValue(tab, id, fullId))        
     getOption <- function(name, default=NA) if(is.null(x[[name]])) default else x[[name]]
     getInline <- function() if(!is.null(t$inline)) t$inline else TRUE
-    div(switch(
+    column(width = inputWidth, switch(
         t$type,
         numericInput = numericInput(
-            id, 
+            fullId, 
             t$label, 
             x$value, 
             getOption('min'), 
@@ -121,36 +148,41 @@ getTabInputs <- function(id, tab){
             getOption('step')
         ),        
         selectInput = selectInput(
-            id, 
+            fullId, 
             t$label, 
             choices = t$choices, 
             selected = x$value
         ),
         radioButtons = radioButtons(
-            id, 
+            fullId, 
             t$label, 
             choices = t$choices, 
             selected = x$value,
             inline = getInline()
         ),
         checkboxGroupInput = checkboxGroupInput(
-            id, 
+            fullId, 
             t$label, 
             choices = t$choices, 
             selected = x$value,
             inline = getInline()
         ),
-        get(x$type)(id, t$label, x$value)
-    ), style = "margin-bottom: 5px;")          
+        spacer = span(style = "visibility: hidden;", textInput(fullId, fullId, "")),
+        get(x$type)(fullId, t$label, x$value)
+    ), style = "margin-bottom: 5px;")    
 }
 toInputs <- function(){
     if(isTabbed){
         fluidRow(do.call(tabBox, c(
             lapply(names(settings), function(tab){
-                do.call(tabPanel, c(
-                    lapply(names(settings[[tab]]), getTabInputs, tab),
+                tabPanel(
+                    fluidRow(lapply(names(settings[[tab]]), getTabInputs, tab)),
                     title = gsub('_', ' ', tab)
-                ))
+                )
+                # do.call(tabPanel, c(
+                #     fluidRow(tagList(lapply(names(settings[[tab]]), getTabInputs, tab))),
+                #     title = gsub('_', ' ', tab)
+                # ))
             }),
             width = 12               
         )))        
@@ -164,7 +196,13 @@ toInputs <- function(){
 }
 
 # update our cached setting values when user commits changes from the modal
-setValues <- function(id, tab, input){
+setValue <- function(tab, id, fullId){ # in immediate mode
+    settings[[tab]][[id]]$value <- sessionInput[[fullId]] 
+    x <- reactiveValuesToList(settings)
+    allSettings(x)
+    setCachedValues(x)
+}
+setValues <- function(id, tab, input){ # in delayed mode
     settings[[tab]][[id]]$value <- input[[parentNs(id)]] 
 }
 fromInputs <- function(input){ # same as from bookmark
@@ -183,10 +221,10 @@ retval <- reactiveValuesToListOfReactives(settings) # the categorized settings r
 retval$all_ <- reactive({ allSettings() })
 retval$replace <- initializeSettings # called when a bookmark is loaded to replace settings en bloc
 retval$cache <- reactive({ cache })
-retval$get <- function(type, name){
-    x <- allSettings()[[type]]
+retval$get <- function(tab, id){
+    x <- settings[[tab]]
     if(is.null(x)) return(NULL)
-    x <- x[[name]]
+    x <- x[[id]]
     if(is.null(x)) return(NULL)
     x$value
 }
@@ -197,6 +235,9 @@ retval
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
+
+# legacy name assignment
+stepSettingsServer <- settingsServer
 
 #----------------------------------------------------------------------
 # settings: use camel case and '_' in names (it is replaced with a space in the UI)

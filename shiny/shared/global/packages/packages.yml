@@ -25,6 +25,7 @@ R:
     graphics:
         - ggplot2
         - plotly # client-side interactive plots 
+        - RColorBrewer
     framework:
         - shiny      # shiny itself (already loaded and attached, of course)
         - shinydashboard # main page layout and boxes

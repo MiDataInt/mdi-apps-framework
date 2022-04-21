@@ -118,7 +118,7 @@ getInvertedCategoryNames <- function(plural=FALSE) getCategoryNames(plural = plu
 
 # retrieve the group/type assignment for a specific Sample Set as a data.table
 # optionally, filter for matching categories
-getSampleSetAssignments <- function(id, category1=NULL, category2=NULL, categoryNames=FALSE){
+getSampleSetAssignments <- function(id, category1 = NULL, category2 = NULL, categoryNames = TRUE){
     stepName <- appStepNamesByType$assign
     sampleSet <- app[[stepName]]$outcomes$sampleSets()[[id]]
     req(sampleSet)

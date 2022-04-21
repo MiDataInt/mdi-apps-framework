@@ -105,7 +105,8 @@ observeEvent(input$selectSamples, {
         "Select Samples", 
         grid, 
         callback = commitSelectedSamples,
-        size = if(nCol > 3) "l" else "m"
+        size = if(nCol > 3) "l" else "m",
+        fade = FALSE
     )
 })
 

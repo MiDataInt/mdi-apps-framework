@@ -1,18 +1,18 @@
 #----------------------------------------------------------------------
 # static components for caching and only occasionally displaying a set 
-# of input parameters for controlling how an application step behaves
+# of input parameters for controlling how an application step or component behaves
 #----------------------------------------------------------------------
 # user click of a gear icon opens a dynamically populated popup
 #----------------------------------------------------------------------
 # usage in appStepUI:
 #    standardSequentialTabItem(
-#        HTML(paste( options$longLabel, stepSettingsUI(ns('settings')) )),
+#        HTML(paste( options$longLabel, settingsUI(ns('settings')) )),
 #        options$leaderText,
 #        ...
 #----------------------------------------------------------------------
 
 # module ui function
-stepSettingsUI <- function(id, isHeader=TRUE) {
+settingsUI <- function(id, isHeader=TRUE) {
 
     # initialize namespace
     ns <- NS(id)
@@ -24,3 +24,6 @@ stepSettingsUI <- function(id, isHeader=TRUE) {
         actionLink(ns('gearIcon'), '', icon('cog')) # apparently, "gear" is no longer the Font Awesome icon name
     )
 }
+
+# legacy name assignment
+stepSettingsUI <- settingsUI
