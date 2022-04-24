@@ -25,6 +25,7 @@ Plot_Frame:
             - topright
             - bottomleft
             - bottomright
+            - none
     Bottom_Margin:
         type:   numericInput
         value:  4.1
@@ -71,3 +72,9 @@ Points_and_Lines:
         min:    0.25
         max:    10
         step:   0.25
+    Line_Type:
+        type:   numericInput
+        value:  1
+        min:    0
+        max:    6
+        step:   1

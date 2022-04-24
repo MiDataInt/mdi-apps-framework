@@ -7,14 +7,14 @@
 #----------------------------------------------------------------------
 staticPlotBoxServer <- function(
     id,
-    create = function() NULL,
+    create = function() NULL, # a function of reactive that creates the plot
     maxHeight = "400px",
-    points = FALSE,
-    lines  = FALSE,
-    legend = FALSE,
+    points  = FALSE, # set these to TRUE to expose relevant plot options
+    lines   = FALSE,
+    legend  = FALSE,
     margins = FALSE,
-    title = FALSE,
-    immediate = FALSE
+    title   = FALSE,
+    immediate = FALSE # if set to TRUE the plot updates as options are changed
 ){ moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'staticPlotBox' # for reportProgress tracing
@@ -35,6 +35,7 @@ if(points || lines){
     }
     if(!lines){
         template$Points_and_Lines$Line_Width <- NULL
+        template$Points_and_Lines$Line_Type <- NULL
     }
 } else {
     template$Points_and_Lines <- NULL
@@ -57,7 +58,7 @@ settings <- settingsServer( # display settings not stored in the UI, exposed by 
 )
 
 #----------------------------------------------------------------------
-# render the plot as a static image
+# render the plot as a static image filled by caller
 #----------------------------------------------------------------------
 output$plot <- renderImage({
     ps <- settings$Plot_Frame()
@@ -86,6 +87,51 @@ output$plot <- renderImage({
 }, deleteFile = FALSE)
 
 #----------------------------------------------------------------------
+# helper functions for constructing plots based on box settings
+#----------------------------------------------------------------------
+setMargins <- function() par(mar = c(
+    settings$get("Plot_Frame", "Bottom_Margin"), 
+    settings$get("Plot_Frame", "Left_Margin"), 
+    settings$get("Plot_Frame", "Top_Margin"), 
+    settings$get("Plot_Frame", "Right_Margin")
+))
+initializeFrame <- function(...){
+    if(margins) setMargins()
+    plot(
+        NA, 
+        NA, 
+        typ = "n",
+        main = settings$get("Plot_Frame", "Title"),
+        ...
+    )
+}
+addPoints <- function(...){
+    points(
+        pch = if(points) settings$get("Points_and_Lines", "Point_Type") else 19,
+        cex = if(points) settings$get("Points_and_Lines", "Point_Size") else 1,
+        ...
+    )
+}
+addLines <- function(...){
+    lines(
+        lty = if(lines) settings$get("Points_and_Lines", "Line_Type")  else 1,        
+        lwd = if(lines) settings$get("Points_and_Lines", "Line_Width") else 1,
+        ...
+    )
+}
+addLegend <- function(...){
+    placement <- if(legend) settings$get('Plot_Frame', 'Legend_Placement') else "topleft"
+    if(placement != "none") legend(
+        placement,
+        lty    = if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NULL,        
+        lwd    = if(lines)  settings$get("Points_and_Lines", "Line_Width") else NULL,
+        pch    = if(points) settings$get("Points_and_Lines", "Point_Type") else NULL,
+        pt.cex = if(points) settings$get("Points_and_Lines", "Point_Size") else NULL,
+        ...
+    )
+}
+
+#----------------------------------------------------------------------
 # support icon-based file download
 #----------------------------------------------------------------------
 output$download <- downloadHandler(
@@ -98,8 +144,13 @@ output$download <- downloadHandler(
 # set return values as reactives that will be assigned to app$data[[stepName]]
 #----------------------------------------------------------------------
 list(
-    settings = settings,
-    get = settings$get
+    settings        = settings,
+    get             = settings$get,
+    setMargins      = setMargins,
+    initializeFrame = initializeFrame,
+    addPoints       = addPoints,
+    addLines        = addLines,
+    addLegend       = addLegend
 )
 
 #----------------------------------------------------------------------
