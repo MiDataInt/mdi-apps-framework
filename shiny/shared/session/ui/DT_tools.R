@@ -167,6 +167,14 @@ getTableEditBoxData <- function(input, parentId){
     )
 }
 
+# convert a row index from a table display subsetted by a parent row click
+# to the index in the parent table
+bufferRowToDataRow <- function(buffer, bufferRow){ 
+    is <- strtoi(rownames(buffer()))
+    if(is.na(is[1])) is <- seq_len(nrow(buffer()))
+    is[bufferRow] 
+}
+
 #----------------------------------------------------------------------
 # add a checkbox column to allow user to set/unset a flag per row
 #----------------------------------------------------------------------

@@ -134,8 +134,9 @@ addNameEditObserver <- function(input, inputId, module, data, buffer, parentNS, 
         
         # update our record of display names    
         edit <- getTableEditBoxData(input, inputId)
-        reportProgress(paste(edit$selectedRow, '=', edit$newValue))
-        id <- data$ids[edit$selectedRow]
+        dataRowI <- bufferRowToDataRow(buffer, edit$selectedRow)
+        reportProgress(paste(edit$selectedRow, '=', dataRowI, '=', edit$newValue))
+        id <- data$ids[dataRowI]
         data$names[[id]] <- edit$newValue
     
         # update the table proxy, via the buffer, to ensure continued proper display in UI

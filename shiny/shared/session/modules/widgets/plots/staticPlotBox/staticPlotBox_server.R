@@ -50,7 +50,7 @@ if(!title) template$Plot_Frame$Title <- NULL
 settings <- settingsServer( # display settings not stored in the UI, exposed by gear icon click
     id = 'settings',
     parentId = id,
-    template = template,
+    templates = list(template),
     fade = FALSE,
     title = "Plot Parameters",
     immediate = immediate

@@ -14,7 +14,7 @@
 settingsServer <- function(
     id, 
     parentId, 
-    template = parentId, # for component settings, supply path(s) to settings.yml or a matching list
+    templates = list(parentId), # list of one or more of: parentId, a path to settings.yml, or a matching list
     size = NULL,
     cacheKey = NULL, # a reactive/reactiveVal that returns an id for the current settings state
     fade = FALSE,
@@ -51,22 +51,19 @@ setCachedValues <- function(d){
 } 
 
 # settings template
-if(is.character(template)){ # one ore more template sources to concatenate
-    keys <- template
-    template <- list()
-    for(key in keys){
-        if(!is.null(app$config$appSteps[[key]])){ # appStep settings
-            template <- c(template, stepModuleInfo[[ app$config$appSteps[[key]]$module ]]$settings)
-        } else if(file.exists(key)){ # component module settings
-            template <- c(template, read_yaml(key))
+template <- list() # one or more template sources to concatenate in order
+if(!is.null(template)) for(t in templates){
+    template <- c(template, if(is.character(t)){
+        if(!is.null(app$config$appSteps[[t]])){ # appStep settings
+            stepModuleInfo[[ app$config$appSteps[[t]]$module ]]$settings
+        } else if(file.exists(t)){ # component module settings
+            read_yaml(t)
         } else { # bad call, proceed with no template
-            reportProgress(paste("failed to load settings template:", key))
-            template <- list()
-        }        
-    }
-} else if(is.null(template)) {
-    template <- list()
-} # otherwise, caller can supply a template as a pre-assembled list
+            reportProgress(paste("failed to load settings template:", t))
+            NULL
+        }
+    } else t) # caller-provided pre-assembled options list
+}
 nTabs <- 1
 isTabbed <- FALSE
 workingSize <- size
@@ -91,7 +88,7 @@ initializeTemplate(template)
 # settings values
 settings <- reactiveValues()
 allSettings <- reactiveVal()
-initializeSettings <- function(init=NULL, newTemplate=NULL){ # executed as function to allow bookmark recovery
+initializeSettings <- function(init = NULL, newTemplate = NULL){ # executed as function to allow bookmark recovery
     if(is.null(init)) init <- getCachedValues()
     if(!is.null(newTemplate)) initializeTemplate(newTemplate)
     x <- lapply(names(template), function(tab) { # process coerces incoming bookmark to match the current template
@@ -174,20 +171,16 @@ getTabInputs <- function(id, tab){
 toInputs <- function(){
     if(isTabbed){
         fluidRow(do.call(tabBox, c(
-            lapply(names(settings), function(tab){
+            lapply(names(template), function(tab){
                 tabPanel(
                     fluidRow(lapply(names(settings[[tab]]), getTabInputs, tab)),
                     title = gsub('_', ' ', tab)
                 )
-                # do.call(tabPanel, c(
-                #     fluidRow(tagList(lapply(names(settings[[tab]]), getTabInputs, tab))),
-                #     title = gsub('_', ' ', tab)
-                # ))
             }),
             width = 12               
         )))        
     } else {
-        tab1 <- names(settings)[1]
+        tab1 <- names(template)[1]
         fluidRow(do.call(column, c(
             lapply(names(settings[[tab1]]), getTabInputs, tab1),
             width = 12
@@ -206,7 +199,7 @@ setValues <- function(id, tab, input){ # in delayed mode
     settings[[tab]][[id]]$value <- input[[parentNs(id)]] 
 }
 fromInputs <- function(input){ # same as from bookmark
-    lapply(names(settings), function(tab){
+    lapply(names(template), function(tab){
         lapply(names(settings[[tab]]), setValues, tab, input)
     })
     x <- reactiveValuesToList(settings)
