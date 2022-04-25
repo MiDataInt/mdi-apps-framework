@@ -95,5 +95,4 @@ CONSTANTS <- list(
         yellow  = '#bcbd22',  # curry yellow-green
         teal    = '#17becf'   # blue-teal
     )
-    
 )

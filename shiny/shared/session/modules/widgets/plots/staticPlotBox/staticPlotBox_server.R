@@ -78,7 +78,7 @@ output$plot <- renderImage({
     create()
 
     # finish plot and return as image
-    dev.off()
+    graphics.off()
     list(
         src = pngFile,
         width = "100%",
@@ -123,10 +123,10 @@ addLegend <- function(...){
     placement <- if(legend) settings$get('Plot_Frame', 'Legend_Placement') else "topleft"
     if(placement != "none") legend(
         placement,
-        lty    = if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NULL,        
-        lwd    = if(lines)  settings$get("Points_and_Lines", "Line_Width") else NULL,
-        pch    = if(points) settings$get("Points_and_Lines", "Point_Type") else NULL,
-        pt.cex = if(points) settings$get("Points_and_Lines", "Point_Size") else NULL,
+        lty    = if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NA,        
+        lwd    = if(lines)  settings$get("Points_and_Lines", "Line_Width") else NA,
+        pch    = if(points) settings$get("Points_and_Lines", "Point_Type") else NA,
+        pt.cex = if(points) settings$get("Points_and_Lines", "Point_Size") else NA,
         ...
     )
 }
