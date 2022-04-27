@@ -52,7 +52,7 @@ setCachedValues <- function(d){
 
 # settings template
 template <- list() # one or more template sources to concatenate in order
-if(!is.null(template)) for(t in templates){
+if(!is.null(templates)) for(t in templates){
     template <- c(template, if(is.character(t)){
         if(!is.null(app$config$appSteps[[t]])){ # appStep settings
             stepModuleInfo[[ app$config$appSteps[[t]]$module ]]$settings

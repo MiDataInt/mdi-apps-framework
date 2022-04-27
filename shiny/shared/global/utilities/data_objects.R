@@ -30,6 +30,19 @@ fixColumnDataTypes <- function(x, template){ # template is an (empty) data frame
 # reduce a data frame to unique rows based on queried columns
 uniqueRows <- function(df, cols) df[!duplicated(df[cols]), ] 
 
+#----------------------------------------------------------------------
+# vector functions
+#----------------------------------------------------------------------
+collapseVector <- function(v, n) { # sum every n adjacent elements of a vector
+    cv <- unname(tapply(v, (seq_along(v) - 1) %/% n, sum))
+    tailLength <- length(v) %% n # number of input elements summed into incomplete last output element    
+    if(tailLength != 0){
+        cvLength <- length(cv) # expand incomplete last element to same scale as all others
+        cv[cvLength] <- cv[cvLength] * n / tailLength          
+    }
+    cv
+}
+
 #----------------------------------------------------------------
 # miscellaneous functions
 #----------------------------------------------------------------
