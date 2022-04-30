@@ -93,6 +93,8 @@ CONSTANTS <- list(
         pink    = '#e377c2',  # raspberry yogurt pink
         gray    = '#7f7f7f',  # middle gray
         yellow  = '#bcbd22',  # curry yellow-green
-        teal    = '#17becf'   # blue-teal
+        teal    = '#17becf',  # blue-teal
+        black   = 'black',
+        grey    = '#7f7f7f'
     )
 )

@@ -74,8 +74,8 @@ initializeTemplate <- function(t){
     isTabbed <<- nTabs > 1
     maxTabSize <- max(sapply(template, length))
     workingSize <<- if(!is.null(size)) size 
-               else if(nTabs > 6 || maxTabSize > 16) 'l' 
-               else if(nTabs > 3 || maxTabSize > 8) 'm' else 's'
+               else if(nTabs >= 6 || maxTabSize > 16) 'l' 
+               else if(nTabs >= 3 || maxTabSize > 8) 'm' else 's'
     inputWidth <<- if(workingSize == "l") 4 else if(workingSize == "m") 6 else 12
     toggle(
         id = fullGearId, 

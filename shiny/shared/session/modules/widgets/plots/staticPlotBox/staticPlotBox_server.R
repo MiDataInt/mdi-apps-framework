@@ -14,7 +14,9 @@ staticPlotBoxServer <- function(
     legend  = FALSE,
     margins = FALSE,
     title   = FALSE,
-    immediate = FALSE # if set to TRUE the plot updates as options are changed
+    immediate = FALSE, # if set to TRUE the plot updates as options are changed
+    template = NULL,   # an additional settings template as a list()
+    size = NULL        # popop menu size, passed to settingsServer
 ){ moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'staticPlotBox' # for reportProgress tracing
@@ -27,6 +29,7 @@ plotId <- ns('plot')
 pngFileName <- paste(plotId, "png", sep = ".")
 pngFile <- file.path(sessionDirectory, pngFileName)
 settingsFile <- file.path(serverEnv$SHARED_DIR, 'session', 'modules', 'widgets', 'plots', 'staticPlotBox', 'settings.yml') # nolint
+callerTemplate <- template
 template <- read_yaml(settingsFile)
 if(points || lines){
     if(!points) {
@@ -48,13 +51,15 @@ if(!margins){
 }
 if(!legend) template$Plot_Frame$Legend_Placement <- NULL
 if(!title) template$Plot_Frame$Title <- NULL
+if(!is.null(callerTemplate)) template <- c(template, callerTemplate)
 settings <- settingsServer( # display settings not stored in the UI, exposed by gear icon click
     id = 'settings',
     parentId = id,
     templates = list(template),
     fade = FALSE,
     title = "Plot Parameters",
-    immediate = immediate
+    immediate = immediate,
+    size = size
 )
 
 #----------------------------------------------------------------------
