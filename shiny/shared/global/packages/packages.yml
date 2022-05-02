@@ -19,7 +19,7 @@ R:
         - jsonlite
         - yaml
         - storr # key-value storage on disk or via Redis
-        # - zoo   # useful rolling value functions
+        - zoo   # useful rolling value functions
         #- RSQLite
         #- DBI
     graphics:

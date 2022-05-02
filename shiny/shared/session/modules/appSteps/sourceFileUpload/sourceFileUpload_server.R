@@ -179,7 +179,8 @@ loadPackageFile <- function(packagePath, packageId, packageFileName){ # packageP
 # load an incoming sample manifest
 #----------------------------------------------------------------------
 loadManifestFile <- function(manifestPath, manifestId){
-    manifestType <- 'IlluminaDefault' # TODO: smarter manifest type declaration, guessing, user input?
+    # manifestType <- 'IlluminaDefault' # TODO: smarter manifest type declaration, guessing, user input?
+    manifestType <- 'simple'
     manifest <- parseManifestFile(manifestPath, manifestType)
     c(
         manifest,
