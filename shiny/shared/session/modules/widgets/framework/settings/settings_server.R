@@ -164,6 +164,7 @@ getTabInputs <- function(id, tab){
             selected = x$value,
             inline = getInline()
         ),
+        fileInput = fileInputPanel(fullId, t, x),
         spacer = span(style = "visibility: hidden;", textInput(fullId, fullId, "")),
         get(x$type)(fullId, t$label, x$value)
     ), style = "margin-bottom: 5px;")    
@@ -186,6 +187,27 @@ toInputs <- function(){
             width = 12
         )))
     }
+}
+
+# composite inputs for complex actions like file uploads
+fileInputPanel <- function(fullId, t, x){
+    buttonId <- paste(fullId, "button", sep = "-")
+    clearId  <- paste(fullId, "clear",  sep = "-")
+    filePath <- function(fileName) file.path(serverEnv$UPLOADS_DIR, fileName)
+    observeEvent(sessionInput[[buttonId]], {
+        file <- sessionInput[[buttonId]]
+        file.copy(file$datapath, filePath(file$name))
+        updateTextInput(sessionSession, fullId, value = file$name)
+    })
+    observeEvent(sessionInput[[clearId]], {
+        unlink(filePath(sessionInput[[fullId]]))        
+        updateTextInput(sessionSession, fullId, value = "")
+    })
+    tagList(
+        fileInput(buttonId, t$label, accept = t$accept),
+        disabled(textInput(fullId, NULL, x$value)),
+        actionLink(clearId, "Remove File")
+    )
 }
 
 # update our cached setting values when user commits changes from the modal

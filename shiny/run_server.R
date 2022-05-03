@@ -75,8 +75,9 @@ setServerDir <- function(name, parentDir, ..., check = TRUE, create = FALSE){
 }
 setServerDir('SHINY_DIR',  serverEnv$APPS_FRAMEWORK_DIR, 'shiny')
 setServerDir('SHARED_DIR', serverEnv$SHINY_DIR, 'shared')
-setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr', check = FALSE, create = TRUE)
-setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache', check = FALSE, create = TRUE)
+setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr',   check = FALSE, create = TRUE)
+setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache',   check = FALSE, create = TRUE)
+setServerDir('UPLOADS_DIR',serverEnv$DATA_DIR, 'uploads', check = FALSE, create = TRUE)
 setwd(serverEnv$SHARED_DIR)
 
 # declare version-specific R library(s) from which all packages are loaded
