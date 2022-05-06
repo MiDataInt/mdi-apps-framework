@@ -19,7 +19,8 @@ settingsServer <- function(
     cacheKey = NULL, # a reactive/reactiveVal that returns an id for the current settings state
     fade = FALSE,
     title = "Set Parameters",
-    immediate = FALSE # if TRUE, setting changes are transmitted in real time
+    immediate = FALSE, # if TRUE, setting changes are transmitted in real time
+    resettable = TRUE  # if TRUE, a Reset All Setting link will be provided
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -109,16 +110,36 @@ initializeSettings(template)
 #----------------------------------------------------------------------
 # react to user click of gear icon by opening a modal popup
 #----------------------------------------------------------------------
+resetAllSettingsId <- paste(parentId, id, "resetAllSettings", sep = "-")
 observeEvent(input[[gearId]], {
     req(nTabs > 0)
     showUserDialog(
         title,
         toInputs(),
+        if(resettable) actionLink(resetAllSettingsId, "Reset All Settings") else "",
         size = workingSize,        
         callback = fromInputs,
         fade = fade,
         type = if(immediate) "okOnly" else "okCancel"
     )
+})
+if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], {
+    dmsg("sessionInput$resetAllSettingsId")
+    lapply(names(template), function(tab){
+        lapply(names(settings[[tab]]), function(id){
+            t <- template[[tab]][[id]]
+            fullId <- parentNs(id)
+            switch(
+                t$type,
+                textInput = updateTextInput(sessionSession, fullId, value = t$value),
+                numericInput = updateNumericInput(sessionSession, fullId, value = t$value),        
+                selectInput = updateSelectInput(sessionSession, fullId, selected = t$value),
+                radioButtons = updateRadioButtons(sessionSession, fullId, selected = t$value),
+                checkboxGroupInput = updateCheckboxGroupInput(sessionSession, fullId, selected = t$value),
+                checkboxInput = updateCheckboxInput(sessionSession, fullId, value = t$value)
+            )
+        })
+    })
 })
 
 #----------------------------------------------------------------------
