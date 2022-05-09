@@ -101,37 +101,39 @@ setMargins <- function() par(mar = c(
     settings$get("Plot_Frame", "Right_Margin")
 ))
 initializeFrame <- function(...){
+    ps <- settings$Plot_Frame()
     if(margins) setMargins()
     plot(
         NA, 
         NA, 
         typ = "n",
         main = settings$get("Plot_Frame", "Title"),
+        cex.main = (ps$Font_Size$value + 0.5) / ps$Font_Size$value,
         ...
     )
 }
-addPoints <- function(...){
+addPoints <- function(pch = NULL, cex = NULL, ...){
     points(
-        pch = if(points) settings$get("Points_and_Lines", "Point_Type") else 19,
-        cex = if(points) settings$get("Points_and_Lines", "Point_Size") else 1,
+        pch = if(!is.null(pch)) pch else if(points) settings$get("Points_and_Lines", "Point_Type") else 19,
+        cex = if(!is.null(cex)) cex else if(points) settings$get("Points_and_Lines", "Point_Size") else 1,
         ...
     )
 }
-addLines <- function(...){
+addLines <- function(lty = NULL, lwd = NULL, ...){
     lines(
-        lty = if(lines) settings$get("Points_and_Lines", "Line_Type")  else 1,        
-        lwd = if(lines) settings$get("Points_and_Lines", "Line_Width") else 1,
+        lty = if(!is.null(lty)) lty else if(lines) settings$get("Points_and_Lines", "Line_Type")  else 1,        
+        lwd = if(!is.null(lwd)) lwd else if(lines) settings$get("Points_and_Lines", "Line_Width") else 1,
         ...
     )
 }
-addLegend <- function(...){
+addLegend <- function(pch = NULL, pt.cex = NULL, lty = NULL, lwd = NULL, ...){
     placement <- if(legend) settings$get('Plot_Frame', 'Legend_Placement') else "topleft"
     if(placement != "none") legend(
         placement,
-        lty    = if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NA,        
-        lwd    = if(lines)  settings$get("Points_and_Lines", "Line_Width") else NA,
-        pch    = if(points) settings$get("Points_and_Lines", "Point_Type") else NA,
-        pt.cex = if(points) settings$get("Points_and_Lines", "Point_Size") else NA,
+        pch    = if(!is.null(pch))    pch    else if(points) settings$get("Points_and_Lines", "Point_Type") else NA,
+        pt.cex = if(!is.null(pt.cex)) pt.cex else if(points) settings$get("Points_and_Lines", "Point_Size") else NA,
+        lty    = if(!is.null(lty))    lty    else if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NA,
+        lwd    = if(!is.null(lwd))    lwd    else if(lines)  settings$get("Points_and_Lines", "Line_Width") else NA,
         ...
     )
 }
