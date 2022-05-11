@@ -80,6 +80,21 @@ CONSTANTS <- list(
         scriptLoading    = 'during script loading in the child process, prior to call to executeJob',
         jobConfiguration = 'during job configuration by executeJob, after script loading in the child process',
         jobExecution     = 'during execution of the job by tryCatchJob in the child process'
-    )    
-    
+    ), 
+
+    # plotly default point colors, for use outside of plotly
+    plotlyColors = list(
+        blue    = '#1f77b4',  # muted blue
+        orange  = '#ff7f0e',  # safety orange
+        green   = '#2ca02c',  # cooked asparagus green
+        red     = '#d62728',  # brick red
+        purple  = '#9467bd',  # muted purple
+        brown   = '#8c564b',  # chestnut brown
+        pink    = '#e377c2',  # raspberry yogurt pink
+        gray    = '#7f7f7f',  # middle gray
+        yellow  = '#bcbd22',  # curry yellow-green
+        teal    = '#17becf',  # blue-teal
+        black   = 'black',
+        grey    = '#7f7f7f'
+    )
 )

@@ -113,8 +113,7 @@ getAppUploadTypes <- function(appDirs){
 
 # convert an app directory into various useful bits and paths
 parseAppDirectory <- function(appDir){
-    appDir <- strsplit(appDir, '/')[[1]]
-    dirApp <- rev(appDir)
+    dirApp <- rev( strsplit(appDir, '/')[[1]] )
     suiteDir <- paste(rev(dirApp[4:length(dirApp)]), collapse = '/')
     suiteSharedDir  <- file.path(suiteDir, 'shiny', 'shared')
     suiteGlobalDir  <- file.path(suiteSharedDir, 'global')
@@ -123,6 +122,8 @@ parseAppDirectory <- function(appDir){
         name  = dirApp[1],
         suite = dirApp[4],
         fork  = dirApp[5],
+        appDir = appDir,
+        appModulesDir = file.path(appDir, 'modules'),
         suiteDir = suiteDir,
         suiteSharedDir = suiteSharedDir,
         suiteGlobalDir = suiteGlobalDir,

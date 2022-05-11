@@ -20,6 +20,8 @@ serverFn <- function(input, output, session,
     ) return()
 
     # source the code that defines a session
+    sessionInput <- input
+    sessionSession <- session
     source("server/initializeSession.R", local = TRUE)
     show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
          CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        

@@ -10,7 +10,18 @@ if(!restricted){
         sourceFileInputUI(id)
     })
 
+
+
     # user status, dataDir and logout in navbar / page header
+    if(serverEnv$IS_DEVELOPER){
+        insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
+            ui = {
+                id <- 'reloadAppScripts'
+                reloadAppScriptsServer(id)
+                reloadAppScriptsUI(id)
+            }
+        )
+    }    
     if(checkConfigEditPermission()){
         insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
             ui = {

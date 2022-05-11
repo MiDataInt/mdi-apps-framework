@@ -19,6 +19,20 @@ dmsg <- debugMsg
 dstr <- debugStr
 dprint <- debugPrint
 
+# code development utility for exploring object sizes and environments
+printObjectSizes_ <- function(envir, name, minSizeMb = 1){
+    message(name)
+    OS <- round(sort( sapply(ls(envir = envir), function(x){
+        object.size(get(x, envir = envir))
+    })) / 1e6, 3)
+    print(OS[OS > minSizeMb])     
+}
+printObjectSizes <- function(sessionEnv, minSizeMb = 1){
+    message('object sizes in MB')
+    printObjectSizes_(.GlobalEnv, '.GlobalEnv', minSizeMb)    
+    printObjectSizes_(sessionEnv, 'sessionEnv', minSizeMb)
+}
+
 # log information about sessions for server management
 logSessionMetadata <- function(sessionData){
 

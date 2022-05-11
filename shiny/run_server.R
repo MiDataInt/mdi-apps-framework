@@ -75,8 +75,9 @@ setServerDir <- function(name, parentDir, ..., check = TRUE, create = FALSE){
 }
 setServerDir('SHINY_DIR',  serverEnv$APPS_FRAMEWORK_DIR, 'shiny')
 setServerDir('SHARED_DIR', serverEnv$SHINY_DIR, 'shared')
-setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr', check = FALSE, create = TRUE)
-setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache', check = FALSE, create = TRUE)
+setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr',   check = FALSE, create = TRUE)
+setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache',   check = FALSE, create = TRUE)
+setServerDir('UPLOADS_DIR',serverEnv$DATA_DIR, 'uploads', check = FALSE, create = TRUE)
 setwd(serverEnv$SHARED_DIR)
 
 # declare version-specific R library(s) from which all packages are loaded
@@ -107,6 +108,12 @@ source(file.path('global', 'packages', 'packages.R'))
 loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
+
+# create the persistent cache object shared across all sessions
+# not for sensitive data in public server modes, etc.
+assign("persistentCache", list(), .GlobalEnv)
+if(is.null(serverConfig$default_ttl)) serverConfig$default_ttl <- 60 * 60 * 24 # i.e., 1 day
+if(is.null(serverConfig$max_ttl))     serverConfig$max_ttl     <- 60 * 60 * 24
 
 # ensure that we have required server-level information for user authentication
 serverEnv$IS_GLOBUS <- FALSE

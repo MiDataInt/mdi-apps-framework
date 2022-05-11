@@ -19,12 +19,13 @@ R:
         - jsonlite
         - yaml
         - storr # key-value storage on disk or via Redis
-        # - zoo   # useful rolling value functions
+        - zoo   # useful rolling value functions
         #- RSQLite
         #- DBI
     graphics:
         - ggplot2
         - plotly # client-side interactive plots 
+        - RColorBrewer
     framework:
         - shiny      # shiny itself (already loaded and attached, of course)
         - shinydashboard # main page layout and boxes

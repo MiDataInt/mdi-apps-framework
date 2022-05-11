@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# utility functions to help apply standard statisical functions
+# utility functions to help apply standard statistical functions
 #----------------------------------------------------------------------
 
 # fit a trendline to a set of input data by one of several methods
@@ -51,4 +51,17 @@ outliers_IQR <- function(x, foldIQR=1.5){ # x is a vector of values
     padding <- foldIQR * IQR(x)
     x < quantile(x, 0.25) - padding | # return boolean where TRUE = outlier
     x > quantile(x, 0.75) + padding
+}
+
+# correlation-based distance of a set of already-centered Z scores
+pearson.dist <- function(m) { # m is a matrix
+  m <- m / sqrt(rowSums(m^2))
+  m <-  tcrossprod(m)
+  m <- as.dist(m)
+  0.5 - m / 2
+}
+pearson.matrix <- function(m) { # m is a matrix
+  m <- m / sqrt(rowSums(m^2))
+  m <-  tcrossprod(m)
+  0.5 - m / 2 # return the full matrix, not a dist formatted object
 }

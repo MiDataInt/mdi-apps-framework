@@ -12,6 +12,9 @@ ucFirst <- function(y) {
     paste(toupper(substring(c, 1, 1)), substring(c, 2), sep = "", collapse = " ")
 }
 
+# convert numbers to character strings with commas
+commify <- function(x) format(x, big.mark = ",", scientific = FALSE)
+
 # find the longest common prefix of a string
 # modified from Bioconductor::Biobase::lcPrefix
 longestCommonPrefix <- function(x, ignore.case = FALSE) {

@@ -8,6 +8,15 @@
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
+# parse assignment grid configuration options
+#----------------------------------------------------------------------
+setAssignmentCategories <- function(options){
+         if(is.null(options$categories)) c(FALSE, FALSE) 
+    else if( length(options$categories) == 1) c(TRUE, FALSE) 
+    else c(TRUE, TRUE) 
+}
+
+#----------------------------------------------------------------------
 # if requested by calling app, validate a sampleSet assignment
 #----------------------------------------------------------------------
 
@@ -109,7 +118,7 @@ getInvertedCategoryNames <- function(plural=FALSE) getCategoryNames(plural = plu
 
 # retrieve the group/type assignment for a specific Sample Set as a data.table
 # optionally, filter for matching categories
-getSampleSetAssignments <- function(id, category1=NULL, category2=NULL, categoryNames=FALSE){
+getSampleSetAssignments <- function(id, category1 = NULL, category2 = NULL, categoryNames = TRUE){
     stepName <- appStepNamesByType$assign
     sampleSet <- app[[stepName]]$outcomes$sampleSets()[[id]]
     req(sampleSet)
