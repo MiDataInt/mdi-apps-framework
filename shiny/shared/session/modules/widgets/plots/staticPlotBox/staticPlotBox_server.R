@@ -100,14 +100,14 @@ setMargins <- function() par(mar = c(
     settings$get("Plot_Frame", "Top_Margin"), 
     settings$get("Plot_Frame", "Right_Margin")
 ))
-initializeFrame <- function(...){
+initializeFrame <- function(title = NULL, ...){
     ps <- settings$Plot_Frame()
     if(margins) setMargins()
     plot(
         NA, 
         NA, 
         typ = "n",
-        main = settings$get("Plot_Frame", "Title"),
+        main = if(!is.null(title)) title else settings$get("Plot_Frame", "Title"),
         cex.main = (ps$Font_Size$value + 0.5) / ps$Font_Size$value,
         ...
     )
