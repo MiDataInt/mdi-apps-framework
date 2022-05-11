@@ -185,6 +185,7 @@ list(
     allSamples          = allSamples,  
     sampleSet           = reactive({ input$sampleSet }),
     selectedSamples = reactive({ # unique IDs (Project:Sample_ID) for the selected samples
+        if(is.na(input$sampleSet) || input$sampleSet == "") return(character())
         x <- selectedSamples[[input$sampleSet]]
         if(is.null(x)) character() else names(x)
     }),
