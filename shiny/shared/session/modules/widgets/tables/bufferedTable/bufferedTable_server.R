@@ -100,6 +100,20 @@ updateCell <- function(row, col, value, rowCol=NULL){
 }
 
 #----------------------------------------------------------------------
+# support icon-based file download
+#----------------------------------------------------------------------
+csvId <- ns('data')
+csvFileName <- paste(csvId, "csv", sep = ".")
+output$download <- downloadHandler(
+    filename = csvFileName,
+    content = function(tmpFile) write.csv(
+        tableData(),
+        tmpFile
+    ),
+    contentType = "text/csv"
+)
+
+#----------------------------------------------------------------------
 # set return values
 #----------------------------------------------------------------------
 list(
