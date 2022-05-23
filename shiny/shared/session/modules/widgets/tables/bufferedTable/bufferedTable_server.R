@@ -106,10 +106,22 @@ csvId <- ns('data')
 csvFileName <- paste(csvId, "csv", sep = ".")
 output$download <- downloadHandler(
     filename = csvFileName,
-    content = function(tmpFile) write.csv(
-        tableData(),
-        tmpFile
-    ),
+    content = function(tmpFile) {
+        x <- tableData()
+        if(nrow(x) > 0){
+            cols <- names(x)
+            inputs <- which(apply(x[1], 1, function(v){
+                v <- as.character(v)
+                grepl("<input", v)
+            }))
+            x <- x[, .SD, .SDcols = cols[-inputs]]
+        }
+        write.csv(
+            x, 
+            tmpFile,
+            row.names = FALSE
+        )
+    },
     contentType = "text/csv"
 )
 
