@@ -114,7 +114,7 @@ output$download <- downloadHandler(
                 v <- as.character(v)
                 grepl("<input", v)
             }))
-            x <- x[, .SD, .SDcols = cols[-inputs]]
+            if(length(inputs) > 0) x <- x[, .SD, .SDcols = cols[-inputs]]
         }
         write.csv(
             x, 
