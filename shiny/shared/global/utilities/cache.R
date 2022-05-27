@@ -29,6 +29,7 @@ loadPersistentFile <- function(
     #-----------------------
     force = FALSE, # force the object to be reloaded anew
     ttl = NULL,    # how long to cache the object after last access, in seconds
+    silent = NULL, # fail silently and return NULL if file not found
     #-----------------------
     sep = "\t", # parameters passed to fread
     header = TRUE,
@@ -41,7 +42,10 @@ loadPersistentFile <- function(
     if(is.null(ttl)) ttl <- serverConfig$default_ttl 
     if(ttl > serverConfig$max_ttl) ttl <- serverConfig$max_ttl 
     if(is.null(file)) file <- getSourceFilePath(sourceId, contentFileType)  
-    if(is.null(file)) stop("load cache error, missing file")      
+    if(is.null(file) || length(file) == 0) {
+        if(!silent) stop("load cache error, missing file")   
+        return(NULL) 
+    }  
 
     # check the cache for the requested file
     cleanPersistentCache(file)    
@@ -62,7 +66,10 @@ loadPersistentFile <- function(
     }
 
     # load a non-RDS file into R
-    if(!file.exists(file)) stop("load cache error, non-existent file")
+    if(!file.exists(file)) {
+        if(!silent) stop("load cache error, non-existent file")   
+        return(NULL) 
+    }
     persistentCache[[file]] <<- list(
         data = if(endsWith(file, ".yml")){
             read_yaml(file)

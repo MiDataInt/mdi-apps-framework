@@ -4,7 +4,19 @@
 #----------------------------------------------------------------------
 
 # module ui function
-bufferedTableUI <- function(id) {
+bufferedTableUI <- function(id, title = NULL, downloadable = FALSE, ...) {
     ns <- NS(id)
-    DTOutput(ns('table'))    
+    if(downloadable && is.null(title)) title <- ""
+    if(!is.null(title)){ # require a title, even an empty one, to use an enhanced box around the table
+        if(downloadable) title <- tagList(
+            title,
+            span(
+                style = "font-size: 0.8em; margin-left: 10px;", 
+                downloadLink(ns("download"), label = icon("download"))
+            ),
+        )
+        box(title = title, ..., DTOutput(ns('table')))
+    } else {
+        DTOutput(ns('table'))
+    }
 }

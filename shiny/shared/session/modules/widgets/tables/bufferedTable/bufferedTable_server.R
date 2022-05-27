@@ -100,6 +100,32 @@ updateCell <- function(row, col, value, rowCol=NULL){
 }
 
 #----------------------------------------------------------------------
+# support icon-based file download
+#----------------------------------------------------------------------
+csvId <- ns('data')
+csvFileName <- paste(csvId, "csv", sep = ".")
+output$download <- downloadHandler(
+    filename = csvFileName,
+    content = function(tmpFile) {
+        x <- tableData()
+        if(nrow(x) > 0){
+            cols <- names(x)
+            inputs <- which(apply(x[1], 1, function(v){
+                v <- as.character(v)
+                grepl("<input", v)
+            }))
+            if(length(inputs) > 0) x <- x[, .SD, .SDcols = cols[-inputs]]
+        }
+        write.csv(
+            x, 
+            tmpFile,
+            row.names = FALSE
+        )
+    },
+    contentType = "text/csv"
+)
+
+#----------------------------------------------------------------------
 # set return values
 #----------------------------------------------------------------------
 list(

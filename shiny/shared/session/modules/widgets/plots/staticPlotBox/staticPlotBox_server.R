@@ -65,7 +65,9 @@ settings <- settingsServer( # display settings not stored in the UI, exposed by 
 #----------------------------------------------------------------------
 # render the plot as a static image filled by caller
 #----------------------------------------------------------------------
+invalidatePlot <- reactiveVal(NULL)
 output$plot <- renderImage({
+    invalidatePlot()
     ps <- settings$Plot_Frame()
     
     # intialize plot
@@ -137,6 +139,11 @@ addLegend <- function(pch = NULL, pt.cex = NULL, lty = NULL, lwd = NULL, ...){
         ...
     )
 }
+
+#----------------------------------------------------------------------
+# support icon-based plot invalidation
+#----------------------------------------------------------------------
+observeEvent(input$reload, { invalidatePlot( sample(1e8, 1) ) })
 
 #----------------------------------------------------------------------
 # support icon-based file download

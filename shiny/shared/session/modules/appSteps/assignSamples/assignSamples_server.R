@@ -99,6 +99,11 @@ sampleRowColName <- function(width, categoryN, index, value){
         ))
     ) 
 }
+setColumnWidth <- function(ep){
+    category2NameCount <- if(ep$nLevels[2] > 1) 1 else 0
+    ep$columnWidth <- floor(12 / (ep$nLevels[1] + category2NameCount))
+    ep
+}
 
 #----------------------------------------------------------------------
 # construct a drag-and-drop UI grid of category1 (columns) by category2 (rows)
@@ -154,9 +159,8 @@ observeEvent({
     }
     ep$initValsSource <- spans[spans %notin% unlist(unlist(ep$initVals, recursive = FALSE), recursive = FALSE)]
     
-    # size out the grid, i.e. contingency table
-    category2NameCount <- if(ep$nLevels[2] > 1) 1 else 0
-    ep$columnWidth <- floor(12 / (ep$nLevels[1] + category2NameCount))
+    # size out the grid, i.e., contingency table
+    ep <- setColumnWidth(ep)
     
     # send results to our dependents
     ep$force <- sample(1e8, 1)
@@ -176,6 +180,7 @@ output$sampleGrid <- renderUI({
     reportProgress('output$sampleGrid', module)
     ep <- editPanelData()
     req(ep)
+    selected <- isolate({ data$selected() })
     fluidRow(box(
         width = 12,
         title = ep$boxTitle,
@@ -205,8 +210,30 @@ output$sampleGrid <- renderUI({
                     sampleRowColName(ep$columnWidth, 2, j, ep$categoryNames[[2]][j])
                 } else ""
             )
-        })
+        }),
+        if(!is.na(selected)) tagList(
+            span(style = "margin-left: 10px;", actionLink(ns('addGridColumn'), 'Add Column')),            
+            span(style = "margin-left: 10px;", actionLink(ns('addGridRow'), 'Add Row'))
+         ) else ""
     ))
+})
+
+# allow for expansion of previously saved sample sets without starting over
+expandSampleSet <- function(categoryI){
+    ep <- editPanelData()
+    ep$nLevels[categoryI] <- ep$nLevels[categoryI] + 1
+    ep$categoryNames[[categoryI]] <- append(ep$categoryNames[[categoryI]], "")
+    setColumnWidth(ep)
+}
+observeEvent(input$addGridColumn, {
+    ep <- expandSampleSet(1)
+    ep$initVals[[ep$nLevels[1]]] <- sapply(seq_len(ep$nLevels[2]), function(i) list())
+    editPanelData(ep)
+})
+observeEvent(input$addGridRow, {
+    ep <- expandSampleSet(2)
+    for(colI in seq_len(ep$nLevels[1])) ep$initVals[[colI]][[ep$nLevels[2]]] <- list()
+    editPanelData(ep)
 })
 
 #----------------------------------------------------------------------

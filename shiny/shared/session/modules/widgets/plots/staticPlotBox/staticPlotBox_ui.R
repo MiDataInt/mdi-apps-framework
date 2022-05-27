@@ -23,6 +23,10 @@ staticPlotBoxUI <- function(
             title,
             span(
                 style = "font-size: 0.8em; margin-left: 10px;", 
+                actionLink(ns("reload"), label = icon("sync"))
+            ),
+            span(
+                style = "font-size: 0.8em; margin-left: 10px;", 
                 downloadLink(ns("download"), label = icon("download"))
             ),
             settingsUI(ns('settings'))
