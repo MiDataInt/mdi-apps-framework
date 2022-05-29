@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 ## Analysis Types
 
 Analysis types define a way of analyzing data that can be:

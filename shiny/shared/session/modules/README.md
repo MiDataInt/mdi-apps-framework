@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 ## Shiny Modules
 
 **modules** are R Shiny modules that define reusable UI components

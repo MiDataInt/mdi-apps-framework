@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 ## Shiny apps framework folder organization
 
 This **shiny/shared** folder has the code that creates the app

@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 ## S3 classes
 
 MDI **classes** defines the object oriented programming (OOP)
