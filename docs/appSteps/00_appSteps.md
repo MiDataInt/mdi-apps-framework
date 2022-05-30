@@ -4,6 +4,8 @@ has_children: true
 nav_order: 10
 ---
 
+## {{page.title}}
+
 The MDI Stage 2 Apps framework is intended to support
 apps written in a stepwise structure corresponding to tabs
 on the leftmost sidebar. This reproducible organization 
