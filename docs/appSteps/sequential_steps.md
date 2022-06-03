@@ -7,8 +7,8 @@ nav_order: 30
 
 ## {{page.title}}
 
-While it is not required, in many cases it won't makes sense for
+In many cases it won't makes sense for
 an app step to be active until a previous step as been completed.
-A specific portion of an appSteps configuration and module return
+A specific portion of an appStep's configuration and module return
 values enforce this sequential dependency. 
 

@@ -7,9 +7,9 @@ nav_order: 20
 
 ## {{page.title}}
 
-It will quickly become important to access the
+It is often important to access the
 data and outputs from one app step in a subsequent step.
-This is achieved in typical R Shiny fashion by using 
-the return values of a Shiny module, but with a few 
-specific requirement of those return values.
+This is achieved in typical fashion by using 
+the return values of a Shiny module, with a few 
+specific requirements of those return values.
 
