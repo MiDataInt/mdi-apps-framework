@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 ## Launching the MDI web server
 
 Script <code>run_server.R</code> is the top-level script that launches

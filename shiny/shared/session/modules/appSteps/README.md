@@ -1,3 +1,7 @@
+---
+published: false
+---
+
 ## Shiny Modules
 
 **appSteps** modules share the properties of all MDI/Shiny modules
