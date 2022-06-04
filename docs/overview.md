@@ -30,7 +30,7 @@ at the source code for a widget, etc.
 
 If you are experienced at something not yet represented in the 
 framework - e.g., a general purpose widget library or an optimized approach 
-to data handling - please consider adding standardized code for others to use as follows:
+to data handling - please consider adding standardized code for others to use:
 
 - fork the 
 [mdi-apps-framework repository](https://github.com/MiDataInt/mdi-apps-framework)

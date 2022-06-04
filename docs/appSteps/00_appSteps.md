@@ -1,7 +1,7 @@
 ---
 title: App Steps
 has_children: true
-nav_order: 10
+nav_order: 30
 ---
 
 ## {{page.title}}
@@ -20,4 +20,4 @@ Many apps will use the same appStep module(s) for the first tab(s),
 as these are designed for loading and structuring
 data analyses without respect to the work being done. Later tabs
 are typically specific to your app - much of your work
-can focus on writing those modules.
+can focus on writing those modules, drawing on inputs from the earlier steps.
