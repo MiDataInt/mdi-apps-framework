@@ -33,7 +33,7 @@ framework - e.g., a general purpose widget library or an optimized approach
 to data handling - please consider adding standardized code for others to use:
 
 - fork the 
-[mdi-apps-framework repository](https://github.com/MiDataInt/mdi-apps-framework)
+[mdi-apps-framework repository](https://github.com/MiDataInt/mdi-apps-framework/fork)
 - add/edit appropriate files
 - make a pull request with a description of your additions
 
