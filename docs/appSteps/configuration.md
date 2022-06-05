@@ -20,17 +20,17 @@ this example:
 # <app>/config.yml
 appSteps:
     <stepName>: # your name for the appStep
-        module: <moduleName>    # expect moduleNameUI and moduleNameServer
-        shortLabel: ...         # shown on dashboard menu
-        shortDescription: ...   # shown on the Overview page
+        module: <moduleName>     # expect moduleNameUI and moduleNameServer
+        shortLabel: ...          # shown on dashboard menu
+        shortDescription: ...    # shown on the Overview page
         options:
-            longLabel: ...      # title for the appStep tabbed page
-            alwaysVisible: false
+            longLabel: ...       # title for the appStep tabbed page
+            alwaysVisible: false # override step dependency chains
             # module-specific options go here
     <stepName>:  # etc.
 ```
 
-The config.yml template file has declarations for 
+The _template app's config.yml file has declarations for 
 an initial app step sequence based on standardized modules
 that is common to many apps, with support for
 additional source file upload, sample assignments into groups, and
@@ -63,12 +63,14 @@ appSteps:
 ### Other declarations in \<appStep\>/module.yml
 
 The other appStep-specific declarations in module.yml are
-**types** and **sourceTypes** that establish step sequence,
-as discussed in detail on a later page.
+**types** and **sourceTypes**, which establish step dependency chains
+as discussed in detail later.
 
-Other declarations permitted in an appStep module.yml are the same
-as many component configuration files, including **packages**
-and **settings**, discussed in detail on a later pages.
+Other declarations permitted in an appStep module.yml file are the same
+as other component configuration files, including **packages**
+and **settings**, discussed in detail later. Step-level settings
+should be activated in the UI and server functions below to be shown
+at the top on an appStep page.
 
 ### appStep-specific structure of a module UI function
 
@@ -76,23 +78,25 @@ The following template shows how to declare an appStep UI function
 by:
 - extending the Shiny module function declaration with additional 
 arguments
-- wrapping the appStep UI contents with the required `standardSequentialTabItem` function
+- wrapping the appStep UI contents with the required `standardSequentialTabItem` function,
+which constructs the appStep page structure
 
 ```r
 # <appStep>/<appStep>_ui.R
 appStepUI <- function(id, options) {
-    ns <- NS(id) 
+    ns <- NS(id) # the module's namespace
     standardSequentialTabItem(
         title,       # title for the appStep page
         leaderText,  # regular text below the title, above the UI elements
-        ...          # UI elements for the appStep's tabbed page
+        xxInput(ns('id'))  # UI elements for the appStep's tabbed page
+        # etc.
     )
 }
 ```
 
-where the arguments in addition to the standard module instance id are:
+where the required arguments in addition to the standard module instance id are:
 
-- **options** = the assembled options defined in config.yml and module.yml
+- **options** = the assembled step options as defined in module.yml and config.yml
 
 A common value for `title` exploits a combination of `longLabel`
 and `settingsUI` to expose step-level settings with a gear icon:
@@ -115,15 +119,16 @@ arguments.
 appStepServer <- function(id, options, bookmark, locks) {
     moduleServer(id, function(input, output, session) {
     # ...
+    # bookmark handling
+    # module return value as a list
 })}
 ```
 
-where the arguments in addition to the standard instance id are:
+where the required arguments in addition to the standard instance id are:
 
-- **options** = the assembled options defined in config.yml and module.yml
+- **options** = the assembled step options as defined in module.yml and config.yml
 - **bookmark** = a reactive carrying the contents of an incoming bookmark file
-- **locks** = XXX
+- **locks** = documentation pending (mainly used by MDI standardized app steps)
 
 Additional important contents of the appStep module server 
-are discussed on the next pages.
-
+are discussed next.

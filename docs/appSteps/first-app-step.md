@@ -19,11 +19,11 @@ However, some apps may wish to enforce the analysis of only
 a single data package per encounter. Such apps should instead
 write their own custom appStep module to be used as the first app step.
 
-# Specific requirements of first appStep modules
+### Specific requirements of first appStep modules
 
 A first appStep module follows the same structure
 as any appStep module, but with the following important _additional_
-members of its returned value list:
+members of its return value list:
 
 ```r
 # <appStep>/<appStep>_server.R
@@ -41,6 +41,6 @@ appStepServer <- function(id, options, bookmark, locks) {
 The **analysisSetName** outcome must be provided, typically from 
 a user input, as it is used to construct standardized bookmark names.
 
-The **loadSourceFile** function is required to load an incoming 
+The **loadSourceFile** function is required to load the incoming 
 data package file.  Please use `str(incomingFile)` when writing
-your appStep module to understand how the file data are communicated.
+your appStep module to understand how the file metadata are communicated.

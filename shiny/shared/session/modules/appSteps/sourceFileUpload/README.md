@@ -8,7 +8,7 @@ nav_order: 10
 
 ## {{page.title}} appStep module
 
-The **sourceFileUpload** appStep is the first module of most apps.
+The **sourceFileUpload** appStep is the first step module of most apps.
 It allows users to:
 
 - add additional data packages to create an extended analysis set
@@ -20,7 +20,20 @@ For more detailed information, see:
 
 - [mdi-apps-framework : sourceFileUpload](https://github.com/MiDataInt/mdi-apps-framework/tree/main/shiny/shared/session/modules/appSteps/sourceFileUpload)
 
-## Definition and structure of data sources
+### Naming sourceFileUpload steps
+
+The canonical name given to sourceFileUpload app steps is 'upload',
+which matches the step type declared in sourceFileUpload/module.yml.
+We recommend you follow this convention as it promotes consistency and readability.
+
+```yml
+# <app>/config.yml
+appSteps:
+    upload:
+        module: sourceFileUpload
+```
+
+### Definition and structure of data sources
 
 Each data package loaded by a user is known as a 
 **data source**, identified by a unique string identifier derived from 
@@ -30,12 +43,16 @@ for purposes of unambiguous sample identification.
 For many apps built on data packages with manifestFile declarations,
 each data source will carry multiple **samples**, each identified 
 by its own unique string identifier. Your app must know how to deal
-with the incoming manifestFile by properly handling the declared manifestType,
+with an incoming manifestFile by properly handling its declared manifestType,
 as described in detail here:
 
 - [mdi-suite-template : manifestTypes](https://wilsonte-umich.github.io/mdi-suite-template/shiny/shared/session/types/manifestTypes/README.html)
 
-## Returned outcomes
+### Module options
+
+The sourceFileUpload appStep does not take any non-standard module options.
+
+### Returned outcomes
 
 These are the outcomes returned by the sourceFileUpload module that you may access
 in downstream appStep modules.
@@ -54,37 +71,44 @@ list(
 
 where:
 
-- **analysisSetName** = the name the user typed in for their analysis set
+- **analysisSetName** = the name the user gave to their analysis set
 - **sources** = metadata on the data packages
 - **samples** = metadata on the aggregated samples from all packages
 - **sampleNames** = any human-readable sample name overrides entered by the user
 
-## Support utilities
+Typically, apps do not access those outcomes directly, favoring
+instead to use the following support utilities.
 
-These are the utility functions provided by the module to make it
-easier to get information about a specific data source or sample,
-in addition to examining the module outcomes directly.
+### Support utilities
+
+These are the utility functions provided by the sourceFileUpload module 
+to make it easier to get information about a specific data source or sample.
 
 ```r
-# get one or multiple same names, with user overrides
-getSampleNames <- function(rows = TRUE, sampleIds = NULL, sampleUniqueIds = NULL, makeUnique = FALSE)
-getSampleName <- function(sample){ # sample is a one row of the samples() table
+# <scriptName>.R
+
+# get one or multiple sample names, with user overrides
+# arguments allow different means of filtering and sample matching
+names <- getSampleNames(rows = TRUE, sampleIds = NULL, sampleUniqueIds = NULL, makeUnique = FALSE)
+name <- getSampleName(sample) # sample is a one row of the samples() table
 
 # get the unique identifiers of samples
-getSampleUniqueIds <- function(samples=NULL, rows=TRUE, sourceId=NULL)
+uids <- getSampleUniqueIds(samples=NULL, rows=TRUE, sourceId=NULL)
 
-# get the full source entry from its ID
-getSourceFromId <- function(sourceId)
+# get a full source, i.e., data package, entry from its ID
+source <- getSourceFromId(sourceId)
 
-# get a file from a source, i.e. data package, by type or name
-getSourceFile <- function(source, fileType) # just the file name
-getSourceFilePath <- function(sourceId, fileType, parentDir=NULL) # when we know a file by type
-expandSourceFilePath <- function(sourceId, fileName, parentDir=NULL) # when we know a file by name
-getSourceFilePackageName <- function(sourceId)
+# get a packaged file from a data source by the file's type or name
+dataFileName <- getSourceFile(source, fileType)
+dataFilePath <- getSourceFilePath(sourceId, fileType, parentDir=NULL) # when we know a file by type
+dataFilePath <- expandSourceFilePath(sourceId, fileName, parentDir=NULL) # when we know a file by name
 
-# get information about a data package from its source ID
-# optionFamily and option names are the values in force during pipeline execution
-getSourcePackageOption <- function(sourceId, optionFamily, option)
+# get the project name of a data source by ID
+projectName <- getSourceFilePackageName(sourceId)
+
+# get option values that were in force during pipeline execution by source ID
+# optionFamily and option names are as defined in pipeline.yml
+optionValue <- getSourcePackageOption(sourceId, optionFamily, option)
 ```
 
 For more detailed information, see:

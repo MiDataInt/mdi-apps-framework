@@ -10,20 +10,21 @@ nav_order: 30
 In many cases it won't make sense for
 an app step to be active until a previous step has been completed, e.g.,
 if it depends on user inputs from the previous step.
-A specific portion of an appStep's configuration and module return
+A structured portion of an appStep's configuration and module return
 values enforce this sequential dependency. 
 
 ### App step dependency chains
 
 MDI apps use appStep type declarations to create a dependency 
-of one or more modules on one or more previous modules, as follows:
+of one or more child modules on one or more ancestor modules, as follows:
 
 ```yml
 # <appStep>/module.yml
 types: # the type(s) assigned to this appStep
     - myType
 sourceTypes: # the module type(s) on which it depends (is a child of)
-    - parentType
+    - parentType # as declared in <parentStep>/module.yml
+    - ancestorType
 ```
 
 Note that these are arrays of types and can be multiple,
@@ -46,13 +47,17 @@ appStepServer <- function(id, options, bookmark, locks) {
 })}
 ```
 
+Only when `isReady() == TRUE` for all ancestors declared in 
+\<appStep\>/module.yml `sourceTypes` will that appStep be made available
+for user interaction.
+
 Arguments for the **getStepReadiness** function are:
 
 - **source** = the parent appStep, communicated as `options$source`
 - **list** = a list that must have length > 0 to be considered ready
-- **fn** = a function that returns a logical ready state
+- **fn** = a function that returns a logical ready state, i.e., TRUE or FALSE
 - **...** = additional arguments passed to fn
 
 See also:
 
-- [sequentialMenu.R getStepReadiness()](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/ui/)
+- [sequentialMenu.R : getStepReadiness()](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/ui/)
