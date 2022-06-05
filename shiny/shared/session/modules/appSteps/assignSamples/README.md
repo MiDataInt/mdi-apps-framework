@@ -51,7 +51,7 @@ sources that are the outcomes returned by the sourceFileUpload module.
 We use the term 'sample set' to refer to any combination of sample
 assignments into categories. We avoid the term 'experiment' or similar
 since the intent is that one experiment might yield
-many different sample set combinations to support different queries against
+many different sample sets to support different queries against
 the same data. 
 
 At present, the assignSamples module supports up to two categorical
@@ -88,7 +88,7 @@ appSteps:
 
 Your app may choose to support zero, one, or two categorical levels.
 Simply omit a level if you don't need it. Having no categories
-means that users will only be offered single-pot assignments, not a true grid. 
+means that users will only be offered single-pot assignments. 
 
 The keys of the categorical levels are used to access values in code.
 

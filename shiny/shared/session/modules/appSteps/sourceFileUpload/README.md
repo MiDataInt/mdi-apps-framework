@@ -38,7 +38,7 @@ appSteps:
 Each data package loaded by a user is known as a 
 **data source**, identified by a unique string identifier derived from 
 a hash of the package file. A data source is also known as a **Project**
-for purposes of unambiguous sample identification.
+for purposes of unambiguous sample naming.
 
 For many apps built on data packages with manifestFile declarations,
 each data source will carry multiple **samples**, each identified 
@@ -90,17 +90,17 @@ to make it easier to get information about a specific data source or sample.
 # get one or multiple sample names, with user overrides
 # arguments allow different means of filtering and sample matching
 names <- getSampleNames(rows = TRUE, sampleIds = NULL, sampleUniqueIds = NULL, makeUnique = FALSE)
-name <- getSampleName(sample) # sample is a one row of the samples() table
+name  <- getSampleName(sample) # sample is a one row of the samples() table
 
 # get the unique identifiers of samples
-uids <- getSampleUniqueIds(samples=NULL, rows=TRUE, sourceId=NULL)
+uids <- getSampleUniqueIds(samples = NULL, rows = TRUE, sourceId = NULL)
 
-# get a full source, i.e., data package, entry from its ID
+# get a full source, i.e., data package, metadata entry from its ID
 source <- getSourceFromId(sourceId)
 
 # get a packaged file from a data source by the file's type or name
 dataFileName <- getSourceFile(source, fileType)
-dataFilePath <- getSourceFilePath(sourceId, fileType, parentDir=NULL) # when we know a file by type
+dataFilePath <- getSourceFilePath(sourceId, fileType, parentDir = NULL) # when we know a file by type
 dataFilePath <- expandSourceFilePath(sourceId, fileName, parentDir=NULL) # when we know a file by name
 
 # get the project name of a data source by ID
