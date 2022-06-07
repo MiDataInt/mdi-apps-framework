@@ -128,7 +128,7 @@ the function that will fill (i.e., create) the plot:
 ```r
 # <scriptName>_server.R
 myPlot <- staticPlotBoxServer(
-    ns('id'), 
+    'id', 
     points = TRUE,
     lines = TRUE
     legend = TRUE, 

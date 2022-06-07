@@ -6,9 +6,9 @@ has_children: false
 nav_order: 20
 ---
 
-{% include table-of-contents.md %}
+<!-- {% include table-of-contents.md %} -->
 
-<!-- ## {{page.title}} -->
+## {{page.title}}
 
 **interactivePlots** is a family of widgets
 that display interactive data plots generated with the 
