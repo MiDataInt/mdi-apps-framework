@@ -9,23 +9,24 @@ nav_order: 10
 ## {{page.title}}
 
 The **staticPlotBox** plot widget displays non-interactive plots that 
-are optimized for the rapid, controlled generation of publication-ready images. 
-It allows users to explore different display
-properties like plot size, point size, legend placement, and so on,
-in order to create and save predictable image files.
+are optimized for generating publication-ready images. 
+It allows users to explore display
+properties like plot size, point size, and legend placement, 
+in order to create predictable image files.
 
 On screen, plots fill a single shinydashboard `box()`. The on-screen 
 scale can therefore be bigger or smaller than the final reproduction size, 
-but plots are nearly always legible and usable for data exploration also.
+but plots are nearly always legible and usable for data exploration.
 
 A link allows for immediate download of the rendered plot,
 with no guessing as to what it will look like in the png file.
 
 The drawback is that plots are not interactive. 
-If this is important for your app,
-try the `interactivePlots` family of widgets. 
+If this is important for your app, try the
+[interactivePlots](/mdi-apps-framework/shiny/shared/session/modules/widgets/plots/interactivePlots/README.html)
+family of widgets. 
 
-A staticPlotBox is a typical widget module with standard
+`staticPlotBox` is a typical widget module with standard
 UI and Server functions, described below. At present,
 the module draws plots using R base graphics
 (future enhancements will support ggplot, although it is 
@@ -61,7 +62,7 @@ The `staticPlotBoxServer` function takes the following arguments in addition to 
 # staticPlotBox_server.R
 staticPlotBoxServer <- function(
     id,
-    create = function() NULL, 
+    create = function() NULL,
     maxHeight = "400px",
     points  = FALSE, 
     lines   = FALSE,
@@ -78,13 +79,13 @@ where:
 
 - **create** = a function or reactive that creates the plot (see below)
 - **maxHeight** = how tall the box is allowed to get
-- **points** = expose settings appropriate to plots that have points
-- **lines** = expose settings appropriate to plots that have lines
-- **legend** = expose settings appropriate to plots that have legends
-- **margins** = expose settings that allow users to adjust plot margins (i.e., mar)
-- **title** = expose settings that allow users to set the plot title
-- **immediate** = if set to TRUE, the plot updates as settings are changed
-- **template** = an additional settings template as a list()
+- **points** = if TRUE, expose settings appropriate to plots that have points
+- **lines** = if TRUE, expose settings appropriate to plots that have lines
+- **legend** = if TRUE, expose settings appropriate to plots that have legends
+- **margins** = if TRUE, expose settings that allow users to adjust plot margins (i.e., mar)
+- **title** = if TRUE, expose settings that allow users to set the plot title
+- **immediate** = if TRUE, the plot updates as settings are changed
+- **template** = an additional `settingsServer` template as a list()
 - **size** = settings popup menu size, s/m/l
 
 ### staticPlotBoxServer return values
@@ -104,9 +105,8 @@ list(
 ```
 
 where **settings** and **get** are the same as returned by
-[settingsServer](/mdi-apps-framework/docs/settings.html),
-with all composite settings for the widget. The 
-remaining elements are helper functions to fill 
+[settingsServer](/mdi-apps-framework/docs/settings.html). 
+The remaining elements are helper functions to fill 
 the plot according to the user's current settings (see below).
 
 ### Using the widget
@@ -134,10 +134,11 @@ myPlot <- staticPlotBoxServer(
     legend = TRUE, 
     # etc.
     create = function(){
+        # use myPlot$settings/get() as needed        
         # do any preparative work, e.g.:
         d <- myReactive()
         myPlot$initializeFrame(...)
-        myPlot$addPoints( # addLines behaves the same
+        myPlot$addPoints( # addLines follows the same pattern
             x = d$xValue,
             y = d$yValue,
             ...
@@ -147,7 +148,6 @@ myPlot <- staticPlotBoxServer(
             legend = character(),
             col = c()
         )
-        # use myPlot$settings/get as needed
     }
 )
 ```
@@ -158,14 +158,14 @@ function to initialize and fill the plot.
 
 Notice that you do not have to call `plot()` or `png()`
 to initialize the plot - `initializeFrame()` does that for you.
-Your function then just needs to add the contents of the plot.
+Your function then just needs to add the plot contents.
 
 As shown, you can modify the plot using any functions from
 R base graphics, but we recommend adding points, lines,
 and legends using the helper functions as they will
 properly obey user settings. 
 
-Helpers are defined with the `...` argument 
+Helpers are all defined with the `...` argument 
 to allow you to pass additional arguments
 to the corresponding graphics functions 
 (`points`, `lines`, `legends`), e.g.:
@@ -186,8 +186,14 @@ myPlot <- staticPlotBoxServer(
 
 The last example shows how to access the same colors
 as plotly if you would like to match the appearance
-between `staticPlotBox` and `interactivePlot` elements in your app.
+between `staticPlotBox` and `interactivePlot` panels.
 
-For more detailed information, see:
+### Additional references
+ 
+For more detailed views of the module's code, see:
 
-[mdi-apps-framework : staticPlotBox](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/staticPlotBox)
+- [mdi-apps-framework : staticPlotBox](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/staticPlotBox)
+
+For a complete working example, see:
+
+- [svx-mdi-tools : junction_nodes](https://github.com/wilsontelab/svx-mdi-tools/blob/main/shiny/shared/session/utilities/plots/junction_nodes.R)
