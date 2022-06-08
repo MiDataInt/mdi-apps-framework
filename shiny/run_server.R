@@ -105,6 +105,7 @@ while(TRUE){
 
 # load the Stage 2 apps config
 source(file.path('global', 'packages', 'packages.R'))
+unloadMdiManagerPackages()
 loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
