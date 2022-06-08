@@ -1,7 +1,7 @@
 ---
 title: Display Widgets
 has_children: true
-nav_order: 50
+nav_order: 60
 ---
 
 ## {{page.title}}

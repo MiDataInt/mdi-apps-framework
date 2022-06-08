@@ -150,10 +150,18 @@ myTable <- bufferedTableServer(
     # ...
     options = list(
         paging = TRUE, # whether to split the table over multiple "pages"
+        pageLength = 10, # the starting length of a single page
+        lengthChange = TRUE, # allow user to change the length of a page
+        lengthMenu = c(10, 25, 50, 100), # the page lengths offered in the menu
         searching = TRUE, # whether to show the table search input [TRUE]
     )
 )
 ```
+
+Not all of the more complex DataTables options will
+work well with Shiny. stick to the options listed above
+or be prepared for possible troubleshooting.
+See [this page](https://rstudio.github.io/DT/options.html) for expanded information.
 
 ### Handling row selections
 
