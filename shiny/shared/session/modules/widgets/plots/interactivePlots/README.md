@@ -6,8 +6,6 @@ has_children: false
 nav_order: 20
 ---
 
-<!-- {% include table-of-contents.md %} -->
-
 ## {{page.title}}
 
 **interactivePlots** is a family of widgets

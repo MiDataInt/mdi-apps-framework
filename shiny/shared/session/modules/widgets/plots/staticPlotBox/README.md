@@ -24,7 +24,8 @@ with no guessing as to what it will look like in the png file.
 The drawback is that plots are not interactive. 
 If this is important for your app, try the
 [interactivePlots](/mdi-apps-framework/shiny/shared/session/modules/widgets/plots/interactivePlots/README.html)
-family of widgets. 
+family of widgets. Be aware that `staticPlotBox` is an easier
+interface to master as compared to `interactivePlots`.
 
 `staticPlotBox` is a typical widget module with standard
 UI and Server functions, described below. At present,
