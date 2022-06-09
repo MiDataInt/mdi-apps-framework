@@ -44,6 +44,7 @@ R:
         - promises
     # packages in this subsection are NOT attached, must use git2r::tags, etc.
     unattached:
+        - miniCRAN
         - git2r # has function name conflicts with simple names like 'tags'
         - R.utils
 #----------------------------------------------------------------------

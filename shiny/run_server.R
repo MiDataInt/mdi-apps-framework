@@ -189,7 +189,7 @@ runApp(
 # check if framework has requested a hard server restart/reinstallation
 # if not, loop will perform a soft restart by recalling runApp(), but not mdi::run()
 if(Sys.getenv('MDI_FORCE_RESTART') != ""){
-    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""
+    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""    
     Sys.setenv(MDI_FORCE_RESTART = "")
     Sys.setenv(MDI_FORCE_REINSTALLATION = "")
     mdi::run( # reinstalls and relaunches shiny server entirely anew (NB: can't use parallel::mcfork on Windows)

@@ -22,7 +22,7 @@ developerToolsServer <- function(id, options, bookmark, locks) {
 #appConfigServer('appConfig', id, options)
 sandboxServer('sandbox', id, options)
 fileEditorServer('fileEditor', id, options)
-gitManagerServer('gitManager', id, options)
+# gitManagerServer('gitManager', id, options)
 
 ##----------------------------------------------------------------------
 ## define bookmarking actions
