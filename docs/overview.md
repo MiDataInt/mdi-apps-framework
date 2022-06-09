@@ -10,7 +10,9 @@ This is the documentation for the **MDI apps framework**,
 which provides support code for the development of 
 MDI R Shiny apps. It describes the functions and structures
 defined by the framework that you can draw on to
-create robust apps more quickly.
+create robust apps more quickly, plus
+information for configuring an MDI web server
+installation.
 
 ### Other important references
 

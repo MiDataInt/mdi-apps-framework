@@ -1,5 +1,6 @@
 ---
 title: R Package Dependencies
+parent: Developer Tools
 has_children: false
 nav_order: 10
 ---
@@ -7,13 +8,14 @@ nav_order: 10
 ## {{page.title}}
 
 The MDI apps framework by default loads and attaches a 
-set of commonly used R packages, listed here:
+set of commonly used R packages that you may use
+when writing your app code, listed here:
 
 - [mdi-apps-framework : packages.yml](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/global/packages/packages.yml)
 
 ### App-specific R package declarations
 
-The suite-level packages.yml file and all app and module configuration files 
+The suite-level `packages.yml` file and all app and module configuration files 
 can declare additional R package dependencies required for an app to function, 
 as follows:
 
@@ -27,7 +29,8 @@ packages:
     Bioconductor: null # or a list of packages as for "R"
 ```
 
-The 'R' key lists general R packages, e.g., those on CRAN, 'Bioconductor'
+The **R** key lists general R packages, e.g., those on CRAN, 
+[**Bioconductor**](https://www.bioconductor.org/)
 is self-evident. 
 
 It is not harmful to re-declare R packages already listed elsewhere, 
