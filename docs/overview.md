@@ -23,10 +23,12 @@ please read that first.
 
 In addition, you can clone the
 [mdi-apps-framework repository](https://github.com/MiDataInt/mdi-apps-framework)
-for examination alongside your own tool suite code 
-(hint: use [VS Code](https://code.visualstudio.com/)).
+for examination alongside your own tool suite code.
 An experienced developer might find it helpful to look
 at the source code for a widget, etc.
+
+If you need help understanding how to edit code or work with
+R Shiny modules, see the [MDI Basic Training](/mdi-basic-training/docs/overview/).
 
 ### Contributing to the framework
 
