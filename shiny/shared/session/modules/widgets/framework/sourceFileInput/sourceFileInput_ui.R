@@ -22,7 +22,6 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
         fileServerButton <- ""
     }
 
-
     # ... and always the local file upload input
     tags$div(
         fluidRow(
@@ -34,7 +33,7 @@ sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100
                     ns('fileInput'),
                     NULL,
                     multiple = FALSE,
-                    accept = getAllowedSourceFileTypes(appName, externalSuffixes),
+                    accept = getAllowedSourceFileTypes(appName, externalSuffixes, extensionOnly = TRUE),
                     width = width
                 )
             ),

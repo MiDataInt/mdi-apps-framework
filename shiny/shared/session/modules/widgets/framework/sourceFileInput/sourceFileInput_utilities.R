@@ -10,12 +10,16 @@ exposeServerFiles <- function(){
 }
 
 # get the list of allowed incoming file types for a given app
-getAllowedSourceFileTypes <- function(appName = NULL, externalSuffixes = list()){
+getAllowedSourceFileTypes <- function(
+    appName = NULL, 
+    externalSuffixes = list(),
+    extensionOnly = FALSE # if true, only return ".zip", not ".xxx.zip", etc.
+){
     fs <- CONSTANTS$fileSuffixes
-    
+
     # first source file load from the launch page
     # bookmark files only allowed here
-    if(is.null(appName)){ 
+    suffixes <- if(is.null(appName)){ 
         x <- list(
             jobFile   = fs$jobFile,
             # manifest  = fs$manifest, # DEPRECATED
@@ -39,6 +43,13 @@ getAllowedSourceFileTypes <- function(appName = NULL, externalSuffixes = list())
             external  = externalSuffixes
         )
     }
+
+    # parse the return value
+    if(extensionOnly){
+        suffixes <- strsplit(unlist(suffixes), "\\.")
+        suffixes <- sapply(suffixes, function(x) x[length(x)])
+        paste0(".", sort(unique(suffixes)))
+    } else suffixes
 }
 
 # check to see if an incoming file matches an allowed type
