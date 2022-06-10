@@ -189,7 +189,7 @@ list(
         x <- selectedSamples[[input$sampleSet]]
         if(is.null(x)) character() else names(x)
     }),
-    setSampleSet = function(samples) updateSelectInput(session, 'sampleSet', selected = samples),
+    setSampleSet = function(sampleSet) updateSelectInput(session, 'sampleSet', selected = sampleSet),
     setSelectedSamples = function(sampleSet, samples) {
         if(is.null(sampleSet) || sampleSet == "" || is.null(samples)) return()
         selectedSamples[[sampleSet]] <- as.list(sapply(samples, function(samples) TRUE))

@@ -124,7 +124,6 @@ observeEvent(input[[gearId]], {
     )
 })
 if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], {
-    dmsg("sessionInput$resetAllSettingsId")
     lapply(names(template), function(tab){
         lapply(names(settings[[tab]]), function(id){
             t <- template[[tab]][[id]]

@@ -105,6 +105,7 @@ while(TRUE){
 
 # load the Stage 2 apps config
 source(file.path('global', 'packages', 'packages.R'))
+unloadMdiManagerPackages()
 loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
@@ -188,7 +189,7 @@ runApp(
 # check if framework has requested a hard server restart/reinstallation
 # if not, loop will perform a soft restart by recalling runApp(), but not mdi::run()
 if(Sys.getenv('MDI_FORCE_RESTART') != ""){
-    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""
+    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""    
     Sys.setenv(MDI_FORCE_RESTART = "")
     Sys.setenv(MDI_FORCE_REINSTALLATION = "")
     mdi::run( # reinstalls and relaunches shiny server entirely anew (NB: can't use parallel::mcfork on Windows)

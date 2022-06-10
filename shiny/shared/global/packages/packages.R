@@ -13,6 +13,12 @@
 # because these packages are attached, code may use functions from them without
 # namespace prefixes, e.g., 'observe' is fine, you do not need to use 'shiny::observe'
 #----------------------------------------------------------------------
+unloadMdiManagerPackages <- function(){
+    # clear selected packages loaded by mdi-manager as they may be out of date
+    tryCatch({
+        sapply(c('miniCRAN'), unloadNamespace)
+    }, error = function(e) NULL)
+}
 unloadRStudioPackages <- function(){
     # clear an RStudio session of these packages as they may be out of date
     # (these are loaded by RStudio, but not R)

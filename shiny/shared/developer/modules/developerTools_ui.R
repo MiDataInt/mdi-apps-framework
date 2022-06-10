@@ -31,17 +31,18 @@ developerToolsUI <- function(id, options) {
                 title = 'File Editor',
                 value = 'fileEditor',
                 fileEditorUI(ns('fileEditor'), options)
-            ),
-            tabPanel(
-                title = 'Git Manager',
-                value = 'gitManager',
-                gitManagerUI(ns('gitManager'), options)
-            ),
-            tabPanel(
-                title = 'Dockerfile',
-                value = 'dockerfile',
-                "PENDING"
-            )    
+            )
+            # ,
+            # tabPanel(
+            #     title = 'Git Manager',
+            #     value = 'gitManager',
+            #     gitManagerUI(ns('gitManager'), options)
+            # ),
+            # tabPanel(
+            #     title = 'Dockerfile',
+            #     value = 'dockerfile',
+            #     "PENDING"
+            # )    
         )
     )
 }
