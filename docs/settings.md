@@ -27,7 +27,7 @@ be extracted from settings and shown as one of the few on-page inputs.
 
 Many appStep modules define settings that
 are relevant to most or all of the output elements on its page.
-This is achieved by first defining the required settings in module.yml:
+This is achieved by first defining the required settings in _module.yml_:
 
 ```yml
 # <appStep>/module.yml
@@ -37,7 +37,7 @@ settings:
         # etc.
 ```
 
-then activating the setting icon link in ui.R:
+then activating the setting icon link in _ui.R_:
 
 ```r
 # <appStep>/<appStep>_ui.R
@@ -50,7 +50,7 @@ then activating the setting icon link in ui.R:
 }
 ```
 
-and finally, activating the settings server in server.R and returning
+and finally, activating the settings server in _server.R_ and returning
 its value to be stored in bookmarks and potentially used by other steps:
 
 ```r
@@ -177,7 +177,7 @@ The `settingsUI` function takes a single argument in addition to 'id':
 settingsUI <- function(id, isHeader = TRUE)
 ```
 
-where setting **isHeader** to TRUE reduces the icon size in a manner
+where setting `isHeader` to TRUE reduces the icon size in a manner
 appropriate for inclusion in a step header or box title,
 which is the most appropriate placement in many widgets.
 
@@ -244,13 +244,13 @@ retval$get <- function(tab, id){
 retval
 ```
 
-where each option is accessed in the list as follows (note carefully
+where each option is accessed in the list as follows (notice
 that the settings family, i.e., tab, is a reactive function!):
 
 ```r
 # <module>_server.R
 settings <- settingsServer(...)
-value <- settings$<familyName>()$<settingName>$value # notice the () !
+value <- settings$<familyName>()$<settingName>$value # !! notice the () !!
 value <- settings$Plot_Parameters()$X_Axis$value
 ```
 

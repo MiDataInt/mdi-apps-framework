@@ -9,7 +9,7 @@ nav_order: 40
 
 A concept of the MDI apps framework
 is to allow the server
-and apps to be updated and developed in an app
+and apps to be updated from within an app
 while it is still running. 
 
 One part of this is that users can update the configuration

@@ -12,7 +12,7 @@ plan and declare its appStep modules.
 
 ### App step declaration in \<app\>/config.yml
 
-The steps for your app are listed in its config.yml file,
+The steps for your app are listed in its _config.yml_ file,
 following the instructions found in the template file and 
 this example:
 
@@ -30,7 +30,7 @@ appSteps:
     <stepName>:  # etc.
 ```
 
-The _template app's config.yml file has declarations for 
+The _template app's _config.yml_ file has declarations for 
 an initial app step sequence based on standardized modules
 that is common to many apps, with support for
 additional source file upload, sample assignments into groups, and
@@ -38,8 +38,7 @@ asynchronous data analysis.
 
 ### Step module default configuration in \<appStep\>/module.yml
 
-In addition to declarations made in an app's config.yml file,
-an appStep module can have standard declarations in its module.yml file.
+An appStep module can also have standard declarations in its _module.yml_ file.
 These act as defaults that can be overridden by an app, in addition
 to other declarations discussed below. 
 
@@ -50,8 +49,8 @@ shortDescription: ...
 longLabel: ...
 ```
 
-Due to declarations in module.yml, many times the appStep declarations
-in config.yml can be quite simple:
+Due to declarations in _module.yml_, many times the appStep declarations
+in _config.yml_ can be quite simple:
 
 ```yml
 # <app>/config.yml
@@ -62,11 +61,11 @@ appSteps:
 
 ### Other declarations in \<appStep\>/module.yml
 
-The other appStep-specific declarations in module.yml are
+The other appStep-specific declarations in _module.yml_ are
 **types** and **sourceTypes**, which establish step dependency chains
 as discussed in detail later.
 
-Other declarations permitted in an appStep module.yml file are the same
+Other declarations permitted in an appStep _module.yml_ file are the same
 as other component configuration files, including **packages**
 and **settings**, discussed in detail later. Step-level settings
 should be activated in the UI and server functions below to be shown
@@ -78,7 +77,7 @@ The following template shows how to declare an appStep UI function
 by:
 - extending the Shiny module function declaration with additional 
 arguments
-- wrapping the appStep UI contents with the required `standardSequentialTabItem` function,
+- wrapping the appStep UI contents with the required `standardSequentialTabItem()` function,
 which constructs the appStep page structure
 
 ```r

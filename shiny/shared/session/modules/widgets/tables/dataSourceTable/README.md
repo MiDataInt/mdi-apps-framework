@@ -61,7 +61,7 @@ The module returns a reactive as follows:
 selectedSourceIds
 ```
 
-where **selectedSourceIds** is a reactive that returns `names(sources()[rows])`, i.e.,
+where _selectedSourceIds_ is a reactive that returns `names(sources()[rows])`, i.e.,
 the unique ids of the selected subset of the `sources` outcome returned by appStep module `sourceFileUpload`. Those sourceId(s) can be used to recover files from data packages, etc.
 
 ### Using the widget

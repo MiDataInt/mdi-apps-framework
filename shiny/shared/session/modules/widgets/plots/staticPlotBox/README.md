@@ -105,7 +105,7 @@ list(
 )
 ```
 
-where **settings** and **get** are the same as returned by
+where `settings` and `get` are the same as returned by
 [settingsServer](/mdi-apps-framework/docs/settings.html). 
 The remaining elements are helper functions to fill 
 the plot according to the user's current settings (see below).

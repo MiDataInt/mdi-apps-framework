@@ -6,9 +6,8 @@ nav_order: 70
 
 ## {{page.title}}
 
-This section gives a brief explanation of a series
-of additional miscellaneous features of the MDI
-apps framework that help you give feedback to our users.
+This section describes features of the MDI
+apps framework that help give feedback to users.
 
 As throughout, none are essential and you can
 achieve many of the same things without using these

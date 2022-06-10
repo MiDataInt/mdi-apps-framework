@@ -1,7 +1,7 @@
 ---
 title: Session Cache Class
 parent: Object Caching
-has_children: true
+has_children: false
 nav_order: 20
 ---
 
@@ -14,7 +14,7 @@ called **dataCache**.
 ### Declaring a new session cache
 
 A new data cache can be declared anywhere in an
-app server script, often in `server.R`:
+app server script, often in _server.R_:
 
 ```r
 # <scriptName>.R
@@ -42,7 +42,7 @@ where the critical methods are described below.
 ### Filling an object into the cache
 
 You add, and also retrieve, an object in the cache
-by making a call to the `get` method:
+by making a call to the dataCache `get` method:
 
 ```r
 # shiny/shared/global/classes/cache/dataCache/dataCache_class.R
@@ -111,7 +111,7 @@ plot(cacheObject$value)
 
 ### Replacing a cached data value
 
-You can force a new value for a cached object using the `set` method:
+You can force a new value for a cached object using the dataCache `set` method:
 
 ```r
 # shiny/shared/global/classes/cache/dataCache/dataCache_class.R
@@ -137,7 +137,7 @@ dataCache$set(cacheObject, 'xyz')
 ### Clearing a cached object
 
 You can clear one or more cache keys from the dataCache using
-the `clear` method:
+the dataCache  `clear` method:
 
 ```r
 # shiny/shared/global/classes/cache/dataCache/dataCache_class.R
@@ -160,7 +160,7 @@ cacheObject <- dataCache$get('myObject', key = 'abc123', createFn = function(...
 dataCache$clear(cacheObject$cacheKey, purgeFiles = TRUE)
 ```
 
-The default behavior clear all cached objects from RAM only.
+The default behavior clears all cached objects from RAM only.
 
 ### Additional references
 

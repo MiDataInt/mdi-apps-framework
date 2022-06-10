@@ -10,7 +10,7 @@ Some analyses executed by your app will be substantially
 slower than others. Very slow processes
 can cause a significant performance degradation
 because R, and thus your Shiny web server, are 
-single-threaded. This means that when your server
+_single-threaded_. This means that when your server
 is performing a slow process, no other requests
 can be fulfilled and pages will appear to
 hang. This is especially problematic for multi-user
@@ -22,9 +22,9 @@ in another R process.
 Deferring a task to another R process and capturing the result later
 is called **asynchronous execution**. It is achieved in R
 using the
-[future]()
+[future](https://cran.r-project.org/web/packages/future/index.html)
 and
-[promises]()
+[promises](https://cran.r-project.org/web/packages/promises/index.html)
 packages. The MDI apps framework helps you use these 
 packages to execute tasks asynchronously. 
 

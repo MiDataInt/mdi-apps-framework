@@ -38,9 +38,9 @@ appStepServer <- function(id, options, bookmark, locks) {
 })}
 ```
 
-The **analysisSetName** outcome must be provided, typically from 
+The `analysisSetName` outcome must be provided, typically from 
 a user input, as it is used to construct standardized bookmark names.
 
-The **loadSourceFile** function is required to load the incoming 
+The `loadSourceFile` function is required to load the incoming 
 data package file.  Please use `str(incomingFile)` when writing
 your appStep module to understand how the file metadata are communicated.

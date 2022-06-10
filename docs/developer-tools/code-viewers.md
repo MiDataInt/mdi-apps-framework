@@ -75,6 +75,6 @@ For complete details, see:
 
 - [mdi-apps-framework : code viewers](https://github.com/MiDataInt/mdi-apps-framework/tree/main/shiny/shared/session/modules/widgets/framework/codeViewer)
 
-Also, the following demo app uses both code viewer modules as 
+The following demo app uses both code viewer modules as 
 a working example:
 - [mdi-demo-app](https://github.com/MiDataInt/demo-mdi-tools/tree/main/shiny/apps/demo)

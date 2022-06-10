@@ -137,7 +137,7 @@ is the `options` argument. The critical thing to understand is that
 the values you set in `options` control the behavior of the DataTables
 javascript library to which they are passed - not DT itself.
 
-Thus, the values you set in `options` correspond directly to
+Thus, the values you set in `options` correspond directly to 
 [DataTables huge list of options](https://datatables.net/reference/option/).
 Please use that page as your reference for things you can do to your table.
 Again, these values are handled in javascript on the client, not in R on the server.
@@ -158,10 +158,10 @@ myTable <- bufferedTableServer(
 )
 ```
 
-Not all of the more complex DataTables options will
-work well with Shiny. stick to the options listed above
+Not all DataTables options
+work well with Shiny. Stick to the options listed above
 or be prepared for possible troubleshooting.
-See [this page](https://rstudio.github.io/DT/options.html) for expanded information.
+See [this page](https://rstudio.github.io/DT/options.html) for more information.
 
 ### Handling row selections
 

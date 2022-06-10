@@ -46,11 +46,11 @@ appStepServer <- function(id, options, bookmark, locks) {
 })}
 ```
 
-Importantly, ONLY **input**, **settings**, and **outcomes** values are stored in 
+Importantly, ONLY `input`, `settings`, and `outcomes` values are stored in 
 bookmarks. All other named objects in the module return value list are
 considered to be for app internal use only. If you need to save something 
 that is not an input or a setting, be sure to declare it as an outcome,
-where in MDI parlance 'outcomes' are data states derived from user actions.
+where 'outcomes' are data states derived from user actions.
 
 ### Restoring appStep state from an incoming bookmark
 
@@ -78,7 +78,11 @@ appStepServer <- function(id, options, bookmark, locks) {
 By convention and for clarity, always place the bookmark observer 
 in the penultimate position of the appStep server function, 
 just above the module return value that declares the 
-input, settings, and outcomes that are found in the bookmark.
+contents of the bookmark.
+
+For backwards compatibility, please ensure that your appStep
+can load older bookmarks that might lack features of newer bookmarks
+by providing overrides when bookmark elements are absent.
 
 ### Auto-saved bookmarks and page reloading
 
@@ -87,5 +91,5 @@ creates a bookmark every time a session ends, i.e., when
 the user closes or reloads the web browser page, which
 supports two additional features:
 
-- quick launch to the most recent state using the "auto saved" entry on the launch page
-- page reloading by clicking the top-left page label ("MDI" by default)
+- **quick launch** to the most recent state using the "auto saved" entry on the launch page
+- **page reloading** by clicking the top-left page label ("MDI" by default)

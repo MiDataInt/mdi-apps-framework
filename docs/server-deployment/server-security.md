@@ -28,7 +28,7 @@ but distinct concepts is server security:
 ### Authentication using OAuth2
 
 The **OAuth2** protocol is an internet standard wherein
-a user logs in with a 3rd party identity provider who 
+a user logs in with a third party identity provider who 
 provides verifying information to the MDI server. Most people
 will be familiar with this kind of login.
 
@@ -59,7 +59,7 @@ found at the vendor sites:
 - [Globus](https://docs.globus.org/api/auth/)
 - [Google](https://developers.google.com/identity/protocols/oauth2)
 
-Once set up, simply copy your client ID and secret into stage2-apps.yml.
+Once set up, simply copy your client ID and secret into _stage2-apps.yml_.
 
 ### Authorization using OAuth2
 
@@ -122,9 +122,9 @@ keys:
     apps:  # see below
 ```
 
-where **hash** is an  _encrypted_ version of the access key 
+where _hash_ is an  _encrypted_ version of the access key 
 that should be entered by a user. To convert your desired key to the
-required hash, open R and call `mdi::password_store("myKey)`, 
+required hash, open R and call `mdi::password_store("myKey")`, 
 installing the 
 [mdi-manager R package](https://github.com/MiDataInt/mdi-manager)
 first if necessary.
@@ -145,7 +145,7 @@ launch page.  In addition, you can specify the local drive
 paths they can access and the apps they may use.
 
 If you are using in-app local file access via
-[shinyFiles]()
+[shinyFiles](/mdi-apps-framework/docs/server-deployment/shinyFiles.html)
 you first need
 to name and list the allowed local paths in the **paths** key:
 

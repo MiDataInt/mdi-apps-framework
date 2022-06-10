@@ -7,7 +7,7 @@ nav_order: 20
 
 ## {{page.title}}
 
-Later steps in an app often need to use the data and outcomes 
+Later steps in an app often need to access outcomes 
 from one or more prior steps. Passing data from a parent or ancestor
 step to a child step is achieved by adding elements to the list of values 
 returned by an appStep module's server function. 
@@ -29,7 +29,7 @@ appStepServer <- function(id, options, bookmark, locks) {
 See the next sections for detailed discussions of sequential
 step readiness and bookmarking.
 
-All elements are optional; simply omit them if not used by your app.
+All elements are optional; omit them if not used by your app.
 If your appStep doesn't need bookmarking or sequencing (e.g., is a last step),
 use `NULL` or an empty list as the return value.
 
@@ -46,7 +46,7 @@ stepName <- "abc123"
 stepData <- app[[stepName]]
 ```
 
-where `stepName` is the name found in \<app\>/config.yml.
+where `stepName` is the name found in _\<app\>/config.yml_.
 
 ### Accessing appStep return values by type
 
@@ -73,13 +73,13 @@ stepOutcomes <- getStepOutcomesByType(stepType)
 
 ```
 
-where `stepType` is the type found in \<appStep\>/module.yml.
+where `stepType` is the type found in _\<appStep\>/module.yml_.
 
 ### Accessing appStep return values by index
 
-Finally, it is also possible to retrieve an app step's data from
+Finally, it is possible to retrieve an app step's data from
 its numerical index across all app steps, although this is usually
-only needed with framework code, not in app code:
+only needed with framework code:
 
 ```r
 # <scriptName>.R
@@ -87,4 +87,4 @@ stepName <- names(app$config$appSteps)[i]
 stepData <- app[[stepName]]
 ```
 which demonstrates that you can access the contents of file 
-\<app\>/config.yml via R object `app$config`.
+_\<app\>/config.yml_ via R object `app$config`.

@@ -31,7 +31,7 @@ For more detailed information, see:
 
 The canonical name given to assignSamples app steps is 'assign',
 which matches the step type declared in assignSamples/module.yml.
-We recommend you follow this convention as it promotes consistency and readability.
+We recommend following this convention as it promotes consistency and readability.
 
 ```yml
 # <app>/config.yml
@@ -44,7 +44,7 @@ appSteps:
 
 All apps that use the assignSamples module must also use sourceFileUpload
 as their first step, as assignSamples reads its data from one or more
-sources that are the outcomes returned by the sourceFileUpload module.
+sources that are the outcomes returned by sourceFileUpload.
 
 ### Definition and structure of categories and sample sets
 
@@ -54,7 +54,7 @@ since the intent is that one experiment might yield
 many different sample sets to support different queries against
 the same data. 
 
-At present, the assignSamples module supports up to two categorical
+At present, assignSamples supports up to two categorical
 levels, shown as columns and rows of the grid. These are often
 referred to as groups and conditions, but can be named anything (see below). 
 
@@ -64,7 +64,7 @@ or any number of groups and conditions.
 
 ### Module options
 
-The assignSamples appStep requires that \<app\>/config.yml declare 
+The assignSamples appStep requires that _\<app\>/config.yml_ declare 
 the appropriate categories for downstream analysis steps, i.e., 
 for the code that will use the assigned sample sets.
 
@@ -93,9 +93,9 @@ means that users will only be offered single-pot assignments.
 The keys of the categorical levels are used to access values in code.
 
 The user-friendly names shown in the app for the categorical levels are determined
-by the **singular** and **plural** keys.
+by the `singular` and `plural` keys.
 
-The **nLevels** keys establish the app's restrictions on the numbers
+The `nLevels` keys establish the app's restrictions on the numbers
 of rows and columns it expects and can support. Including `nLevels == 1`
 means that your app doesn't require, but can support, 
 a categorical level, e.g., it can support row x column as well as
@@ -141,15 +141,15 @@ All members are present with values even if there is only one level,
 the category assignments will simply be set to 1. 
 
 The concatenation of **Project** and **Sample_ID** together is used to 
-create a presumed unique identifier for a sample, since Sample_ID might
+create a unique identifier for a sample, since Sample_ID might
 have been used repeatedly in different data sources.
 
-Notice that each sample that is assigned will have exactly one row
+Notice that each assigned sample will have exactly one row
 in the `assignments` data.frame, i.e., the assignSamples module
 supports the assignment of a sample to at most one grid position, 
 since it rarely makes sense to compare a sample to itself. If there is 
 a need to create multiple assignment pots that include the same sample,
-that is achieved by creating multiple sample sets.
+do that by creating multiple sample sets.
 
 Many apps do not access those outcomes directly, favoring
 instead to use the following support utilities.

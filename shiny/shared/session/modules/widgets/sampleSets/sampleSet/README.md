@@ -60,7 +60,7 @@ where `assignments` corresponds to the outcome of the same name from the `assign
 `sampleSet` is a simple widget. Just place it on a page
 by calling `sampleSetUI` in your module UI function, activate it by
 calling `sampleSetServer` in your module server function, and react
-to the assignments element in its return value list.
+to the `assignments` element in its return value list.
 
 ### Additional references
  

@@ -7,12 +7,12 @@ nav_order: 30
 
 ## {{page.title}}
 
-One very important code monitoring utility function is in the global
-scope and serves the purpose of providing feedback in the 
+One very important code monitoring utility in the global
+scope provides feedback in the 
 server's command terminal in local and remote modes about the
 actions being executed.  
 
-## reportProgress function for production logging
+### reportProgress function for production logging
 
 The `reportProgress()` function creates the running
 log of server actions you see in local mode. 
@@ -40,9 +40,9 @@ which would generate the server log message "myModule: my log message".
 
 Such messages are tremendously useful in code development
 as they help you understand - in addition to any feedback that R 
-gives you - what sequence of actions was being taken up to 
-the point that code failed. This includes knowing what the order
-of events was, and what the last reported action was.
+gives you - what sequence of actions was taken up to 
+the point that code failed. This includes knowing the order
+of events and the last reported action.
 
 Keeping such messages in the production app allows you 
 to query other users for similar information if they 

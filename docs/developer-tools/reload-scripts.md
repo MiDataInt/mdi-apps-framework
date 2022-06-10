@@ -11,11 +11,11 @@ A concept of the MDI apps framework is to allow the framework
 and app code to be viewed and updated in an app
 while it is running. 
 
-### Re-sourcing app scripts without page reloading
+### Re-sourcing app scripts without page reload
 
 One part of this is that a **refresh link** is placed 
 in the top menu bar when working in single-user
-developer modes, e.g. when `mode = 'local', developer = TRUE`. 
+developer modes, e.g. `mode = 'local', developer = TRUE`. 
 Clicking the link allows a developer
 to re-`source()` many of the session scripts used
 by an app without reloading the web page.
@@ -36,12 +36,12 @@ on each reload.
 ### Page reload via auto-saved bookmarks
 
 For scripts that cannot be dynamically refreshed,
-you can always click on the upper left page label
+you can click on the upper left page label
 (default value "MDI") to force a hard reload
-of the page in which the auto-saved bookmark will
+of the page where the auto-saved bookmark will
 take you back to the same app step and state, but
 now having reloaded the framework and all appStep modules.
 
-This feature is available in all apps all the time
-but most useful to developers, which is
+This feature is always available in all apps
+but is most useful to developers, which is
 why it is not advertised to users in a more obvious way.

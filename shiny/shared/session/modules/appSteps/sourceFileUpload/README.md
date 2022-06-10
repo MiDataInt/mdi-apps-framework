@@ -23,8 +23,8 @@ For more detailed information, see:
 ### Naming sourceFileUpload steps
 
 The canonical name given to sourceFileUpload app steps is 'upload',
-which matches the step type declared in sourceFileUpload/module.yml.
-We recommend you follow this convention as it promotes consistency and readability.
+which matches the step type declared in _sourceFileUpload/module.yml_.
+We recommend following this convention as it promotes consistency and readability.
 
 ```yml
 # <app>/config.yml

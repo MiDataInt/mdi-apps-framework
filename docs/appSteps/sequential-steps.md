@@ -34,7 +34,7 @@ to create a linear step dependency chain.
 ### Step readiness states in appStep module return values
 
 A child step knows it can be displayed because its parent
-declares an **isReady** reactive, or another function with no arguments,
+declares an `isReady()` reactive, or another function with no arguments,
 in its return value, as follows:
 
 ```r
@@ -48,10 +48,10 @@ appStepServer <- function(id, options, bookmark, locks) {
 ```
 
 Only when `isReady() == TRUE` for all ancestors declared in 
-\<appStep\>/module.yml `sourceTypes` will that appStep be made available
+_\<appStep\>/module.yml_ `sourceTypes` will that appStep be made available
 for user interaction.
 
-Arguments for the **getStepReadiness** function are:
+Arguments for the `getStepReadiness()` function are:
 
 - **source** = the parent appStep, communicated as `options$source`
 - **list** = a list that must have length > 0 to be considered ready
@@ -60,4 +60,4 @@ Arguments for the **getStepReadiness** function are:
 
 See also:
 
-- [sequentialMenu.R : getStepReadiness()](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/ui/)
+- [mdi-apps-framework : sequentialMenu](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/ui/sequentialMenu.R)

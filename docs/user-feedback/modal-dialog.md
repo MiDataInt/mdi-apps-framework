@@ -1,5 +1,5 @@
 ---
-title: Modal Popups
+title: Modal Dialogs
 parent: User Feedback
 has_children: false
 nav_order: 10

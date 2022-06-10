@@ -10,7 +10,7 @@ nav_order: 20
 The MDI apps framework supports two ways that users 
 can load and save files, from the computer running the web 
 browser (the client machine), using the R Shiny
-`fileInput` widget, or from the computer running
+`fileInput` and `downloadHandler` features, or from the computer running
 the web server (the server machine), using the 
 [R shinyFiles package](https://cran.r-project.org/web/packages/shinyFiles/index.html).
 
@@ -28,7 +28,7 @@ file system. It can still be useful to use
 
 All server file paths are inaccessible by default - 
 you must specifically list the paths you wish to
-expose in stage2-apps.yml, as follows:
+expose in _stage2-apps.yml_, as follows:
 
 ```yml
 # mdi/config/stage2-apps.yml
@@ -106,7 +106,7 @@ serverSaveFileButtonServer(
 )
 ```
 
-Notice that `serverSaveFileButtonServer` is the same server function to use whether
+Notice that `serverSaveFileButtonServer()` is the same server function to use whether
 your UI used a link or a button.
 
 ### Additional references

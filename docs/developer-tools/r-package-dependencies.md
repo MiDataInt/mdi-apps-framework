@@ -15,7 +15,7 @@ when writing your app code, listed here:
 
 ### App-specific R package declarations
 
-The suite-level `packages.yml` file and all app and module configuration files 
+The suite-level _packages.yml_ file and all app and module configuration files 
 can declare additional R package dependencies required for an app to function, 
 as follows:
 
