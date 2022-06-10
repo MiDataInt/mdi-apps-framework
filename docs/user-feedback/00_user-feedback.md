@@ -1,7 +1,7 @@
 ---
 title: User Feedback
 has_children: true
-nav_order: 90
+nav_order: 70
 ---
 
 ## {{page.title}}

@@ -7,7 +7,7 @@ nav_order: 10
 
 ## {{page.title}}
 
-The MDI apps framework by default loads and attaches a 
+The MDI apps framework loads and attaches a 
 set of commonly used R packages that you may use
 when writing your app code, listed here:
 
@@ -29,8 +29,8 @@ packages:
     Bioconductor: null # or a list of packages as for "R"
 ```
 
-The **R** key lists general R packages, e.g., those on CRAN, 
-[**Bioconductor**](https://www.bioconductor.org/)
+The **R** key lists general R packages, e.g., those on CRAN.
+[Bioconductor](https://www.bioconductor.org/)
 is self-evident. 
 
 It is not harmful to re-declare R packages already listed elsewhere, 
