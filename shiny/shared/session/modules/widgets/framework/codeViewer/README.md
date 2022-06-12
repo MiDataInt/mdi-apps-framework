@@ -44,6 +44,8 @@ where:
 - **parentId** = the id of the module loading the widget
 - **codeFile** = a string, reactive, or function with no arguments that returns a code file path
 
+{% include figure.html file="developer-tools/code-viewer-file.png" border=true %}
+
 ### General purpose code viewer
 
 The more extensive code viewer provides an embedded
@@ -68,6 +70,8 @@ where:
 - **id** = the id of the widget
 - **parentId** = the id of the module loading the widget
 - **showApp** = if TRUE, also show root-level app scripts
+
+{% include figure.html file="developer-tools/code-viewer-tree.png" border=true %}
 
 ### Additional references
 

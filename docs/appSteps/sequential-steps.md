@@ -13,6 +13,8 @@ if it depends on user inputs from the previous step.
 A structured portion of an appStep's configuration and module return
 values enforce this sequential dependency. 
 
+{% include figure.html file="app-steps/sequential.png" border=true %}
+
 ### App step dependency chains
 
 MDI apps use appStep type declarations to create a dependency 

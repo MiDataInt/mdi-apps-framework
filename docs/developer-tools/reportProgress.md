@@ -12,6 +12,8 @@ scope provides feedback in the
 server's command terminal in local and remote modes about the
 actions being executed.  
 
+{% include figure.html file="developer-tools/server-log.png" %}
+
 ### reportProgress function for production logging
 
 The `reportProgress()` function creates the running

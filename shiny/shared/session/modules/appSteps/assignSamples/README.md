@@ -23,6 +23,8 @@ The assignSamples UI allows users to:
 - save multiple distinct samples sets from the same data sources
 - edit previously saved samples sets when necessary, e.g., to remove bad samples
 
+{% include figure.html file="app-steps/assign-samples.png" border=true %}
+
 For more detailed information, see:
 
 - [mdi-apps-framework : assignSamples](https://github.com/MiDataInt/mdi-apps-framework/tree/main/shiny/shared/session/modules/appSteps/assignSamples)
