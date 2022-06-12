@@ -44,8 +44,6 @@ of the page where the auto-saved bookmark will
 take you back to the same app step and state, but
 now having reloaded the framework and all appStep modules.
 
-{% include figure.html file="developer-tools/auto-save-bookmark.png" border=true %}
-
 This feature is always available in all apps
 but is most useful to developers, which is
 why it is not advertised to users in a more obvious way.

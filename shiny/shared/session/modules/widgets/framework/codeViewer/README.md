@@ -25,6 +25,8 @@ with auto-resourcing on file save.
 The first code viewer provides access to a specific file via
 a popup modal (only module-specific code is shown).
 
+{% include figure.html file="developer-tools/code-viewer-file.png" border=true %}
+
 ```r
 # <moduleName>_ui.R
 codeViewerModalUI(id)
@@ -44,13 +46,13 @@ where:
 - **parentId** = the id of the module loading the widget
 - **codeFile** = a string, reactive, or function with no arguments that returns a code file path
 
-{% include figure.html file="developer-tools/code-viewer-file.png" border=true %}
-
 ### General purpose code viewer
 
 The more extensive code viewer provides an embedded
 panel with a file tree and viewer/editor pane
  (only module-specific code is shown).
+
+{% include figure.html file="developer-tools/code-viewer-tree.png" border=true %}
 
 ```r
 # <moduleName>_ui.R
@@ -70,8 +72,6 @@ where:
 - **id** = the id of the widget
 - **parentId** = the id of the module loading the widget
 - **showApp** = if TRUE, also show root-level app scripts
-
-{% include figure.html file="developer-tools/code-viewer-tree.png" border=true %}
 
 ### Additional references
 

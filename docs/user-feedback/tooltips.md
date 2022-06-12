@@ -81,3 +81,4 @@ mdiTooltipUI(
     ns('mySelectInput'), 
     'information about the data to be selected'
 )
+```

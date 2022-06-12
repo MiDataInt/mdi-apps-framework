@@ -11,7 +11,7 @@ The **dataSourceTable** widget creates a table that
 allows users to select one or more data sources, i.e.,
 uploaded data packages. 
 
-{% include figure.html file="data-selectors/data-source.png" %}
+{% include figure.html file="data-selectors/data-source.png" border=true %}
 
 It is most useful for apps 
 that do not have samples, or

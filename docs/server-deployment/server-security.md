@@ -21,7 +21,7 @@ are accessed via an SSH port tunnel and again
 not publicly accessible.
 
 The following definitions apply to the two related
-but distinct concepts is server security:
+but distinct concepts in server security:
 - **authentication** - establishing who a user is
 - **authorization** - determining what a user is allowed to do
 
@@ -32,7 +32,7 @@ a user logs in with a third party identity provider who
 provides verifying information to the MDI server. Most people
 will be familiar with this kind of login.
 
-{% include figure.html file="server-deployment/oauth2.png" border=true %}
+{% include figure.html file="server-deployment/oauth2.png" border=true width="600px" %}
 
 At present, the apps framework supports two identity providers:
 [Globus](https://www.globus.org/)
@@ -102,7 +102,7 @@ mechanism nevertheless prevents most people from
 loading your MDI framework and apps and provides the opportunity
 to authorize resources based on the access key.
 
-{% include figure.html file="server-deployment/keys.png" border=true %}
+{% include figure.html file="server-deployment/keys.png" border=true width="600px" %}
 
 The following example shows how to enable access keys on your
 public MDI server:
