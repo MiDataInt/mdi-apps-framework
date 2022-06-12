@@ -14,6 +14,8 @@ browser (the client machine), using the R Shiny
 the web server (the server machine), using the 
 [R shinyFiles package](https://cran.r-project.org/web/packages/shinyFiles/index.html).
 
+{% include figure.html file="server-deployment/shinyFiles.png" border=true width="600px" %}
+
 This section describes the shinyFiles approach,
 which is especially useful to give users access to 
 files on a remote or public server without having to 

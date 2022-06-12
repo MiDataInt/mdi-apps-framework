@@ -14,6 +14,8 @@ to select a Sample Set. A button then allows them
 to open a modal popup with a grid of checkboxes to
 select all or just a subset of the samples in the set.
 
+{% include figure.html file="data-selectors/sample-selector.png" border=true %}
+
 The dual approach give users maximum flexibility in
 constructing a specific analysis. An overall experimental
 design can be laid out with `assignSamples` and 

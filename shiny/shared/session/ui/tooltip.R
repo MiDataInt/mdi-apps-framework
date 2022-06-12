@@ -10,7 +10,7 @@
 
 # standardize tooltip appearance
 mdiTooltipOptions <- list(
-    delay = 200, 
+    delay = 200, # shinyBS::bsTooltip no longer seems to honor this 
     animation = TRUE
 )
 toolTipLineWidth <- 35
@@ -49,11 +49,17 @@ mdiTooltip <- function(ns, id, title, placement = "top", ui = FALSE){
         else addTooltip(session, ns(id), title, placement, options = mdiTooltipOptions)
 }
 
-# multiple tooltops, e.g., called by a module server function
+# multiple tooltips, e.g., called by a module server function
 # takes a list of tooltips, each as character(id, title, [placement])
 mdiTooltips <- function(ns, tooltips, ui = FALSE){
     for(tooltip in tooltips){
         placement <- if(is.na(tooltip[3])) "top" else tooltip[3]
         mdiTooltip(ns, tooltip[1], tooltip[2], placement, ui)
     }
+}
+
+# a single tooltip placed from a UI function
+mdiTooltipUI <- function(id, title, placement = "top"){
+    # title <- paginateTooltip(title)
+    bsTooltip(id, title, placement, options = mdiTooltipOptions)
 }

@@ -12,7 +12,7 @@ scope provides feedback in the
 server's command terminal in local and remote modes about the
 actions being executed.  
 
-{% include figure.html file="developer-tools/server-log.png" %}
+{% include figure.html file="developer-tools/server-log.png" width="400px" %}
 
 ### reportProgress function for production logging
 

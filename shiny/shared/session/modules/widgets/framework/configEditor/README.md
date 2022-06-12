@@ -16,6 +16,8 @@ One part of this is that users can update the configuration
 of the local server in-app using the gear icon in the top
 menu bar, which can be clicked to expose a file editor.
 
+{% include figure.html file="server-deployment/config-editor.png" border=true %}
+
 The feature is only active in single-user modes - you wouldn't
 want users changing the configuration of a shared public server.
 

@@ -20,7 +20,7 @@ Clicking the link allows a developer
 to re-`source()` many of the session scripts used
 by an app without reloading the web page.
 
-{% include figure.html file="developer-tools/refresh-icon.png" border=true %}
+{% include figure.html file="developer-tools/refresh-icon.png" width="250px" %}
 
 Not all scripts can be re-loaded in this fashion.
 A complete description is beyond the scope here,

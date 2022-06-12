@@ -15,12 +15,12 @@ We help achieve this through a YAML-based
 "settings" module, whose resulting gear/cog icon can be attached to 
 an appStep page or to any box or widget in your UI. 
 
-{% include figure.html file="settings/settings-icon.png" border=true %}
+{% include figure.html file="settings/settings-icon.png" border=true width="400px" %}
 
 When clicked, the icon opens a modal popup revealing structured option inputs.
 Users quickly become accustomed to looking under that icon for context-relevant options.
 
-{% include figure.html file="settings/settings-dialog.png" border=true %}
+{% include figure.html file="settings/settings-dialog.png" border=true width="400px" %}
 
 Disadvantages are a small delay to being
 able to edit options and that the values in force are not always

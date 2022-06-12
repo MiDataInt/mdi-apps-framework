@@ -32,6 +32,8 @@ a user logs in with a third party identity provider who
 provides verifying information to the MDI server. Most people
 will be familiar with this kind of login.
 
+{% include figure.html file="server-deployment/oauth2.png" border=true %}
+
 At present, the apps framework supports two identity providers:
 [Globus](https://www.globus.org/)
 and
@@ -99,6 +101,8 @@ learns an access key will also be able to use the site, but the
 mechanism nevertheless prevents most people from 
 loading your MDI framework and apps and provides the opportunity
 to authorize resources based on the access key.
+
+{% include figure.html file="server-deployment/keys.png" border=true %}
 
 The following example shows how to enable access keys on your
 public MDI server:

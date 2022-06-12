@@ -9,7 +9,11 @@ nav_order: 10
 
 The **dataSourceTable** widget creates a table that
 allows users to select one or more data sources, i.e.,
-uploaded data packages. It is most useful for apps 
+uploaded data packages. 
+
+{% include figure.html file="data-selectors/data-source.png" %}
+
+It is most useful for apps 
 that do not have samples, or
 if your app can assume (and verify) a specific structure for the 
 samples in a given data package.

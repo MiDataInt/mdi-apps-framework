@@ -13,7 +13,7 @@ if it depends on user inputs from the previous step.
 A structured portion of an appStep's configuration and module return
 values enforce this sequential dependency. 
 
-{% include figure.html file="app-steps/sequential.png" border=true %}
+{% include figure.html file="app-steps/sequential.png" border=true width="500px" %}
 
 ### App step dependency chains
 

@@ -12,6 +12,8 @@ with users. The MDI apps framework provides a wrapper
 around the R Shiny `showModal` utility for a consistent experience
 for the developer and user.
 
+{% include figure.html file="settings/settings-dialog.png" border=true width="400px" %}
+
 The wrapper is implemented in a single function called
 `showUserDialog`. The following code block shows the basic call structure.
 

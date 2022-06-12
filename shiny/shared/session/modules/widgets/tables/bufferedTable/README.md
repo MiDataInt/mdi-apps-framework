@@ -15,6 +15,8 @@ package, itself a wrapper of the well-developed
 These tools are tried and true - you don't need to fuss
 to quickly make a well-formatted table.
 
+{% include figure.html file="display-widgets/buffered-table.png" border=true %}
+
 The MDI widget makes it even easier to render tables well
 and avoids pitfalls that can sometimes lead to undesirable
 behavior.
