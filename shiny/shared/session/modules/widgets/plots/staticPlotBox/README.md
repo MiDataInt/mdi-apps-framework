@@ -14,6 +14,8 @@ It allows users to explore display
 properties like plot size, point size, and legend placement, 
 in order to create predictable image files.
 
+{% include figure.html file="display-widgets/static-plot-box.png" border=true %}
+
 On screen, plots fill a single shinydashboard `box()`. The on-screen 
 scale can therefore be bigger or smaller than the final reproduction size, 
 but plots are nearly always legible and usable for data exploration.

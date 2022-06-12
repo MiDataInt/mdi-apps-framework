@@ -10,16 +10,21 @@ nav_order: 20
 Sometimes you will wish to put context-dependent help
 on specific UI items using the common **tooltip** mechanism.
 The MDI apps framework provides a wrapper around the 
-[R tippy package](https://cran.r-project.org/web/packages/tippy/index.html) 
-for server functions to use to add tooltips to UI elements 
-by id.
+[shinyBS package](https://cran.r-project.org/web/packages/shinyBS/index.html) 
+for apps to use to add standardized tooltips to UI elements by id.
+
+{% include figure.html file="user-feedback/tooltip.png" border=true %}
+
+TODO: aspects of tooltip utilization seem erratic and may have changed in
+recent versions of shinyBS; tooltip.R may require attention. 
+
+### Adding tooltips from server functions
 
 The following code block shows the basic call structures that can be used
 anywhere within a module server script:
 
 ```r
 # <moduleName>_server.R
-ns <- NS(id)
 mdiTooltip( # a single tooltip
     ns, 
     id, 
@@ -46,11 +51,34 @@ for example:
 
 ```r
 # <moduleName>_server.R
-ns <- NS(id)
 mdiTooltip( # a single tooltip
     ns, 
     id = 'mySelectInput', 
     title = 'information about the data to be selected', 
     placement = "bottom"
+)
+```
+
+### Adding tooltips from UI functions
+
+The following code block shows the basic call structure that can be used
+anywhere within a module UI script:
+
+```r
+# <moduleName>_ui.R
+mdiTooltipUI(
+    ns(id), 
+    title, 
+    placement = "top"
+)
+```
+
+for example:
+
+```r
+# <moduleName>_ui.R
+mdiTooltipUI(
+    ns('mySelectInput'), 
+    'information about the data to be selected'
 )
 ```

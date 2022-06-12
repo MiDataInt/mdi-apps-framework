@@ -19,6 +19,8 @@ which is especially useful to give users access to
 files on a remote or public server without having to 
 transfer them to a desktop or laptop.
 
+{% include figure.html file="server-deployment/shinyFiles.png" border=true width="600px" %}
+
 Notice that in local mode the client and server run
 on the same computers, so the two methods read the same
 file system. It can still be useful to use 

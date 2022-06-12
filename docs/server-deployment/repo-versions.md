@@ -16,6 +16,8 @@ displays the current versions of all relevant code,
 including the app, the tool suite, and the apps framework.
 It further puts the version into all saved bookmarks.
 
+{% include figure.html file="server-deployment/versions.png" border=true %}
+
 ### TODO: Pending feature enhancements
 
 A pending development will allow users to change

@@ -250,7 +250,7 @@ table i.fa.fa-times-circle {
 /*  ------------------------------------------------------------------------
     tooltip style
     ------------------------------------------------------------------------*/
-.tooltip.top .tooltip-inner{
+/* .tooltip.top .tooltip-inner{
     max-width: 500px;
     width: auto;
     padding: 3px 8px;
@@ -259,7 +259,7 @@ table i.fa.fa-times-circle {
     color: #001222;
     border: 1px solid black;
     text-align: center;
-}
+} */
 
 /*  ------------------------------------------------------------------------
     DT data tables

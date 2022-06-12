@@ -16,6 +16,8 @@ It allows users to:
 - provide human-readable names for any samples in manifestFiles
 - examine high-level summaries of the data in their packages
 
+{% include figure.html file="app-steps/source-file-upload.png" border=true %}
+
 For more detailed information, see:
 
 - [mdi-apps-framework : sourceFileUpload](https://github.com/MiDataInt/mdi-apps-framework/tree/main/shiny/shared/session/modules/appSteps/sourceFileUpload)

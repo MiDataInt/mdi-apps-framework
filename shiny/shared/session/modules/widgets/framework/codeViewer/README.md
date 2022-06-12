@@ -25,6 +25,8 @@ with auto-resourcing on file save.
 The first code viewer provides access to a specific file via
 a popup modal (only module-specific code is shown).
 
+{% include figure.html file="developer-tools/code-viewer-file.png" border=true %}
+
 ```r
 # <moduleName>_ui.R
 codeViewerModalUI(id)
@@ -49,6 +51,8 @@ where:
 The more extensive code viewer provides an embedded
 panel with a file tree and viewer/editor pane
  (only module-specific code is shown).
+
+{% include figure.html file="developer-tools/code-viewer-tree.png" border=true %}
 
 ```r
 # <moduleName>_ui.R

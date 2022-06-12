@@ -12,6 +12,8 @@ on the left sidebar. This reproducible organization
 makes it easy for users to understand how to use your app in
 an organized fashion. 
 
+{% include figure.html file="app-steps/app-step-bookmarks.png" border=true width="150px" %}
+
 App steps can be obligatorily sequential, but don't have to be.
 Even for non-sequential activities, tab-based organization
 is helpful and simplifying.

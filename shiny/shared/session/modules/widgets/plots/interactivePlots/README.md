@@ -14,6 +14,8 @@ that display interactive data plots generated with the
 "Interactive" means that user can select data points, adjust
 axis limits, and more, in their browser.
 
+{% include figure.html file="display-widgets/interactive-plots.png" border=true width="450px" %}
+
 Interactive plots are a feature of many well-designed
 apps, but aren't always required or the best tool. 
 If WYSIWYG ("what you see is what you get") images 

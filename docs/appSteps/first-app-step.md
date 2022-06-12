@@ -15,6 +15,8 @@ for users to upload multiple data-packages for:
 - renaming samples
 - performing comparative data analyses
 
+{% include figure.html file="app-steps/source-file-upload.png" border=true %}
+
 However, some apps may wish to enforce the analysis of only
 a single data package per encounter. Such apps should instead
 write their own custom appStep module to be used as the first app step.

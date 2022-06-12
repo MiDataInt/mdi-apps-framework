@@ -13,6 +13,8 @@ than the approaches used by R Shiny, where an **MDI bookmark** is
 a JSON-formatted text file with extension '.mdi' that carries comprehensive information
 on the state of an app to allow it to be seamlessly reloaded.
 
+{% include figure.html file="app-steps/app-step-bookmarks.png" border=true width="150px" %}
+
 Bookmarking is implemented
 at the level of the appStep, i.e., each appStep module is responsible
 for declaring and acting on its bookmark contents. This is accomplished
@@ -93,3 +95,5 @@ supports two additional features:
 
 - **quick launch** to the most recent state using the "auto saved" entry on the launch page
 - **page reloading** by clicking the top-left page label ("MDI" by default)
+
+{% include figure.html file="developer-tools/auto-save-bookmark.png" border=true %}

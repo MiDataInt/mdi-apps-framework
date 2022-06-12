@@ -10,6 +10,8 @@ nav_order: 20
 The **sampleSet** widget provides a single input to select
 a sample set and returns the samples assigned to that set.
 
+{% include figure.html file="data-selectors/sample-set.png" border=true %}
+
 ### sampleSetUI options
 
 The `sampleSetUI` function does not take any arguments other than 'id'.
