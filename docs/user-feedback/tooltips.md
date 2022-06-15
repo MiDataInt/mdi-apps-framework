@@ -7,44 +7,41 @@ nav_order: 20
 
 ## {{page.title}}
 
-Sometimes you will wish to put context-dependent help
+Sometimes it is beneficial to put context-dependent help
 on specific UI items using the common **tooltip** mechanism.
-The MDI apps framework provides a wrapper around the 
+The MDI apps framework provides wrappers around the 
 [shinyBS package](https://cran.r-project.org/web/packages/shinyBS/index.html) 
-for apps to use to add standardized tooltips to UI elements by id.
+for adding standardized tooltips to UI elements by id.
 
 {% include figure.html file="user-feedback/tooltip.png" border=true %}
 
-TODO: aspects of tooltip utilization seem erratic and may have changed in
-recent versions of shinyBS; tooltip.R may require attention. 
-
 ### Adding tooltips from server functions
 
-The following code block shows the basic call structures that can be used
+The following code block shows the call structures that can be used
 anywhere within a module server script:
 
 ```r
 # <moduleName>_server.R
 mdiTooltip( # a single tooltip
-    ns, 
+    session, 
     id, 
     title, 
     placement = "top", 
     ui = FALSE
 )
 mdiTooltips( # multiple tooltips added at once
-    ns, 
+    session, 
     tooltips, 
     ui = FALSE
 )
 ```
 
 where: 
-- **ns** = the namespace function of the calling environment
+- **session** = the session object of the calling module
 - **id** = the id of the UI element that the tooltip is attached to
 - **title** = the tooltip text
 - **placement** = where to put the text relative to the element
-- **ui** = caller is adding a tooltip as part of a renderUI expression
+- **ui** = caller is adding a tooltip from within a renderUI expression
 - **tooltips** = a list of tooltips, each as character(id, title, [placement])
 
 for example:
@@ -52,16 +49,16 @@ for example:
 ```r
 # <moduleName>_server.R
 mdiTooltip( # a single tooltip
-    ns, 
-    id = 'mySelectInput', 
-    title = 'information about the data to be selected', 
+    session, 
+    id = 'elementId', 
+    title = 'Important information about the element', 
     placement = "bottom"
 )
 ```
 
 ### Adding tooltips from UI functions
 
-The following code block shows the basic call structure that can be used
+The following code block shows the call structure that can be used
 anywhere within a module UI script:
 
 ```r
@@ -77,8 +74,49 @@ for example:
 
 ```r
 # <moduleName>_ui.R
+ns <- NS(id)
 mdiTooltipUI(
-    ns('mySelectInput'), 
-    'information about the data to be selected'
+    ns('elementId'), 
+    'Important information about the element'
+)
+```
+
+### Adding help icon (?) tooltips to Shiny inputs
+
+A known limitation is that `mdiTooltip()` does not
+work to place tooltips on Shiny inputs, e.g., `selectInput()`. Thankfully, 
+that is rarely a good idea as you do not want popups to appear
+every time a user interacts with an input, only when they want help.
+
+Instead, the apps framework provides the `addInputHelp()` function
+to add typical **?** icons to an input's label whose sole purpose is to provide 
+context-dependent help.
+
+{% include figure.html file="user-feedback/addInputHelp.png" border=true %}
+
+The call structure is:
+
+```r
+# <moduleName>_server.R
+addInputHelp(
+    session, 
+    id, 
+    title
+)
+```
+
+where: 
+- **session** = the session object of the calling module
+- **id** = the id of the Shiny input that the tooltip is attached to
+- **title** = the tooltip text
+
+for example:
+
+```r
+# <moduleName>_server.R
+addInputHelp(
+    session, 
+    id = 'selectInputId', 
+    title = 'Information about the data to be selected'
 )
 ```

@@ -16,7 +16,7 @@ dashReplacement <- "DASH"
 # add tooltips
 #----------------------------------------------------------------------
 mdiTooltips(
-    ns, 
+    session, 
     list(
         c("setName", "Give this configuration set a short, useful name.")
     )
@@ -375,7 +375,7 @@ getOptionInput <- function(value, option){
     tags$span(
         class = if(option$required) "" else "pr-optional-input",
         x,
-        mdiTooltip(ns, helpId, option$description, placement = "top", ui = TRUE),
+        mdiTooltip(session, helpId, option$description, placement = "top", ui = TRUE),
         # if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
     )
 }

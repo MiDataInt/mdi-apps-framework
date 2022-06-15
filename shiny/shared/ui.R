@@ -115,7 +115,6 @@ getLaunchPage <- function(cookie, restricted = FALSE){
         # body content, i.e., panels associated with each dashboard option
         dashboardBody(
             useShinyjs(), # enable shinyjs
-            bsTooltip("mdi-external-link", ""), # enable shinyBS:addTooltip
             HTML(paste0("<input type=hidden id='sessionNonce' value='",
                         setSessionKeyNonce(cookie$sessionKey), "' />")),
             tabItems(firsttTabItem)

@@ -13,6 +13,12 @@ createJobFileServer <- function(id, parentId){
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
+# initialize tooltips
+#----------------------------------------------------------------------
+addInputHelp(session, 'suite', 'Select a tool suite')
+addInputHelp(session, 'pipeline', 'Select a pipeline from the tool suite for which to create and excecute a job file')
+
+#----------------------------------------------------------------------
 # initialize installed pipelines
 #----------------------------------------------------------------------
 pipelineSuiteDirs <- getPipelineSuiteDirs()
@@ -40,8 +46,8 @@ observeEvent(input$suite, {
 #----------------------------------------------------------------------
 output$createJobFileUI <- renderUI({ # dynamically colored button for job file saving
     req(input$pipeline)
-    serverSaveFileButtonUI(parentNS("createJobFile"), "Create New", input$pipeline, ".yml",
-                           buttonType = "default")
+    id <- parentNS("createJobFile") 
+    serverSaveFileButtonUI(id, "Create New", input$pipeline, ".yml", buttonType = "default")
 })
 serverSaveFileButtonServer("createJobFile", input, session, "yml", 
                            default_type = 'job_default', saveFn = createJobFile)
