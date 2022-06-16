@@ -16,7 +16,7 @@ getPipelineOptionsTable <- function(pipeline){
 }
 
 #----------------------------------------------------------------------
-# use 'mdi <pipeline> optionsTable' to determine the default values for a pipeline, 
+# use 'mdi <pipeline> template --all-options' to determine the default values for a pipeline, 
 # _without_ considering a folder environment, returned as parsed job yml
 # thus, these values are determined purely by the developer's pipeline.yml
 #----------------------------------------------------------------------

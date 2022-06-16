@@ -63,9 +63,14 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
         style = "display: none;", # server.R selects the proper content to show
         includeMarkdown( uiLaunchHeader ),
         uiOutput('mainFileInputUI'),
-        if(serverEnv$IS_WINDOWS) ""  
-        else includeMarkdown( file.path('static/launch-page-stage1.md') ), # OS dependent
-             includeMarkdown( file.path('static/launch-page-stage2.md') ), # always present
+        if(serverEnv$IS_WINDOWS || # fail conditions that suppress Pipeline Runner
+           serverEnv$IS_LOCAL || 
+           is.null(serverConfig$pipeline_runner) ||         
+           (is.logical(serverConfig$pipeline_runner) && !serverConfig$pipeline_runner) ||
+           (is.character(serverConfig$pipeline_runner) && serverConfig$pipeline_runner != "auto") ||
+           (is.character(serverConfig$pipeline_runner) && serverEnv$IS_SERVER)) ""  
+        else includeMarkdown( file.path('static/launch-page-stage1.md') ),
+        includeMarkdown( file.path('static/launch-page-stage2.md') ), # app loading always supporting
         uiOutput('bookmarkHistoryList')
     ),
     tags$div( # server busy page

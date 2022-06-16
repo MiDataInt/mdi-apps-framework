@@ -194,20 +194,20 @@ observeEvent(input$inspect, {
 # dry run job submission buttons
 #----------------------------------------------------------------------
 observeEvent(input$submit, {
-    runJobManagerCommand('submit')
+    runJobManagerCommand('submit', force = TRUE)
 })
 observeEvent(input$extend, {
-    runJobManagerCommand('extend')
+    runJobManagerCommand('extend', force = TRUE)
 })
 
 #----------------------------------------------------------------------
 # status history rollback and purging
 #----------------------------------------------------------------------
 # observeEvent(input$rollback, {
-#     runJobManagerCommand('rollback', force = TRUE)
+#     runJobManagerCommand('rollback', force = TRUE) 
 # })
 # observeEvent(input$purge, {
-#     runJobManagerCommand('purge', force = TRUE)
+#     runJobManagerCommand('purge', force = TRUE) 
 # })
 
 #----------------------------------------------------------------------
@@ -281,10 +281,10 @@ observeEvent(input$execute, { # act on the execute button click
     command <- 'execute'
     startSpinner(session, command)
     args <- args[args != "--dry-run"]
-    # data <- runMdiCommand(args)
-    # if(!data$success) return( setOutputData(command, args, data) )
-    # data$success <- isMdiSuccess(data$results)
-    # if(!data$success) return( setOutputData(command, args, data) )
+    data <- runMdiCommand(args)
+    if(!data$success) return( setOutputData(command, args, data) )
+    data$success <- isMdiSuccess(data$results)
+    if(!data$success) return( setOutputData(command, args, data) )
     setOutputData(NULL, NULL, NULL)
     invalidateStatusTable( invalidateStatusTable() + 1 )
 })
