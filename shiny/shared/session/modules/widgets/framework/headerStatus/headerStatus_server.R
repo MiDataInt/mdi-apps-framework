@@ -11,7 +11,9 @@ headerStatusServer <- function(id) {
         
 # output text
 output$userDisplayName <- renderText({ 
-    headerStatusData$userDisplayName 
+    name <- headerStatusData$userDisplayName
+    domain <- serverEnv$MDI_REMOTE_DOMAIN
+    if(is.null(domain)) name else paste(name, domain, sep="@")
 })
 output$dataDir <- renderText({ 
     req(headerStatusData$userDisplayName)

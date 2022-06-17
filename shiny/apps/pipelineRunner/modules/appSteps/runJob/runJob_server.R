@@ -10,6 +10,7 @@ runJobServer <- function(id, options, bookmark, locks) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'runJob' # for reportProgress tracing
 #----------------------------------------------------------------------
+if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
 
 #----------------------------------------------------------------------
 # initialize module

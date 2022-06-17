@@ -110,6 +110,15 @@ loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
 
+# determine whether the Pipeline Runner app is allowed
+serverEnv$SUPPRESS_PIPELINE_RUNNER <- 
+    serverEnv$IS_WINDOWS || # fail conditions that suppress Pipeline Runner
+    serverEnv$IS_LOCAL || 
+    is.null(serverConfig$pipeline_runner) ||         
+    (is.logical(serverConfig$pipeline_runner) && !serverConfig$pipeline_runner) ||
+    (is.character(serverConfig$pipeline_runner) && serverConfig$pipeline_runner != "auto") ||
+    (is.character(serverConfig$pipeline_runner) && serverEnv$IS_SERVER) 
+
 # create the persistent cache object shared across all sessions
 # not for sensitive data in public server modes, etc.
 assign("persistentCache", list(), .GlobalEnv)

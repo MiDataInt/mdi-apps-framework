@@ -4,6 +4,7 @@
 
 # module ui function
 runJobUI <- function(id, options) {
+    if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return("")
 
     # initialize namespace
     ns <- NS(id)

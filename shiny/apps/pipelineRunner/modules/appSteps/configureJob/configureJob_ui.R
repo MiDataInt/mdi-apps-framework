@@ -4,6 +4,9 @@
 
 # module ui function
 configureJobUI <- function(id, options) {
+    if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(
+        tags$h4("The Pipeline Runner app is disabled on this web server.")
+    )
 
     # initialize namespace
     ns <- NS(id)
@@ -20,7 +23,7 @@ configureJobUI <- function(id, options) {
     padding <- "padding: 0 0 10px 10px;"
     standardSequentialTabItem(
         # HTML(paste( options$longLabel, stepSettingsUI(ns('settings')) )),
-        options$longLabel,
+        HTML(paste( options$longLabel, documentationLinkUI(ns('documentation')) )),
         leaderText,
 
         # enable merging additional sample sources into this one

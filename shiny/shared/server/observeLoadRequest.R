@@ -109,7 +109,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     
     # enable bookmarking; appStep modules react to bookmark
     bookmark <<- bookmarkingServer('saveBookmarkFile', list(), locks) # in the app sidebar
-    if(serverEnv$IS_SERVER) serverBookmark <<- bookmarkingServer('saveBookmarkToServer', list(shinyFiles = TRUE), locks)
+    if(!serverEnv$IS_LOCAL) serverBookmark <<- bookmarkingServer('saveBookmarkToServer', list(shinyFiles = TRUE), locks)
 
     # load servers for all required appStep modules, plus finally run appServer
     # because this is the slowest initialization step, defer many until after first UI load

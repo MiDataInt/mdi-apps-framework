@@ -10,10 +10,11 @@ configureJobServer <- function(id, options, bookmark, locks){
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'configureJob' # for reportProgress tracing
 #----------------------------------------------------------------------
+if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
 dashReplacement <- "DASH"
 
 #----------------------------------------------------------------------
-# add tooltips
+# add tooltips and documentation
 #----------------------------------------------------------------------
 mdiTooltips(
     session, 
@@ -21,6 +22,7 @@ mdiTooltips(
         c("setName", "Give this configuration set a short, useful name.")
     )
 )
+documentationLinkServer('documentation', "MiDataInt", "mdi-apps-framework", "docs/server-deployment/00_server-deployment", NULL)
 
 #----------------------------------------------------------------------
 # initialize job configuration load, create and select elements at top of page
