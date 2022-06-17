@@ -90,6 +90,9 @@ body, html {
     margin: 5px 10px;
     text-align: right;
 }
+.header-status-dir-icon {
+    cursor: pointer;
+}
 
 /*  ------------------------------------------------------------------------
     shinydashboard sidebar styles
@@ -407,6 +410,12 @@ table.dataTable tbody tr.selected {
     color: #555;
     margin-left: 5px;
     cursor: pointer;
+}
+.pr-add-icon {
+    margin-left: 3px;
+    font-size: 1rem;
+    color:#555;
+    vertical-align: middle;
 }
 .pr-link-disable {
     color:#aaaaaa !important;

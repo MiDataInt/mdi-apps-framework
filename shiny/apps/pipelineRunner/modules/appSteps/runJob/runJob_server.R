@@ -21,6 +21,7 @@ jobFiles <- selectJobFilesServer(
     parentId = id,
     parentOptions = options
 )
+addPRDocs('docs', "docs/server-deployment/pipeline-runner", "execute-and-monitor-jobs")
 
 #----------------------------------------------------------------------
 # conditional display elements dependent on an active job file selection

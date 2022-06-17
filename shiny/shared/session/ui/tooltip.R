@@ -72,10 +72,10 @@ addInputHelp <- function(session, id, title){
     helpId  <- paste(id, 'help',  sep = "-")
     insertUI(
         paste0('#', session$ns(labelId)),
-        where = "afterEnd",
+        where = "beforeEnd",
         tags$span(id = session$ns(helpId), class = "mdi-help-icon", icon("question")),
         immediate = TRUE,
         session = session
     )
-    mdiTooltip(session, helpId, title)
+    mdiTooltip(session, labelId, title)
 }

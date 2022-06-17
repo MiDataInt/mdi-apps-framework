@@ -22,7 +22,7 @@ mdiTooltips(
         c("setName", "Give this configuration set a short, useful name.")
     )
 )
-documentationLinkServer('documentation', "MiDataInt", "mdi-apps-framework", "docs/server-deployment/00_server-deployment", NULL)
+addPRDocs('docs', "docs/server-deployment/pipeline-runner", "create-and-edit-job-configuration-files")
 
 #----------------------------------------------------------------------
 # initialize job configuration load, create and select elements at top of page
@@ -77,7 +77,7 @@ loadSourceFile <- function(incomingFile, ...){
     startSpinner(session, 'loadSourceFile')    
     reportProgress(incomingFile$path, module)
     yml <- read_yaml(incomingFile$path)
-    pipeline <- basename(yml$pipeline)
+    pipeline <- strsplit(basename(yml$pipeline), ":")[[1]][1]
     suite <- dirname(yml$pipeline)
     jobFiles$list[[incomingFile$path]] <- list(
         name = basename(incomingFile$path),
@@ -345,9 +345,11 @@ getOptionInput <- function(value, option){
     id <- paste(unlist(prInputNames), collapse = "_")
     id <- paste('prInput', id, sep = "__")
     id <- gsub("-", dashReplacement, id)
-    requiredId <- paste(id, "required", sep = "_")
     helpId <- paste(id, "help", sep = "_")
+    requiredId <- paste(id, "required", sep = "_")
     dirId <- paste(id, "directory", sep = "_")
+    dirId_1 <- paste(dirId, "1", sep = "_") # the first directory in an array updated by shinyFiles widget
+    addId <- paste(id, "add", sep = "_")
     isDirectory <- endsWith(prInputNames$option, "-dir") || grepl("-dir-", prInputNames$option)
     placeholder <- paste(
         if(isDirectory) "directory" else option$type, 
@@ -355,29 +357,32 @@ getOptionInput <- function(value, option){
     )
     label <- HTML(paste(
         prInputNames$option, 
+        tags$span(id = ns(helpId), class = "mdi-help-icon", icon("question")),        
         if(option$required) tags$span(id = ns(requiredId), class = "pr-required-icon", icon("asterisk")) else "",
-        tags$span(id = ns(helpId), class = "pr-help-icon", icon("question")),
         if(isDirectory) {
-            serverChooseDirIconServer(dirId, input, session, chooseFn = handleChooseDir)
-            serverChooseDirIconUI(ns(dirId)) 
-        } else ""
+            serverChooseDirIconServer(dirId_1, input, session, chooseFn = handleChooseDir)
+            serverChooseDirIconUI(ns(dirId_1)) 
+        } else "",
+        tags$a(id = ns(addId), class = "pr-add-icon", icon("plus"))
     ))
 
     # custom inputs with a single tracking function/event
     x <- if(option$type == "boolean") 
-        customCheckboxGroupInput(ns(id), label, value, onchangeFn = "prCheckboxOnChange")
+        mdiCheckboxGroupInput(ns(id), label, value, onchangeFn = "prCheckboxOnChange")
     else if(option$type == "integer") 
-        customIntegerInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
+        mdiIntegerInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
     else if(option$type == "double") 
-        customDoubleInput(id, label, value, placeholder, onchangeFn = "prInputOnChange")
+        mdiDoubleInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
     else   
-        customTextInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
-    
+        mdiTextInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
+
     # input with tooltip
     tags$span(
         class = if(option$required) "" else "pr-optional-input",
         x,
-        mdiTooltip(session, helpId, option$description, placement = "top", ui = TRUE),
+        mdiTooltip(session, helpId, option$description, ui = TRUE),
+        # if(isDirectory) mdiTooltip(session, dirId_1, "click to search for a directory", ui = TRUE),
+        # mdiTooltip(session, addId, "add an array item", ui = TRUE),
         # if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
     )
 }
@@ -396,16 +401,17 @@ getOptionTag <- function(option, values = NULL, options = NULL){
     )
 }
 getOptionFamilyTags <- function(optionFamilyName, values, options, optionFamilyNames){
-    prInputNames$family <<- optionFamilyName
     options <- options[optionFamily == optionFamilyName]
+    optionFamilyName_no_suite <- rev(strsplit(optionFamilyName, '//')[[1]])[1] # remove any external suite name
+    prInputNames$family <<- optionFamilyName_no_suite    
     border <- if(optionFamilyName != rev(optionFamilyNames)[1]) "border-bottom: 1px solid #ddd;" else ""
     fluidRow(
         style = paste("padding: 0 0 10px 0;", border),
         class = if(sum(options$required) == 0) "pr-optional-input" else "",
         lapply(seq_len(nrow(options)), function(i){
             tagList(
-                if(i %% 2 == 1) getOptionTag(if(i == 1) optionFamilyName else "") else "",
-                getOptionTag(options[i, optionName], values[[optionFamilyName]], options)
+                if(i %% 2 == 1) getOptionTag(if(i == 1) optionFamilyName_no_suite else "") else "",
+                getOptionTag(options[i, optionName], values[[optionFamilyName_no_suite]], options)
             )
         })
     )
@@ -422,7 +428,7 @@ output$optionFamilies <- renderUI({
     tabActions <- if(length(config$actions) > 1) input$actions else config$actions
     tabs <- lapply(tabActions, function(actionName){
         prInputNames$action <<- actionName
-        options <- config$options[action == actionName][order(universal, optionFamily, order, -required)]
+        options <- config$options[action == actionName][order(universal, familyOrder, order, -required, optionName)]
         optionFamilyNames <- options[, unique(optionFamily)]
         tabPanel(
             actionName, 
@@ -470,13 +476,14 @@ observeEvent(input$prInput, {
     action <- x[1]
     family <- x[2]
     option <- x[3]
+    index  <- as.integer(x[4]) # the array index value
 
     # commit the new value to workingValues
     new <- input$prInput$value
-    workingValues[[path]][[action]][[family]][[option]] <- new
+    workingValues[[path]][[action]][[family]][[option]][index] <- new
 
     # record whether the new value is different than the _disk_ value
-    old <- jobFileValues[[path]][[action]][[family]][[option]]
+    old <- jobFileValues[[path]][[action]][[family]][[option]][index]
     if(input$prInput$logical){ # since sometimes the disk value is 0/1
         new <- as.logical(new)
         old <- as.logical(old)
@@ -493,6 +500,7 @@ observeEvent(input$prInput, {
 observe({
     bm <- getModuleBookmark(id, module, bookmark, locks)
     req(bm)
+    updateTextInput(session, 'analysisSetName', value = bm$outcomes$analysisSetName)
     jobFiles$list <- bm$outcomes$jobFiles
 })
 

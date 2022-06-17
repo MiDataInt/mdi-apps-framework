@@ -9,31 +9,32 @@ documentationLinkServer <- function(
     id, 
     gitUser = "MiDataInt", # the GitHub user or organization
     repository = NULL, # the base repository name, if not "midataint.github.io"
-    docPath, # the relative file path to the documentation target, e.g., "path/to/docs.html" (".html" is optional)
-    anchor = NULL # the name of an optional heading anchor on the page, e.g., "first-heading"
+    docPath = NULL, # the relative file path to the documentation target, e.g., "path/to/docs.html" (".html" is optional)
+    anchor = NULL, # the name of an optional heading anchor on the page, e.g., "first-heading"
+    url = NULL # use this web address, ignoring all other values
 ) {
     moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
 #----------------------------------------------------------------------
 
 # show a tooltip on the icon
-mdiTooltip(session, "show", "Open the documentation page")
+mdiTooltip(session, "show", "Open the documentation")
 
-# parse the docs url and open in a new browser tab
-gitUser <- tolower(gitUser)
+# parse the docs url
+if(is.null(url)) url <- paste0(
+    "https://", 
+    tolower(as.character(gitUser)), 
+    ".github.io/", 
+    if(is.null(repository)) "" else paste0(repository, "/"),
+    docPath, 
+    if(is.null(anchor)) "" else paste0("#", anchor)
+)
+
+# act on use icon click
 observeEvent(input$show, {
-    url <- paste0(
-        "https://", 
-        gitUser, 
-        ".github.io/", 
-        if(is.null(repository)) "" else paste0(repository, "/"),
-        docPath, 
-        if(is.null(anchor)) "" else paste0("#", anchor)
-    )
     js <- paste0(
         "window.open('", 
         url,
-        "', '_mdi_docs');"
+        "', 'mdi_docs');"
     )
     runjs(js)
 })

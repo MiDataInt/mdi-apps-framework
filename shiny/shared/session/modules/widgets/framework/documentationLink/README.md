@@ -7,11 +7,11 @@ nav_order: 40
 
 ## {{page.title}}
 
-It is very useful to have links to the appropriate complete
+It is very useful to have links to the appropriate
 documentation for your app within the app itself.
 The `documentationLink` widget puts such a link on your page.
 
-## documentationLinkUI arguments
+### documentationLinkUI arguments
 
 The `documentationLinkUI` function takes a single argument in addition to 'id':
 
@@ -22,7 +22,7 @@ documentationLinkUI <- function(id, isHeader = TRUE)
 
 where setting `isHeader` to TRUE reduces the icon size in a manner
 appropriate for inclusion in a step header or box title,
-which is the most appropriate placement in many widgets.
+the most appropriate placement in many widgets.
 
 For example:
 
@@ -31,7 +31,7 @@ For example:
 documentationLinkUI(ns(id))
 ```
 
-## documentationLinkServer arguments
+### documentationLinkServer arguments
 
 The `documentationLinkServer` function takes various arguments in addition to 'id':
 
@@ -41,8 +41,9 @@ documentationLinkServer <- function(
     id, 
     gitUser = "MiDataInt",
     repository = NULL,
-    docPath,
-    anchor = NULL
+    docPath = NULL,
+    anchor = NULL,
+    url = NULL
 )
 ```
 
@@ -53,12 +54,13 @@ where:
 - **repository** = the base repository name, if not "midataint.github.io"
 - **docPath** = the relative file path to the documentation target, e.g., "path/to/docs.html" (".html" is optional)
 - **anchor** = the name of an optional heading anchor on the page, e.g., "first-heading"
+- **url** = use this web address, ignoring all values for `gitUser`, `repository`, `docPath`, and `anchor`
 
 For example:
 
 ```r
 # module_server.R
-documentationLinkServer(id, "wilsontelab", "svx-mdi-tools", "path/to/README.html")
+documentationLinkServer(id, "wilsontelab", "svx-mdi-tools", "path/to/README")
 ```
 
 ### Step-level documentation

@@ -16,7 +16,7 @@ settingsUI <- function(id, isHeader = TRUE)
 
 where setting `isHeader` to TRUE reduces the icon size in a manner
 appropriate for inclusion in a step header or box title,
-which is the most appropriate placement in many widgets.
+the most appropriate placement in many widgets.
 
 ## settingsServer arguments
 

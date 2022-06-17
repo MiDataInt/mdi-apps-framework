@@ -25,7 +25,7 @@ runJobUI <- function(id, options) {
 
     # return the UI contents
     standardSequentialTabItem(
-        options$longLabel,
+        HTML(paste( options$longLabel, documentationLinkUI(ns('docs')) )),
         leaderText,
         selectJobFilesUI(ns('jobFiles')), 
         span(

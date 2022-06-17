@@ -4,9 +4,19 @@
 
 # overview of app shown at first user encounter or when the app name is clicked
 getAppOverviewHtml <- function(nAppSteps){
+    docs <- app$config$documentationUrl
     list(tabItem(tabName = "appName",
         tags$div(class = "text-block",
-            tags$h3(paste(app$config$name, "overview")),
+            tags$h3(HTML(paste(
+                app$config$name, 
+                "overview",
+                if(is.null(docs)) "" else tags$a(
+                    href = docs, 
+                    style = "font-size: 0.7em; margin-left: 10px;", 
+                    target = "mdi_docs",
+                    icon('book')
+                )
+            ))),
             includeMarkdown(file.path(app$DIRECTORY, 'overview.md')),
             tagList(
                 tags$h3("Analysis steps"),

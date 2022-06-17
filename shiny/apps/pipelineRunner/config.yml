@@ -6,6 +6,7 @@
 name: "Pipeline Runner"
 description: "Set parameters and execute a Stage 1 data analysis pipeline"
 version: 0.0.1
+documentationUrl: https://wilsonte-umich.github.io/mdi-apps-framework/docs/server-deployment/pipeline-runner.html
 
 #----------------------------------------------------------------------
 # project data file type(s) associated with this app

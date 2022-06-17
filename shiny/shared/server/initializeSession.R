@@ -47,7 +47,7 @@ sourceExternalScript <- function(suite, shinyPath){
     if(file.exists(file)) source(file)
 }
 loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
-    if(!dir.exists(dir)) return(NULL)
+    if(is.null(dir) || !dir.exists(dir)) return(NULL)
     scripts <- list.files(dir, '\\.R$', full.names = TRUE, recursive = recursive)
     if(is.null(local)) local <- sessionEnv
     for(script in scripts) {

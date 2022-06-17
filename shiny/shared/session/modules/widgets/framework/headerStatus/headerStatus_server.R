@@ -34,19 +34,43 @@ observeEvent(input$logout, {
     runjs(paste0("window.location.href = '", build_url(url), "'"))
 })
 
-# allow user to change the dataDir; necessarily reloads the page
-observeEvent(input$changeDataDir, {
-    req(headerStatusData$userDisplayName)
-    req(headerStatusData$dataDir)
-    # showUserDialog(
-    #     "Change the data directory",
-    #     tags$p("Navigate to the folder where apps should store/look for data and analyses and click OK."),
-    #     tags$p("Please note: changing the data directory will reset the web page - you may want to Save Your Work first."), # nolint
-    #     tags$p("pending"), # TODO: need a file browser popup, with OK/Cancel
-    #     callback = function(parentInput) NULL,
-    #     size = "m"
-    # ) 
-})
+# allow user to change the dataDir; necessarily restarts the server
+serverChooseDirIconServer(
+    'changeDataDir', 
+    input, 
+    session,
+    chooseFn = function(dir){
+        req(dir)
+        dir <- dir$dir
+        req(dir)
+        if(dir == serverEnv$DATA_DIR) return(NULL)
+        if(endsWith(dir, 'mdi/data')){
+            showUserDialog(
+                "Server Restart Required", 
+                tags$p(paste("The server must restart to change data directories.")),
+                tags$p("Please reload a fresh web page to start a new session once the server restarts."),
+                callback = function(...) {
+                    serverEnv$DATA_DIR <<- dir
+                    Sys.setenv(MDI_FORCE_RESTART = "TRUE")
+                    stopApp()
+                },
+                size = "s", 
+                type = 'okOnlyCallback', 
+                footer = NULL, 
+                easyClose = TRUE
+            )            
+        } else {
+            showUserDialog(
+                "Invalid Data Directory", 
+                tags$p("Invalid data directory."), 
+                tags$p(dir),
+                tags$p("Please select a subdirectory named 'data' within a valid MDI installation directory."), 
+                type = 'okOnly',
+                size = "m"
+            )
+        }
+    }
+)
 
 #----------------------------------------------------------------------
 # return nothing

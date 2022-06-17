@@ -23,7 +23,7 @@ configureJobUI <- function(id, options) {
     padding <- "padding: 0 0 10px 10px;"
     standardSequentialTabItem(
         # HTML(paste( options$longLabel, stepSettingsUI(ns('settings')) )),
-        HTML(paste( options$longLabel, documentationLinkUI(ns('documentation')) )),
+        HTML(paste( options$longLabel, documentationLinkUI(ns('docs')) )),
         leaderText,
 
         # enable merging additional sample sources into this one

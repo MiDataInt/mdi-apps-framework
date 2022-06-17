@@ -31,7 +31,13 @@ headerStatusUI <- function(id) {
             tags$br(),
             textOutput(ns('dataDir'), inline = TRUE), # TODO: enable changing dataDir within running app
             HTML("&nbsp;&nbsp;"),
-            actionLink(ns('changeDataDir'), label = NULL, icon = icon("folder"))
+            if(!serverEnv$IS_SERVER && !is.null(serverConfig$paths)){
+                serverChooseDirIconUI(
+                    ns("changeDataDir"), 
+                    class = "header-status-dir-icon", 
+                    title = "Select an MDI data directory (must end with 'mdi/data')"
+                )                
+            } else ""
         )}
     )
 }
