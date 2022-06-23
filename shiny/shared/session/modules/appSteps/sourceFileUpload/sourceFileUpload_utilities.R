@@ -13,25 +13,32 @@
 getSampleNames <- function(rows = TRUE, sampleIds = NULL, sampleUniqueIds = NULL, makeUnique = FALSE){
     stepName <- appStepNamesByType$upload
     samples <- app[[stepName]]$outcomes$samples()
-    if(!is.null(sampleIds)) rows <- samples$Sample_ID %in% sampleIds
-    if(!is.null(sampleUniqueIds)) rows <- getSampleUniqueIds() %in% sampleUniqueIds
     samples <- samples[, c('Project', 'Sample_ID', 'Description')]
     names <- app[[stepName]]$outcomes$sampleNames()
-    names <- apply(samples, 1, function(v){
-        key <- paste(v[1], v[2], sep = ":")
-        if(is.null(names[[key]])) v[3] else names[[key]]
+    x <- apply(samples, 1, function(v){     # get the user's assigned name, or description as a default
+        key <- paste(v[1], v[2], sep = ":") # at this point, working with all known samples
+        trimws(if(is.null(names[[key]])) v[3] else names[[key]])
     })
-    x <- if(makeUnique){
-        isDup <- duplicated(names) | rev(duplicated(rev(names)))
-        ifelse(isDup, paste(samples$Project, names, sep = ":"), names)[rows]
-    } else {
-        names[rows]    
+    if(makeUnique){ # prepend project if requested to try to make strings unique
+        isDup <- duplicated(x) | rev(duplicated(rev(x)))
+        x <- ifelse(isDup, paste(samples$Project, x, sep = ":"), x)
     }
-    if(!is.null(sampleIds)) {
-        names(x) <- samples[rows, 'Sample_ID'] # if samples requested by id, return a named vector
-        x <- x[sampleIds]
-    }
-    trimws(x) # remove leading and trailing whitespace for accurate matching later on
+    if(!is.null(sampleIds)) { # filter for specific samples, maintaining query order
+        y <- sapply(sampleIds, function(sampleId){
+            i <- which(samples$Sample_ID == sampleId)
+            switch(as.character(length(i)), "0" = "unknown sampleId", "1" = x[i], "ambiguous sampleId")
+        }) 
+        names(y) <-  sampleIds
+        y
+    } else if(!is.null(sampleUniqueIds)) {
+        sUIds <- getSampleUniqueIds()
+        y <- sapply(sampleUniqueIds, function(sampleUniqueId){
+            i <- which(sUIds == sampleUniqueId)
+            switch(as.character(length(i)), "0" = "unknown sampleUniqueId", "1" = x[i], "ambiguous sampleUniqueId")
+        }) 
+        names(y) <-  sampleUniqueIds
+        y
+    }  else x[rows]
 }
 getSampleName <- function(sample){ # sample is a one row of the samples() table we wish to match
     stepName <- appStepNamesByType$upload
