@@ -25,7 +25,9 @@ reloadAppScriptsServer <- function(id) {
 #----------------------------------------------------------------------
 # activate the config file editor in a modal popup
 #----------------------------------------------------------------------
+blur <- paste0("document.getElementById('", session$ns('reload'),"').blur();")
 observeEvent(input$reload, {
+    runjs(blur)
     startSpinner(session, "reloadAppScripts")
     loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
     loadAppScriptDirectory(app$sources$suiteSessionDir)

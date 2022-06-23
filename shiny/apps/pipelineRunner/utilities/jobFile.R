@@ -57,7 +57,7 @@ readDataYml <- function(jobFile){
     args <- c('valuesYaml', 'valuesYaml', jobFile$path)
     valuesYaml <- runMdiCommand(args)
     req(valuesYaml$success)
-    read_yaml(text = valuesYaml$results)
+    read_yaml(text = valuesYaml$results) # retains suite//option name format
 }
 
 #----------------------------------------------------------------------
@@ -75,16 +75,18 @@ readDataYml <- function(jobFile){
 # not those that reflect properties assigned by the job's environment.
 #----------------------------------------------------------------------
 writeDataYml <- function(jobFilePath, suite, pipeline, newValues, 
-                         actions = NULL, optionsTable = NULL, template = NULL){
+                         actions = NULL, optionsTable = NULL, template = NULL,
+                         allOptions = FALSE){
 
     # initialize yaml
     if(is.null(optionsTable)) optionsTable <- getPipelineOptionsTable(pipeline)
     if(is.null(template)) template <- getPipelineTemplate(pipeline)
-    if(is.null(actions)) actions <- template$execute
+    allActions <- template$execute    
+    if(is.null(actions)) actions <- allActions
     yml <- list(pipeline = file.path(suite, pipeline))
 
     # helper objects for parsing values
-    defaults <- getJobEnvironmentDefaults(dirname(jobFilePath), pipeline, actions)
+    defaults <- getJobEnvironmentDefaults(dirname(jobFilePath), pipeline, allActions)
     option_ <- NULL
     typeFn  <- NULL
     REQUIRED <- "_REQUIRED_"
@@ -97,7 +99,7 @@ writeDataYml <- function(jobFilePath, suite, pipeline, newValues,
     }
 
     # build the nested action options, requested options only
-    for(actionName in actions){
+    for(actionName in allActions){ # print options for all actions, even if not executed to protect future interests
         action_ <- template[[actionName]]
         for(family in names(action_)){
             family_ <- action_[[family]]
@@ -119,7 +121,8 @@ writeDataYml <- function(jobFilePath, suite, pipeline, newValues,
                 newValue <- adjustValue(newValue)
 
                 # commit informative values per rules listed above
-                if(!identical(default, newValue) || # the value was not the one provided by the environment
+                if(allOptions || 
+                   !identical(default, newValue) || # the value was not the one provided by the environment
                    (option_$required && newValue == REQUIRED)){ # a missing value is required (and was not provided by the environment) # nolint
                     if(is.null(yml[[actionName]])) yml[[actionName]] <- list()
                     if(is.null(yml[[actionName]][[family]])) yml[[actionName]][[family]] <- list()

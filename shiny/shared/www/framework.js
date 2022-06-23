@@ -95,10 +95,10 @@ Shiny.addCustomMessageHandler('toggleSpinner', function(visibility) {
 /*  ------------------------------------------------------------------------
     handle Ace Code Editor
     ------------------------------------------------------------------------*/
-let initializeAceCodeEditor = function(editorId, readOnly){
+let initializeAceCodeEditor = function(editorId, readOnly, mode = "r"){
     window[editorId] = ace.edit(editorId);    
     window[editorId].setTheme("ace/theme/crimson_editor");
-    window[editorId].session.setMode("ace/mode/r");
+    window[editorId].session.setMode("ace/mode/" + mode);
     window[editorId].setReadOnly(readOnly);
 }
 Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
@@ -140,6 +140,16 @@ let handleActionClick = function(parentId, instanceId, confirmMessage){
 /*  ------------------------------------------------------------------------
     Pipeline Runner, functions to simplify the number of required input observers in R
     ------------------------------------------------------------------------*/
+Shiny.addCustomMessageHandler('initializePRCodeEditor', function(editorId) {
+    initializeAceCodeEditor(editorId, false, "yaml");
+    window[editorId].session.on('change', function(delta) {
+        Shiny.setInputValue(
+            editorId + "-contents", 
+            {contents: window[editorId].getValue()}, 
+            {priority: "event"}
+        );
+    });
+});
 let prInputOnChange = function(x){
     let parts = x.id.split('__');
     Shiny.setInputValue(

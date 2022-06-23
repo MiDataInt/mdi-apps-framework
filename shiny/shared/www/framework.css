@@ -72,16 +72,14 @@ body, html {
 .skin-blue .main-header .navbar .sidebar-toggle, 
 .header-large-icon {
     color: #F2D384;
+    float: left;
+    line-height: 50px;
+    padding: 0 10px;     
 }
 .skin-blue .main-header .navbar .sidebar-toggle:hover, 
 .header-large-icon:hover {
     color: #F2D384 !important;
     background: #ffffff11;
-}
-.header-large-icon {
-    float: left;
-    line-height: 50px;
-    padding: 0 10px;    
 }
 .header-status {
     float: right;
@@ -273,6 +271,11 @@ table i.fa.fa-times-circle {
     margin-left: 2px;     
     font-size: 1rem; 
     color: #007700;    
+}
+.mdi-dir-icon {
+    font-size: 1rem;
+    margin-left: 5px;
+    cursor: pointer;
 }
 
 /*  ------------------------------------------------------------------------

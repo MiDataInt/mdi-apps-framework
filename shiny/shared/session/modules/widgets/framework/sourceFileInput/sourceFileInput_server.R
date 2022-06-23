@@ -7,7 +7,12 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-sourceFileInputServer <- function(id, appName = NULL, externalSuffixes = c()) {
+sourceFileInputServer <- function(
+    id, 
+    appName = NULL, 
+    externalSuffixes = c(), 
+    createButtonServer = NULL
+) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id)
         module <- ns('sourceFileInput') # for reportProgress tracing
@@ -30,7 +35,7 @@ allowedFileTypes <- getAllowedSourceFileTypes(appName, externalSuffixes)
 isLaunchPage <- is.null(appName)
 
 #----------------------------------------------------------------------
-# enable the local file upload input
+# enable the local file upload input (working from right to left...)
 #----------------------------------------------------------------------
 handleIncomingSourceFile <- function(file, suppressUnlink = FALSE){
     reportProgress('handleIncomingSourceFile')
@@ -68,11 +73,17 @@ if(exposeServerFiles()) {
 }
 
 #----------------------------------------------------------------------
+# as needed, enable the create new button with actions defined by caller
+#----------------------------------------------------------------------
+createButtonData <- if(!is.null(createButtonServer)) createButtonServer('createNew', id) else NULL
+
+#----------------------------------------------------------------------
 # return reactive with path to incoming file
 #----------------------------------------------------------------------
 list(
     file = incomingFile,
-    sendFeedback = sendFeedback
+    sendFeedback = sendFeedback,
+    createButtonData = createButtonData
 )
 
 #----------------------------------------------------------------------

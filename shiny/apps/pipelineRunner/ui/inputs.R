@@ -23,6 +23,7 @@ mdiBoxInputHtml <- function(id, type, Type, step, value, placeholder, onchangeFn
 mdiBoxInput <- function(id, label, value = NULL, 
                             placeholder = "", onchangeFn = NULL,
                             type, Type, step = NULL, indexed = TRUE){
+    if(is.null(value) || length(value) == 0) value <- ""
     tags$div(
         class = "form-group shiny-input-container",
         # create one label ...
@@ -71,6 +72,7 @@ mdiCheckboxGroupInputDiv <- function(id, onchangeFn, checked){
     )    
 }
 mdiCheckboxGroupInput <- function(id, label, value = 0, onchangeFn = NULL, indexed = TRUE){
+    if(is.null(value) || length(value) == 0) value <- FALSE
     labelId <- paste(id, "label", sep = "-")
     checked <- if(as.logical(as.integer(value))) 'checked="checked"' else ""
     tags$div(

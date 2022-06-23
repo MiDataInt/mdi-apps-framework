@@ -14,7 +14,7 @@ if(!restricted){
 
     # user status, dataDir and logout in navbar / page header
     if(serverEnv$IS_DEVELOPER){
-        insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
+        insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
                 id <- 'reloadAppScripts'
                 reloadAppScriptsServer(id)
@@ -23,7 +23,7 @@ if(!restricted){
         )
     }    
     if(checkConfigEditPermission()){
-        insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
+        insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
                 id <- 'configEditorLink'
                 configEditorLinkServer(id)
@@ -31,7 +31,14 @@ if(!restricted){
             }
         )
     }
-
+    insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
+        ui = {
+            id <- 'stage2-apps-docs'
+            documentationLinkServer(id, url = "https://midataint.github.io/docs/usage/#stage-2-apps")
+            documentationLinkUI(id, isAppHeader = TRUE)
+        }
+    )
+    
     # user status, dataDir and logout in navbar / page header
     insertUI(".navbar-static-top",  where = "beforeEnd", immediate = TRUE,   
         ui = {

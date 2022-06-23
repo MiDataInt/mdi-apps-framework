@@ -7,16 +7,8 @@
 #----------------------------------------------------------------------
 createJobFileServer <- function(id, parentId){
     moduleServer(id, function(input, output, session){
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNS <- function(id_) paste(parentId, id, id_, sep = "-")
         module <- 'createJobFile' # for reportProgress tracing
 #----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
-# initialize tooltips
-#----------------------------------------------------------------------
-addInputHelp(session, 'suite', 'Select a tool suite')
-addInputHelp(session, 'pipeline', 'Select a pipeline from the tool suite for which to create and excecute a job file')
 
 #----------------------------------------------------------------------
 # initialize installed pipelines
@@ -24,13 +16,54 @@ addInputHelp(session, 'pipeline', 'Select a pipeline from the tool suite for whi
 pipelineSuiteDirs <- getPipelineSuiteDirs()
 pipelineDirs      <- getPipelineDirs(pipelineSuiteDirs)
 pipelineSuites    <- getInstalledPipelineSuites(pipelineDirs)
-newFile <- reactiveVal(NULL)
 
 #----------------------------------------------------------------------
-# cascade update to the suite and pipeline selectInputs
+# prepare the button dialog
 #----------------------------------------------------------------------
-isolate({ # input$suite is the full path of the suite directory
-    updateSelectInput('suite', choices = pipelineSuites, session = session)
+lastCreated <- list() # buffer for remembering the state of the create dialog
+createDirId <- 'directory'
+getCreateDirId <- "getDirectory"
+createDirLabel <- HTML(paste('Server Directory', {
+    serverChooseDirIconServer(getCreateDirId, input, session, chooseFn = function(dir) {
+        updateTextInput(session, createDirId, value = dir$dir)
+    })
+    serverChooseDirIconUI(session$ns(getCreateDirId), class = "mdi-dir-icon")
+}))
+
+#----------------------------------------------------------------------
+# show the button dialog
+#----------------------------------------------------------------------
+observeEvent(input$button, {
+    activeSuite <- if(is.null(lastCreated$suite)) pipelineSuites[1] else lastCreated$suite
+    showUserDialog(
+        "Create a New Job File", 
+        fluidRow(
+            column(width = 6,
+                selectInput(session$ns('suite'), 'Tool Suite', choices = pipelineSuites, 
+                            selected = activeSuite, width = "100%")
+            ),
+            column(width = 6,
+                selectInput(session$ns('pipeline'), 'Pipeline', choices = getInstalledPipelines(activeSuite), 
+                            selected = lastCreated$pipeline, width = "100%")
+            )      
+        ),
+        textInput(session$ns(createDirId), createDirLabel, value = lastCreated$directory, width = "100%"),
+        fluidRow(
+            style = "margin-top: 1em;",
+            column(width = 6,
+                textInput(session$ns('file'), 'File Name', value = lastCreated$file)
+            ),
+            column(width = 2, ".yml", style = "margin-top: 2em; padding-left: 0;"),
+            column(width = 4, style = "margin-top: 1.25em;", 
+                   checkboxInput(session$ns("allOptions"), "Include All Options", value = lastCreated$allOptions))  
+        ),
+        size = "m",
+        type = 'custom',
+        footer = tagList( 
+            modalButton("Cancel"),
+            bsButton(session$ns("save"), "Save Job File", style = "success")
+        )
+    )
 })
 suiteName <- reactive({ # suiteName() is just the name of the suite, e.g., mdi-johndoe-apps
     req(input$suite)
@@ -38,34 +71,75 @@ suiteName <- reactive({ # suiteName() is just the name of the suite, e.g., mdi-j
 })
 observeEvent(input$suite, {
     req(input$suite)
-    updateSelectInput('pipeline', choices = getInstalledPipelines(input$suite), session = session)
+    updateSelectInput(session, 'pipeline', choices = getInstalledPipelines(input$suite))
 })
 
 #----------------------------------------------------------------------
-# cascade update to the create new file button
+# monitor and validate the state of the inputs
 #----------------------------------------------------------------------
-output$createJobFileUI <- renderUI({ # dynamically colored button for job file saving
-    req(input$pipeline)
-    id <- parentNS("createJobFile") 
-    serverSaveFileButtonUI(id, "Create New", input$pipeline, ".yml", buttonType = "default")
+buttonStates <- list(
+    dirNotFound = list(
+        label = "Directory Not Found",
+        style = "danger"
+    ),
+    ready = list(
+        label = "Save Job File",
+        style = "success"
+    ),
+    overwrite = list(
+        label = "Overwrite Job File",
+        style = "warning"   
+    )
+)
+observeEvent({
+    input$directory
+    input$file
+}, {
+    dirNotFound <- !is.null(input$directory) && input$directory != "" && !dir.exists(input$directory)
+    disabled <- is.null(input$directory) || input$directory == "" || !dir.exists(input$directory) || 
+                is.null(input$file)      || input$file == ""
+    state <- if(dirNotFound){
+        buttonStates$dirNotFound
+    } else if(disabled){
+        buttonStates$ready
+    } else {
+        if(file.exists(jobFilePath())) buttonStates$overwrite else buttonStates$ready
+    }
+    updateButton(session, session$ns("save"), 
+                 label = state$label, style = state$style, disabled = disabled)
 })
-serverSaveFileButtonServer("createJobFile", input, session, "yml", 
-                           default_type = 'job_default', saveFn = createJobFile)
-createJobFile <- function(jobFilePath){
+
+#----------------------------------------------------------------------
+# react to Save button by creating a new job configuration file
+#----------------------------------------------------------------------
+jobFilePath <- reactive({
+    req(input$directory)
+    req(input$file)
+    file <- if(endsWith(input$file, ".yml")) input$file else paste0(input$file, ".yml")
+    file.path(input$directory, file)
+})
+newFile <- reactiveVal(list())
+observeEvent(input$save, {
+    removeModal()    
+    startSpinner(session, "save job file")
+    lastCreated <<- list(
+        suite = input$suite,
+        pipeline = input$pipeline,
+        directory = input$directory,
+        file = input$file,
+        allOptions = input$allOptions
+    )     
+    jobFilePath <- jobFilePath()
     defaults <- getJobEnvironmentDefaults(dirname(jobFilePath), input$pipeline)
-    writeDataYml(jobFilePath, suiteName(), input$pipeline, defaults)
+    writeDataYml(jobFilePath, suiteName(), input$pipeline, defaults, allOptions = input$allOptions)
+    stopSpinner(session, "save job file")
     newFile(list(path = jobFilePath))
-}
+})
 
 #----------------------------------------------------------------------
 # return value
 #----------------------------------------------------------------------
-list(
-    pipelineSuiteDirs = pipelineSuiteDirs, # all are static objects
-    pipelineDirs = pipelineDirs,
-    pipelineSuites = pipelineSuites,
-    file = newFile # reactive to signal a newly created file to add to a parent list
-)
+newFile
 
 #----------------------------------------------------------------------
 # END MODULE SERVER

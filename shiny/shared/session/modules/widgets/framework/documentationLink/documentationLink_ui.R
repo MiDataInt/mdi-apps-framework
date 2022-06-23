@@ -3,10 +3,19 @@
 #----------------------------------------------------------------------
 
 # module ui function
-documentationLinkUI <- function(id, isHeader = TRUE) {
+documentationLinkUI <- function(id, isHeader = TRUE, isAppHeader = FALSE) {
     ns <- NS(id)
-    span( 
-        style = if(isHeader) "font-size: 0.7em; margin-left: 10px;" else NULL,
-        actionLink(ns('show'), '', icon('book'))
+    if(isAppHeader) actionLink(
+        ns('show'), 
+        label = NULL, 
+        icon = icon("book"),
+        class = if(isHeader) "header-large-icon" else ""
+    ) else span( 
+        style = if(isHeader) "font-size: 0.7em; margin-left: 10px;" else "",
+        actionLink(
+            ns('show'), 
+            NULL, 
+            icon('book')
+        )
     )
 }
