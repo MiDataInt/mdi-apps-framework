@@ -2,10 +2,12 @@
 # convert input option values to job yml (for writing) and vice versa (for loading)
 #----------------------------------------------------------------------
 
+
 #----------------------------------------------------------------------
 # use 'mdi <pipeline> optionsTable' to recover comprehensive information about options
 # only developer's default values are present in the table, along with all option metadata
 #----------------------------------------------------------------------
+
 getPipelineOptionsTable <- function(pipeline){
     args <- c(pipeline, 'optionsTable')
     optionsTable <- runMdiCommand(args)
@@ -55,7 +57,15 @@ getJobEnvironmentDefaults <- function(dir, pipeline, actions = NULL){ # dir is t
 #----------------------------------------------------------------------
 readDataYml <- function(jobFile){
     args <- c('valuesYaml', 'valuesYaml', jobFile$path)
-    valuesYaml <- runMdiCommand(args)
+    valuesYaml <- runMdiCommand(args, suite = jobFile$suite, errorDialog = function(...) showUserDialog(
+        "Job File Load Error", 
+        tags$p("A fatal error occurred while attempting to load the following job file:"), 
+        tags$p(jobFile$path, style = "margin-left: 2em;"),
+        tags$p("Most likely there is a configuration error in the job file."), 
+        tags$p("See the server log output for additional debugging information."), 
+        size = "m", 
+        type = 'okOnly'
+    ))
     req(valuesYaml$success)
     read_yaml(text = valuesYaml$results) # retains suite//option name format
 }

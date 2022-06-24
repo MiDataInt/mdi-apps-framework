@@ -125,7 +125,7 @@ getOptionInput <- function(value, option){
         tags$a(id = ns(addId), class = "pr-add-icon", icon("plus"), 
                href = paste0("javascript:prAddToList('", addId, "')")),
         tags$a(id = ns(removeId), class = "pr-add-icon", icon("minus"), 
-               href = paste0("javascript:removeLastItem('", removeId, "')"))
+               href = paste0("javascript:prRemoveLastItem('", removeId, "')"))
     ))
 
     # custom inputs with a single tracking function/event
@@ -241,21 +241,60 @@ parsePrInput <- function(id, indexed = FALSE){
     d$option <- x[2]
     if(indexed) d$index <- as.integer(x[3])
     d$family <- prInputFamilyNames[[paste(d$action, d$option, sep = "_")]]
+    d$current <- state$working[[d$path]][[d$action]][[d$family]][[d$option]]
+    d$nItems <- length(d$current)
     d
+}
+getPrInputId <- function(id, index){
+    parts <- strsplit(id, '_')[[1]]
+    prefix <- paste(parts[1:(length(parts) - 1)], collapse = '_')
+    parts[length(parts)] <- index
+    id <- paste(parts, collapse = '_')
+    list(
+        prefix = prefix,
+        index = index,
+        id = id,
+        cssId = session$ns(paste0("prInput__", id))
+    )
+}
+setListPending <- function(x, prefix){
+    old <- state$disk[[x$path]][[x$action]][[x$family]][[x$option]]
+    new <- state$working[[x$path]][[x$action]][[x$family]][[x$option]]
+    maxI <- max(length(old), length(new)) 
+    for(i in seq_len(maxI)){
+        id <- paste(prefix, i, sep = "_")
+        new_ <- new[i]        
+        old_ <- old[i]
+        if(is.logical(old_)){
+            new_ <- as.logical(new_)
+            old_ <- as.logical(old_)
+        } else {
+            new_ <- as.character(new_)
+            old_ <- as.character(old_)
+        }
+        state$pending[[x$path]][[id]] <- if(identical(old_, new_)) NULL else 1
+    }
+    for(id in names(state$pending[[x$path]])){
+        if(!startsWith(id, paste0(prefix, "_"))) next
+        i <- as.integer(rev(strsplit(id, "_")[[1]])[1])
+        if(i > maxI) state$pending[[x$path]][[id]] <- NULL
+    }
 }
 observeEvent(input$prAddToList, {
     x <- parsePrInput(input$prAddToList)
-    current <- state$working[[x$path]][[x$action]][[x$family]][[x$option]]
-    state$working[[x$path]][[x$action]][[x$family]][[x$option]] <- c(current, NA)
-    reloadInputs( reloadInputs() + 1 )
+    state$working[[x$path]][[x$action]][[x$family]][[x$option]] <- c(x$current, x$current[x$nItems])
+    id    <- getPrInputId(input$prAddToList, x$nItems)
+    newId <- getPrInputId(input$prAddToList, x$nItems + 1)
+    session$sendCustomMessage("prDuplicateLastInput", list(id = id$cssId, newId = newId$cssId))
+    setListPending(x, id$prefix)
 })
-observeEvent(input$removeLastItem, {
-    x <- parsePrInput(input$removeLastItem)
-    current <- state$working[[x$path]][[x$action]][[x$family]][[x$option]]
-    nItems <- length(current)
-    if(nItems > 1){
-        state$working[[x$path]][[x$action]][[x$family]][[x$option]] <- current[1:(nItems - 1)]
-        reloadInputs( reloadInputs() + 1 )
+observeEvent(input$prRemoveLastItem, {
+    x <- parsePrInput(input$prRemoveLastItem)
+    if(x$nItems > 1){
+        state$working[[x$path]][[x$action]][[x$family]][[x$option]] <- x$current[1:(x$nItems - 1)]
+        id <- getPrInputId(input$prRemoveLastItem, x$nItems)
+        session$sendCustomMessage("prRemoveLastInput", id$cssId)
+        setListPending(x, id$prefix)
     }
 })
 

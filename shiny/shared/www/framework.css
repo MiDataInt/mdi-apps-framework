@@ -273,7 +273,7 @@ table i.fa.fa-times-circle {
     color: #007700;    
 }
 .mdi-dir-icon {
-    font-size: 1rem;
+    font-size: 1.25rem;
     margin-left: 8px;
     cursor: pointer;
 }
@@ -409,7 +409,7 @@ table.dataTable tbody tr.selected {
     color: #0174BB;    
 }
 .pr-dir-icon {
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: #555;
     margin-left: 6px;
     cursor: pointer;

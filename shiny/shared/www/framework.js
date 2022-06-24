@@ -150,7 +150,7 @@ Shiny.addCustomMessageHandler('initializePRCodeEditor', function(editorId) {
         );
     });
 });
-let prInputOnChange = function(x){
+let prInputOnChange = function(x){ // when any PR text input changes
     let parts = x.id.split('__');
     Shiny.setInputValue(
         parts[0], 
@@ -158,7 +158,7 @@ let prInputOnChange = function(x){
         {priority: "event"}
     );
 }
-let prCheckboxOnChange = function(x){
+let prCheckboxOnChange = function(x){ // when any PR checkbox changes
     let parts = x.name.split('__');
     Shiny.setInputValue(
         parts[0], 
@@ -166,7 +166,7 @@ let prCheckboxOnChange = function(x){
         {priority: "event"}
     );
 }
-let prAddToList = function(x){
+let prAddToList = function(x){ // react to the add/remove list action requests
     let parts = x.split('__');
     Shiny.setInputValue(
         "configure-inputEditor-prAddToList", 
@@ -174,11 +174,31 @@ let prAddToList = function(x){
         {priority: "event"}
     );
 }
-let removeLastItem = function(x){
+let prRemoveLastItem = function(x){ 
     let parts = x.split('__');
     Shiny.setInputValue(
-        "configure-inputEditor-removeLastItem", 
+        "configure-inputEditor-prRemoveLastItem", 
         parts[1], 
         {priority: "event"}
     );
 }
+Shiny.addCustomMessageHandler('prDuplicateLastInput', function(data) { // execute the add/remove list actions
+    let input = $('#' + data.id);
+    if(input.length === 0){ // checkboxes
+        input = $("input[name='" + data.id + "']");
+        let clone = input.clone().attr('name', data.newId);
+        clone.insertAfter(input.parent().parent()).wrap('<div class="checkbox"></div>').wrap('<label></label>');
+    } else { // text/number inputs
+        let attr = 'data-shinyjs-resettable-id';
+        input.clone().attr('id', data.newId).attr(attr, data.newId).insertAfter(input);
+    }
+});
+Shiny.addCustomMessageHandler('prRemoveLastInput', function(id) {
+    let input = $('#' + id);
+    if(input.length === 0){ // checkboxes
+        input = $("input[name='" + id + "']");
+        input.parent().parent().remove();
+    } else { // text/number inputs
+        input.remove();
+    } 
+});
