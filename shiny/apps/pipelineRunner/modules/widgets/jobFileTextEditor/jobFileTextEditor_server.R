@@ -25,8 +25,14 @@ output$editorFile <- renderText({
     req(activeJobFile())
     activeJobFile()$path
 })
+setEditorContents <- function(path){
+    isolate({ session$sendCustomMessage("setAceCodeContents", list(
+        editorId = editorId,
+        code = state$working[[path]]
+    )) })
+}
 
-#----------------------------------------------------------------------
+#---------------------------------------------------------------------
 # initialize the editor
 #----------------------------------------------------------------------
 observe({
@@ -47,25 +53,43 @@ observe({
         code <- gsub("\\r", "", code)
         state$disk[[path]] <- code
         state$working[[path]] <- code
-        state$pending[[path]] <- FALSE
+        state$pending[[path]] <- NULL
         stopSpinner(session, "loadJobContents")
     }
-    isolate({ session$sendCustomMessage("setAceCodeContents", list(
-        editorId = editorId,
-        code = state$working[[path]]
-    )) })
+    setEditorContents(path)
 })
 observeEvent(input[[editorContentsId]], {
     path <- activeJobFile()$path
     req(path)
     state$working[[path]] <- input[[editorContentsId]]$contents
-    state$pending[[path]] <- state$disk[[path]] != state$working[[path]] 
+    state$pending[[path]] <- state$disk[[path]] != state$working[[path]]
 })
 
 #----------------------------------------------------------------------
 # return value
 #----------------------------------------------------------------------
-state
+list(
+    state = state,
+    pending = function(path) {
+        if(is.null(state$pending[[path]])) FALSE else state$pending[[path]]
+    },
+    write = function(newPath, oldPath){
+        cat(state$working[[oldPath]], file = newPath)
+    },
+    save = function(path){
+        state$disk[[path]] <- state$working[[path]]
+        state$pending[[path]] <- NULL
+    },
+    saveAs = function(newPath, oldPath){
+        state$working[[oldPath]] <- state$disk[[oldPath]]
+        state$pending[[oldPath]] <- NULL
+    },
+    discard = function(path){
+        state$working[[path]] <- state$disk[[path]]
+        state$pending[[path]] <- NULL
+        setEditorContents(path)
+    }
+)
 
 #----------------------------------------------------------------------
 # END MODULE SERVER

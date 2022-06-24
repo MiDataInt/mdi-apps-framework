@@ -166,3 +166,19 @@ let prCheckboxOnChange = function(x){
         {priority: "event"}
     );
 }
+let prAddToList = function(x){
+    let parts = x.split('__');
+    Shiny.setInputValue(
+        "configure-inputEditor-prAddToList", 
+        parts[1], 
+        {priority: "event"}
+    );
+}
+let removeLastItem = function(x){
+    let parts = x.split('__');
+    Shiny.setInputValue(
+        "configure-inputEditor-removeLastItem", 
+        parts[1], 
+        {priority: "event"}
+    );
+}

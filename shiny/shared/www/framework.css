@@ -268,13 +268,13 @@ table i.fa.fa-times-circle {
     vertical-align: text-top;    
 }
 .mdi-help-icon { 
-    margin-left: 2px;     
+    margin-left: 4px;     
     font-size: 1rem; 
     color: #007700;    
 }
 .mdi-dir-icon {
     font-size: 1rem;
-    margin-left: 5px;
+    margin-left: 8px;
     cursor: pointer;
 }
 
@@ -398,7 +398,7 @@ table.dataTable tbody tr.selected {
     vertical-align: text-top;    
 }
 .pr-help-icon, .pr-required-icon { 
-    margin-left: 2px;      
+    margin-left: 6px;      
 }
 .pr-required-icon {
     font-size: 0.9rem; 
@@ -411,14 +411,15 @@ table.dataTable tbody tr.selected {
 .pr-dir-icon {
     font-size: 1rem;
     color: #555;
-    margin-left: 5px;
+    margin-left: 6px;
     cursor: pointer;
 }
 .pr-add-icon {
-    margin-left: 3px;
+    margin-left: 6px;
     font-size: 1rem;
     color:#555;
     vertical-align: middle;
+    cursor: pointer;
 }
 .pr-link-disable {
     color:#aaaaaa !important;

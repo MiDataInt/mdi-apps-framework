@@ -5,14 +5,17 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-jobFileInputEditorServer <- function(id, editMode, activeJobFile){
+jobFileInputEditorServer <- function(id, editMode, activeJobFile, reloadInputs){
     moduleServer(id, function(input, output, session){
         module <- 'jobFileInputEditor' # for reportProgress tracing
+        ns <- session$ns
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # initialize the editor
 #----------------------------------------------------------------------
+dashReplacement <- "DASH"
+jobFileType <- CONSTANTS$sourceFileTypes$jobFile
 state <- list(
     disk    = reactiveValues(), # the file contents present at the last load of the file, prior to save
     working = reactiveValues(), # the file contents updated with any user changes in script editor
@@ -37,6 +40,26 @@ pipelineConfig <- reactive({
         )
     }
     pipelineConfigs[[jobFile$pipeline]]
+})
+jobFileActions <- reactiveValues() 
+
+#----------------------------------------------------------------------
+# job file loading
+#----------------------------------------------------------------------
+observe({ 
+    req(isInputs())
+    jobFile <- activeJobFile()
+    req(jobFile)
+    path <- jobFile$path
+    if(is.null(state$disk[[path]])){
+        startSpinner(session, "loadJobFile")        
+        reportProgress(path, 'loading:')
+        d <- readDataYml(jobFile)
+        state$disk[[path]] <- d
+        state$working[[path]] <- d
+        state$pending[[path]] <- list()
+        stopSpinner(session, "loadJobFile")
+    }
 })
 
 #----------------------------------------------------------------------
@@ -85,6 +108,7 @@ getOptionInput <- function(value, option){
     dirId <- paste(id, "directory", sep = "_")
     dirId_1 <- paste(dirId, "1", sep = "_") # the first directory in an array updated by shinyFiles widget
     addId <- paste(id, "add", sep = "_")
+    removeId <- paste(id, "remove", sep = "_")
     isDirectory <- endsWith(prInputNames$option, "-dir") || grepl("-dir-", prInputNames$option)
     placeholder <- paste(
         if(isDirectory) "directory" else option$type, 
@@ -98,7 +122,10 @@ getOptionInput <- function(value, option){
             serverChooseDirIconServer(dirId_1, input, session, chooseFn = handleChooseDir)
             serverChooseDirIconUI(ns(dirId_1)) 
         } else "",
-        tags$a(id = ns(addId), class = "pr-add-icon", icon("plus"))
+        tags$a(id = ns(addId), class = "pr-add-icon", icon("plus"), 
+               href = paste0("javascript:prAddToList('", addId, "')")),
+        tags$a(id = ns(removeId), class = "pr-add-icon", icon("minus"), 
+               href = paste0("javascript:removeLastItem('", removeId, "')"))
     ))
 
     # custom inputs with a single tracking function/event
@@ -158,7 +185,7 @@ output$optionFamilies <- renderUI({
     req(config) 
     jobFile <- activeJobFile()
     req(jobFile)
-    values <- isolate({ workingValues[[jobFile$path]] })
+    values <- isolate({ state$working[[jobFile$path]] })
     req(values)
     reloadInputs()
     startSpinner(session, "output$optionFamilies")
@@ -182,7 +209,9 @@ output$optionFamilies <- renderUI({
     do.call(tabBox, tabs)
 })
 
+#----------------------------------------------------------------------
 # enable toggle for option visibility
+#----------------------------------------------------------------------
 requiredOnly <- reactiveVal(FALSE)
 observeEvent(requiredOnly(), { 
     reqOnly <- requiredOnly()
@@ -202,26 +231,47 @@ handleChooseDir <- function(x){
 }
 
 #----------------------------------------------------------------------
+# handle list item additions and contractions
+#----------------------------------------------------------------------
+parsePrInput <- function(id, indexed = FALSE){
+    d <- list(path = activeJobFile()$path)
+    x <- gsub(dashReplacement, "-", id)
+    x <- strsplit(x, "_")[[1]]
+    d$action <- x[1]
+    d$option <- x[2]
+    if(indexed) d$index <- as.integer(x[3])
+    d$family <- prInputFamilyNames[[paste(d$action, d$option, sep = "_")]]
+    d
+}
+observeEvent(input$prAddToList, {
+    x <- parsePrInput(input$prAddToList)
+    current <- state$working[[x$path]][[x$action]][[x$family]][[x$option]]
+    state$working[[x$path]][[x$action]][[x$family]][[x$option]] <- c(current, NA)
+    reloadInputs( reloadInputs() + 1 )
+})
+observeEvent(input$removeLastItem, {
+    x <- parsePrInput(input$removeLastItem)
+    current <- state$working[[x$path]][[x$action]][[x$family]][[x$option]]
+    nItems <- length(current)
+    if(nItems > 1){
+        state$working[[x$path]][[x$action]][[x$family]][[x$option]] <- current[1:(nItems - 1)]
+        reloadInputs( reloadInputs() + 1 )
+    }
+})
+
+#----------------------------------------------------------------------
 # watch job inputs for changing values with a single observer
 #----------------------------------------------------------------------
 observeEvent(input$prInput, {
-    req(editMode() == editModes$inputs)
+    req(isInputs())
 
-    # parse the changing value
-    path <- activeJobFile()$path    
-    x <- gsub(dashReplacement, "-", input$prInput$id)
-    x <- strsplit(x, "_")[[1]]
-    action <- x[1]
-    option <- x[2]
-    index  <- as.integer(x[3]) # the array index value    
-    family <- prInputFamilyNames[[paste(action, option, sep = "_")]]
-
-    # commit the new value to workingValues
+    # parse and commit the new value to workingValues
+    x <- parsePrInput(input$prInput$id, indexed = TRUE)
     new <- input$prInput$value
-    workingValues[[path]][[action]][[family]][[option]][index] <- new
+    state$working[[x$path]][[x$action]][[x$family]][[x$option]][x$index] <- new
 
     # record whether the new value is different than the _disk_ value
-    old <- jobFileValues[[path]][[action]][[family]][[option]][index]
+    old <- state$disk[[x$path]][[x$action]][[x$family]][[x$option]][x$index]
     if(input$prInput$logical){ # since sometimes the disk value is 0/1
         new <- as.logical(new)
         old <- as.logical(old)
@@ -229,67 +279,52 @@ observeEvent(input$prInput, {
         new <- as.character(new)
         old <- as.character(old)
     }
-    pendingValueChanges[[path]][[input$prInput$id]] <- if(identical(old, new)) NULL else 1
+    state$pending[[x$path]][[input$prInput$id]] <- if(identical(old, new)) NULL else 1
 })
-
-
-
-# #----------------------------------------------------------------------
-# # initialize the editor
-# #----------------------------------------------------------------------
-# editorId <- session$ns("editor")
-# editorContentsId <- "editor-contents"
-# editorIsInitialized <- FALSE
-# state <- list(
-#     disk    = reactiveValues(), # the file contents present at the last load of the file, prior to save
-#     working = reactiveValues(), # the file contents updated with any user changes in script editor
-#     pending = reactiveValues()  # whether each file has changes that need to be saved 
-# )
-# output$editorFile <- renderText({ 
-#     req(activeJobFile())
-#     activeJobFile()$path
-# })
-
-# #----------------------------------------------------------------------
-# # initialize the editor
-# #----------------------------------------------------------------------
-# observe({
-#     editMode <- editMode()
-#     req(editMode)
-#     req(editMode == "editor")
-#     if(!editorIsInitialized){
-#         session$sendCustomMessage("initializePRCodeEditor", editorId)
-#         editorIsInitialized <<- TRUE
-#     }
-#     activeJobFile <- activeJobFile()
-#     req(activeJobFile)
-#     path <- activeJobFile$path
-#     req(path)
-#     if(is.null(state$disk[[path]])){
-#         startSpinner(session, "loadJobContents")
-#         code <- loadResourceText(path)
-#         code <- gsub("\\r", "", code)
-#         state$disk[[path]] <- code
-#         state$working[[path]] <- code
-#         state$pending[[path]] <- FALSE
-#         stopSpinner(session, "loadJobContents")
-#     }
-#     isolate({ session$sendCustomMessage("setAceCodeContents", list(
-#         editorId = editorId,
-#         code = state$working[[path]]
-#     )) })
-# })
-# observeEvent(input[[editorContentsId]], {
-#     path <- activeJobFile()$path
-#     req(path)
-#     state$working[[path]] <- input[[editorContentsId]]$contents
-#     state$pending[[path]] <- state$disk[[path]] != state$working[[path]] 
-# })
 
 #----------------------------------------------------------------------
 # return value
 #----------------------------------------------------------------------
-state
+list(
+    state = state,
+    pending = function(path) {
+        if(is.null(input$actions) || 
+           is.null(jobFileActions[[path]]) || 
+           is.null(state$pending[[path]])) return(FALSE)
+        length(state$pending[[path]]) > 0 ||
+        !identical(
+            sort(input$actions),
+            sort(jobFileActions[[path]])
+        )   
+    },
+    write = function(newPath, oldPath){
+        jobFile <- activeJobFile()
+        config <- pipelineConfig()
+        writeDataYml(
+            newPath, 
+            jobFile$suite,
+            jobFile$pipeline, 
+            state$working[[oldPath]], # retains suite//option name format       
+            actions = input$actions, 
+            optionsTable = config$options,
+            template = config$template
+        )
+    },
+    save = function(path){
+        state$disk[[path]] <- state$working[[path]]
+        jobFileActions[[path]] <- input$actions 
+        state$pending[[path]] <- list()  
+    },
+    saveAs = function(newPath, oldPath){
+        state$working[[oldPath]] <- state$disk[[oldPath]]
+        state$pending[[oldPath]] <- list()
+    },
+    discard = function(path){
+        state$working[[path]] <- state$disk[[path]]
+        state$pending[[path]] <- list()
+        reloadInputs( reloadInputs() + 1 )
+    }
+)
 
 #----------------------------------------------------------------------
 # END MODULE SERVER
