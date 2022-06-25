@@ -35,7 +35,10 @@ setEditorContents <- function(path){
 #---------------------------------------------------------------------
 # initialize the editor
 #----------------------------------------------------------------------
-observe({
+observeEvent({
+    editMode()
+    activeJobFile()
+}, {
     editMode <- editMode()
     req(editMode)
     req(editMode == "editor")

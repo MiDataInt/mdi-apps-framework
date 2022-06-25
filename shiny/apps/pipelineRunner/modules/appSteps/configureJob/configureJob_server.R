@@ -22,7 +22,6 @@ mdiTooltips(
     )
 )
 addPRDocs('docs', "docs/server-deployment/pipeline-runner", "create-and-edit-job-configuration-files")
-
 #----------------------------------------------------------------------
 # initialize step settings
 #----------------------------------------------------------------------
@@ -31,7 +30,6 @@ settings <- settingsServer(
     id, 
     resettable = FALSE 
 )
-
 #----------------------------------------------------------------------
 # initialize job file creation
 #----------------------------------------------------------------------
@@ -98,7 +96,7 @@ loadSourceFile <- function(incomingFile, ...){
     )
     stopSpinner(session, 'loadSourceFile')
     sourceFileInput$sendFeedback(paste("loaded", incomingFile$path))   
-    selectRows(jobFiles$proxy, length(jobFiles$list)) # auto-select the new (last) job file row
+    # selectRows(jobFiles$proxy, length(jobFiles$list)) # auto-select the new (last) job file row
 }
 # add an _additional_ job file uploaded by user via step 1 (not via the launch page)
 handleExtraFile <- function(reactive){
@@ -151,7 +149,7 @@ activeJobFile <- reactive({
     req(i)
     jobFiles$list[[i]]
 })
-observe({
+observeEvent(jobFiles$selected(), {
     selectedRow <- jobFiles$selected()
     isSelection <- !is.null(selectedRow) && !is.na(selectedRow)
     toggle(
@@ -168,27 +166,49 @@ observe({
 # set the job configuration edit mode
 #----------------------------------------------------------------------
 editModes <- list(none = "none", inputs = "inputs", editor = "editor")
-editMode <- reactive({
+editMode <- reactiveVal(editModes$none)
+observeEvent({
+    settings$Job_Files()
+    activeJobFile()
+}, {
+    oldMode <- editMode()
+    req(oldMode) 
     isInputs <- settings$Job_Files()$Job_File_Edit_Mode$value == "User Inputs"
+    newMode <- if(isInputs) editModes$inputs else editModes$editor
+    if(oldMode == newMode) return(NULL)
+    if(isPendingChanges()){
+        showUserDialog(
+            "Changes are Pending", 
+            tags$p("You have pending changes in one or more job files."), 
+            tags$p("Please save or discard all pending changes before switching editor modes."), 
+            size = "s", 
+            type = 'okOnly'
+        )
+        settings$set("Job_Files", "Job_File_Edit_Mode", if(isInputs) "Script Editor" else "User Inputs")
+        return(NULL)
+    }
     toggle(id = "uiBasedJobEditing",   condition =  isInputs)
     toggle(id = "textBasedJobEditing", condition = !isInputs)
-    if(is.null(activeJobFile())) editModes$none 
-    else if(isInputs) editModes$inputs 
-    else editModes$editor
+    editMode(
+        if(is.null(activeJobFile())) editModes$none 
+        else if(isInputs) editModes$inputs 
+        else editModes$editor
+    )
 })
 
 #----------------------------------------------------------------------
 # initialize the job file editors
 #----------------------------------------------------------------------
-reloadInputs <- reactiveVal(0)
 editors <- list(
     editor = jobFileTextEditorServer( "textEditor",  editMode, activeJobFile),
-    inputs = jobFileInputEditorServer("inputEditor", editMode, activeJobFile, reloadInputs)
+    inputs = jobFileInputEditorServer("inputEditor", editMode, activeJobFile)
 )
-isPendingChanges <- function(path){
+isPendingChanges <- function(path = NULL){
     editMode <- editMode()
     if(editMode == editModes$none) return(FALSE)
-    editors[[editMode]]$pending(path)
+    if(is.null(path)) path <- names(jobFiles$list)
+    for(x in path) if(editors[[editMode]]$pending(x)) return(TRUE)
+    FALSE
 }
 
 #----------------------------------------------------------------------
@@ -237,7 +257,7 @@ observeEvent(input[[saveJobFileId]], {
         tags$p(paste(
             "Save changes to configuration file?"
         )), 
-        tags$p(path),
+        tags$p(path, style = "margin-left: 2em;"),
         callback = function(...) {
             isolate({
                 editors[[editMode]]$write(path, path)
@@ -272,7 +292,7 @@ observeEvent(input$discardChanges, {
             "The file will be reverted to its previously saved state.",
             "This cannot be undone."
         )), 
-        tags$p(path),
+        tags$p(path, style = "margin-left: 2em;"),
         callback = function(...) {
             editors[[editMode]]$discard(path)
         }, 

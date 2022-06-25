@@ -5,7 +5,7 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-jobFileInputEditorServer <- function(id, editMode, activeJobFile, reloadInputs){
+jobFileInputEditorServer <- function(id, editMode, activeJobFile){
     moduleServer(id, function(input, output, session){
         module <- 'jobFileInputEditor' # for reportProgress tracing
         ns <- session$ns
@@ -33,7 +33,7 @@ pipelineConfig <- reactive({
     if(is.null(pipelineConfigs[[jobFile$pipeline]])){
         optionsTable <- getPipelineOptionsTable(jobFile$pipeline) # comprehensive metadata about options        
         template <- getPipelineTemplate(jobFile$pipeline) # ordered actions list and options sets
-        pipelineConfigs[[jobFile$pipeline]] <- list(
+        pipelineConfigs[[jobFile$pipeline]] <<- list(
             actions  = template$execute, 
             options  = optionsTable,
             template = template
@@ -41,12 +41,15 @@ pipelineConfig <- reactive({
     }
     pipelineConfigs[[jobFile$pipeline]]
 })
-jobFileActions <- reactiveValues() 
+reloadInputs <- reactiveVal(0) # trigger to reload the entire inputs UI
 
 #----------------------------------------------------------------------
 # job file loading
 #----------------------------------------------------------------------
-observe({ 
+observeEvent({
+    isInputs()
+    activeJobFile()
+}, { 
     req(isInputs())
     jobFile <- activeJobFile()
     req(jobFile)
@@ -65,17 +68,19 @@ observe({
 #----------------------------------------------------------------------
 # cascade update pipeline actions to execute (if more than one)    
 #----------------------------------------------------------------------
-observe({
+observeEvent({
+    isInputs()
+    activeJobFile()
+}, {
     req(isInputs())
-    config <- pipelineConfig()
-    req(config) 
     jobFile <- activeJobFile()
     req(jobFile)
     path <- jobFile$path
+    config <- pipelineConfig()
+    req(config) 
     values <- state$disk[[path]]
     req(values)
     actions <- values$execute
-    jobFileActions[[path]] <- actions
     reloadInputs()
     updateCheckboxGroupInput(
         'actions',
@@ -223,6 +228,15 @@ observeEvent(input$showRequiredOnly, { requiredOnly(TRUE) })
 observeEvent(input$showAllOptions,   { requiredOnly(FALSE) })
 
 #----------------------------------------------------------------------
+# handle changing action selections
+#----------------------------------------------------------------------
+observeEvent(input$actions, {
+    path <- activeJobFile()$path
+    state$working[[path]]$execute <- input$actions
+    state$pending[[path]]$execute <- if(identical(state$disk[[path]]$execute, input$actions)) NULL else 1
+})
+
+#----------------------------------------------------------------------
 # handle shinyFile selection of a directory being set into an option
 #----------------------------------------------------------------------
 handleChooseDir <- function(x){
@@ -327,31 +341,24 @@ observeEvent(input$prInput, {
 list(
     state = state,
     pending = function(path) {
-        if(is.null(input$actions) || 
-           is.null(jobFileActions[[path]]) || 
-           is.null(state$pending[[path]])) return(FALSE)
-        length(state$pending[[path]]) > 0 ||
-        !identical(
-            sort(input$actions),
-            sort(jobFileActions[[path]])
-        )   
+        if(is.null(state$pending[[path]])) return(FALSE)
+        length(state$pending[[path]]) > 0
     },
     write = function(newPath, oldPath){
         jobFile <- activeJobFile()
         config <- pipelineConfig()
         writeDataYml(
-            newPath, 
-            jobFile$suite,
-            jobFile$pipeline, 
-            state$working[[oldPath]], # retains suite//option name format       
-            actions = input$actions, 
+            jobFilePath = newPath, 
+            suite = jobFile$suite,
+            pipeline = jobFile$pipeline, 
+            newValues = state$working[[oldPath]], # retains suite//option name format       
+            actions = state$working[[oldPath]]$execute, 
             optionsTable = config$options,
             template = config$template
         )
     },
     save = function(path){
         state$disk[[path]] <- state$working[[path]]
-        jobFileActions[[path]] <- input$actions 
         state$pending[[path]] <- list()  
     },
     saveAs = function(newPath, oldPath){

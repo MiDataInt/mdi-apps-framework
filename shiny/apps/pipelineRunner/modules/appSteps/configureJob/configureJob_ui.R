@@ -67,8 +67,8 @@ configureJobUI <- function(id, options) {
                     status = 'primary',
                     solidHeader = FALSE,
                     style = "padding: 0 0 10px 15px;",
-                    actionLink(ns('discardChanges'), 'Discard Changes', style = "margin-right: 1rem;"),
-                    uiOutput(ns('saveJobFileAsUI'), style = "display: inline-block; margin-right: 1rem; cursor: pointer;"), # nolint
+                    actionLink(ns('discardChanges'), 'Discard Changes', style = "margin-right: 2rem;"),
+                    uiOutput(ns('saveJobFileAsUI'), style = "display: inline-block; margin-right: 2rem; cursor: pointer;"), # nolint
                     uiOutput(ns('saveJobFileUI'), style = "display: inline-block;")
                 ) 
             ),

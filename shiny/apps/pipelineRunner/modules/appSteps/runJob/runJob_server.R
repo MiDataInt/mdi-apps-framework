@@ -92,10 +92,14 @@ statusTable <- reactive({
         exit_status,
         walltime,
         maxvmem
-    )]   
+    )]  
     y <- data.table(
-        delete = tableActionLinks(ns(deleteLinkId), nrow(x), 'Delete', 
-                                  allow = !is.numeric(x$exit_status))  
+        delete = tableActionLinks(
+            ns(deleteLinkId), 
+            nrow(x), 
+            'Delete', 
+            allow = !check.numeric(x$exit_status)
+        )  
     )
     cbind(y, x)
 })
@@ -302,13 +306,15 @@ downloadPackageButton <- function(){
     x <- x$results
     req(x)
     x <- strsplit(x, "\n")[[1]]
-    i <- max(which(grepl("writing Stage 2 package file", x)))
+    is <- which(grepl("writing Stage 2 package file", x))
+    req(is)
+    i <- max(is)
     req(i)
     i <- i + 1 # this line carries the name of the most recently written data package.zip
     packageFile(x[i])
     downloadButton(ns('download'), label = "Download Package", 
                    icon = NULL, width = "100%", # style mimics bsButton style=primary
-                   style = "color: white; background-color: #3c8dbc; width: 100%; border-radius: 3px;")
+                   style = "color: white; background-color: #3c8dbc; width: 100%; border-radius: 3px; float: right;")
 }
 output$download <- downloadHandler(
     filename = function(){

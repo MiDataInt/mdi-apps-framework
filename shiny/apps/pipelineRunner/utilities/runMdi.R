@@ -42,12 +42,15 @@ runMdiCommand <- function(
 }
 
 # determine whether mdi (not system2) reported a usage/configuration error
+# generally, we expect launcher.pl to not die, so routinely only check its messages
+# some developers may need to temporarily check mdiSuiteIsLocked to debug mdi-pipeline-framework code
 isMdiSuccess <- function(results, caller = NULL, command = NULL, suite = NULL){
     check <- paste(results, collapse = "\n")
     success <- !grepl('mdi error:', check) && 
                !grepl('!!!!!!!!!!', check) &&
-               !grepl('WARNING!', check) && 
-               !mdiSuiteIsLocked(suite) # locks fail to clear when launcher.pl dies prematurely
+               !grepl('WARNING!', check) 
+            #    && 
+            #    !mdiSuiteIsLocked(suite) # locks fail to clear when launcher.pl dies prematurely (not when it throws an error)
     if(!success) {
         border <- paste(rep("!", 80), collapse = "")
         error <- "the mdi utility returned an error"

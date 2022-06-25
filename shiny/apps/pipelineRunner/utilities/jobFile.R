@@ -57,13 +57,15 @@ getJobEnvironmentDefaults <- function(dir, pipeline, actions = NULL){ # dir is t
 #----------------------------------------------------------------------
 readDataYml <- function(jobFile){
     args <- c('valuesYaml', 'valuesYaml', jobFile$path)
-    valuesYaml <- runMdiCommand(args, suite = jobFile$suite, errorDialog = function(...) showUserDialog(
+    valuesYaml <- runMdiCommand(
+        args, 
+        suite = jobFile$suite, 
+        errorDialog = function(command, results) showUserDialog(
         "Job File Load Error", 
-        tags$p("A fatal error occurred while attempting to load the following job file:"), 
-        tags$p(jobFile$path, style = "margin-left: 2em;"),
-        tags$p("Most likely there is a configuration error in the job file."), 
-        tags$p("See the server log output for additional debugging information."), 
-        size = "m", 
+        tags$p("A fatal error occurred while attempting to load the following job file, which most likely has a configuration error:"), 
+        tags$p(jobFile$path),
+        tags$pre(paste(results, collapse = "\n"), style = "max-height: 400px;"),
+        size = "l", 
         type = 'okOnly'
     ))
     req(valuesYaml$success)

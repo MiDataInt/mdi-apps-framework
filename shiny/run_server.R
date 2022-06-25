@@ -31,6 +31,7 @@ setServerEnv <- function(name, default = NULL, type = as.character){
 for(name in c('DEBUG', 'IS_DEVELOPER', 'IS_HOSTED', 'LAUNCH_BROWSER')) {
     serverEnv[[name]] <- as.logical(serverEnv[[name]])
 }
+if(serverEnv$IS_DEVELOPER) serverEnv$DEBUG <- TRUE
 
 # set structured environment variables based on mode
 serverEnv$IS_WINDOWS  <- .Platform$OS.type != "unix"
