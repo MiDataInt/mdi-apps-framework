@@ -117,7 +117,7 @@ output$statusTable <- renderDT(
 )
 
 #----------------------------------------------------------------------
-# enable job deletetion from within the status table
+# enable job deletion from within the status table
 #----------------------------------------------------------------------
 deleteLinkId <- 'deleteLink'
 observeEvent(input[[deleteLinkId]], {
@@ -180,24 +180,17 @@ observeEvent(selectedJob(), {
 })
 
 #----------------------------------------------------------------------
-# inspect: display the complete set of job configuration options
-# handled by direct call to launcher.pl
+# buttons to get ready to submit
 #----------------------------------------------------------------------
 observeEvent(input$inspect, {
-    setOutputData(NULL, NULL, NULL, FALSE)
-    jobFile <- activeJobFile()
-    req(jobFile)
-    command <- 'inspect'
-    startSpinner(session, command)
-    args <- c(jobFile$pipeline, jobFile$path, '--dry-run')
-    data <- runMdiCommand(args)
-    if(!data$success) return( setOutputData(command, args, data) )
-    data$success <- isMdiSuccess(data$results)
-    setOutputData(command, args, data)
+    runJobManagerCommand('inspect', dryRun = FALSE) # inspect itself enforces --dry-run
+})
+observeEvent(input$mkdir, {
+    runJobManagerCommand('mkdir', force = TRUE)
 })
 
 #----------------------------------------------------------------------
-# dry run job submission buttons
+# dry run job submission buttons (resulting panels reveal buttons for live execution)
 #----------------------------------------------------------------------
 observeEvent(input$submit, {
     runJobManagerCommand('submit', force = TRUE)
@@ -243,7 +236,7 @@ output$output <- renderText({ # the output returned by 'mdi <command>'
         class = "command-output-error", 
         condition = !x$success
     )
-    x$results
+    paste(x$results, collapse = "\n")
 })
 
 #----------------------------------------------------------------------
@@ -264,6 +257,7 @@ observeEvent(input$refreshOutput, {
 # enable final execution, i.e., after (from within) a --dry-run display
 #----------------------------------------------------------------------
 executeButtonMetadata <- list(
+    mkdir    = c("Make Directory", "primary", suppressIf = "all output directories already exist"),
     submit   = c("Submit",   "success"),
     extend   = c("Extend",   "success"),
     rollback = c("Rollback", "danger"),
@@ -275,6 +269,13 @@ output$executeButton <- renderUI({ # render the Execute button
     if(x == "report") return(downloadPackageButton())
     d <- executeButtonMetadata[[x]]
     req(d)
+    if(!is.null(d[3]) && !is.na(d[3])){
+        data <- outputData()$data
+        req(data)
+        results <- data$results
+        req(results)
+        if(any(grepl(d[3], results))) return(NULL)
+    }
     label <- paste('Execute', d[1])
     bsButton(ns('execute'), label, style = d[2], width = "100%")
 })
@@ -289,9 +290,7 @@ observeEvent(input$execute, { # act on the execute button click
     args <- args[args != "--dry-run"]
     data <- runMdiCommand(args)
     if(!data$success) return( setOutputData(command, args, data) )
-    data$success <- isMdiSuccess(data$results)
-    if(!data$success) return( setOutputData(command, args, data) )
-    setOutputData(NULL, NULL, NULL)
+    setOutputData(command, args, data)
     invalidateStatusTable( invalidateStatusTable() + 1 )
 })
 
@@ -331,7 +330,6 @@ output$download <- downloadHandler(
 observe({
     bm <- getModuleBookmark(id, module, bookmark, locks)
     req(bm)
-    
 })
 
 #----------------------------------------------------------------------

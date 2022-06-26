@@ -88,7 +88,8 @@ body, html {
     margin: 5px 10px;
     text-align: right;
 }
-.header-status-dir-icon {
+.header-status-icon, .header-status-dir-icon {
+    color: #a6921e;
     cursor: pointer;
 }
 

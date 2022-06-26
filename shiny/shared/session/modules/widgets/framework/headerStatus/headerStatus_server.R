@@ -20,6 +20,25 @@ output$dataDir <- renderText({
     headerStatusData$dataDir 
 })    
 
+# allow remote user to unlock the MDI installation, i.e., all frameworks and suites
+observeEvent(input$unlockAllRepos, {
+    req(headerStatusData$userDisplayName)
+    showUserDialog(
+        "Unlock MDI Installation", 
+        tags$p(paste("Please click OK to confirm that you wish to remove all framework and suite lock files from your local or remote MDI installation.")),
+        tags$p(serverEnv$MDI_DIR, style = "margin-left: 2em;"),
+        tags$p("This action is usually only required if you experienced a fatal error during execution of an MDI command, e.g., in Pipeline Runner."),
+        callback = function(...) {
+            sapply(c(
+                file.path(serverEnv$MDI_DIR, "suites", "*.lock"),
+                file.path(serverEnv$MDI_DIR, "frameworks", "*.lock")
+            ), unlink, force = TRUE)
+        },
+        size = "m", 
+        type = 'okCancel'
+    )   
+})
+
 # allow user to log out
 observeEvent(input$logout, {
     req(headerStatusData$userDisplayName)

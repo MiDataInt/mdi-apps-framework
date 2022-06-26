@@ -32,7 +32,8 @@ runJobUI <- function(id, options) {
             class = "requiresJobFile",
             fluidRow(
                 lapply(list(
-                    c('inspect',    'Inspect',  'primary', 'examine the complete set of job configuration options'),
+                    c('inspect',    'Inspect',  'primary', 'examine the parsed values of all job options'),
+                    c('mkdir',      'Make Directory', 'primary', 'create all required output directory(s)'),
                     c('submit',     'Submit',   'success', 'queue all required data analysis jobs'),
                     c('extend',     'Extend',   'success', 'queue only new or deleted/unsatisfied jobs'),
                     c('rollback',   'Rollback', 'danger', 'revert pipeline to the most recent prior log file'),
