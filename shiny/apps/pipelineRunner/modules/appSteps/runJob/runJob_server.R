@@ -7,7 +7,6 @@
 #----------------------------------------------------------------------
 runJobServer <- function(id, options, bookmark, locks) {
     moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'runJob' # for reportProgress tracing
 #----------------------------------------------------------------------
 if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
@@ -15,7 +14,6 @@ if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
 #----------------------------------------------------------------------
 # initialize module
 #----------------------------------------------------------------------
-currentJobFilePath <- reactiveVal(NULL)
 jobFiles <- selectJobFilesServer(
     id = 'jobFiles',
     parentId = id,
@@ -42,6 +40,49 @@ observe({
         selector = "div.requiresJobFileMessage", 
         condition = !isSelection
     )
+})
+
+#----------------------------------------------------------------------
+# generic handler for MDI job-manager commands
+#----------------------------------------------------------------------
+runJobManagerCommand <- function(command, jobId = NULL, 
+                                 dryRun = TRUE, force = FALSE,
+                                 errorString = 'mdi error:'){
+    setOutputData(NULL, NULL, NULL, FALSE)
+    jobFile <- activeJobFile()
+    req(jobFile)
+    startSpinner(session, command)
+    jobId  <- if(is.null(jobId)) ""  else c("--job", jobId)
+    dryRun <- if(dryRun) "--dry-run" else ""
+    force  <- if(force)  "--force"   else ""
+    args <- c(command, jobId, dryRun, force, jobFile$path)
+    data <- runMdiCommand(args)
+    setOutputData(command, args, data)
+}
+
+#----------------------------------------------------------------------
+# top-level action buttons for a selected job configuration file
+#----------------------------------------------------------------------
+# buttons to get ready to submit
+observeEvent(input$inspect, {
+    runJobManagerCommand('inspect', dryRun = FALSE) # inspect itself enforces --dry-run
+})
+observeEvent(input$mkdir, {
+    runJobManagerCommand('mkdir', force = TRUE)
+})
+# dry-run job submission buttons (result panels reveal buttons for live execution)
+observeEvent(input$submit, {
+    runJobManagerCommand('submit', force = TRUE)
+})
+observeEvent(input$extend, {
+    runJobManagerCommand('extend', force = TRUE)
+})
+# status history rollback and purging
+observeEvent(input$rollback, {
+    runJobManagerCommand('rollback', force = TRUE) 
+})
+observeEvent(input$purge, {
+    runJobManagerCommand('purge', force = TRUE) 
 })
 
 #----------------------------------------------------------------------
@@ -83,7 +124,9 @@ statusTable <- reactive({
     i1 <- which(startsWith(x, "jobName"))
     x <- paste(x[i1:length(x)], collapse = "\n")
     x <- fread(text = x)
-    stopSpinner(session, 'mdi status')
+    x[, array := sapply(array, function(d) if(is.na(d) || d == "") NA else {
+        paste(range(as.integer(strsplit(d, ",")[[1]])), collapse = "-")
+    })]
     x <- x[, .(
         jobName,
         jobID,
@@ -95,12 +138,13 @@ statusTable <- reactive({
     )]  
     y <- data.table(
         delete = tableActionLinks(
-            ns(deleteLinkId), 
+            session$ns(deleteLinkId), 
             nrow(x), 
             'Delete', 
             allow = !check.numeric(x$exit_status)
         )  
     )
+    stopSpinner(session, 'mdi status')    
     cbind(y, x)
 })
 output$statusTable <- renderDT(
@@ -129,10 +173,18 @@ observeEvent(input[[deleteLinkId]], {
     showUserDialog(
         "Confirm Job Deletion", 
         tags$p("Delete / kill / cancel this job from the cluster job queue?"),
-        tags$p(jobName), 
-        tags$p(jobId),
+        tags$p(
+            tags$strong("Job Name: "), 
+            jobName,
+            style = "margin-left: 0.5em;"
+        ),
+        tags$p(
+            tags$strong("Job ID: "), 
+            jobId,
+            style = "margin-left: 0.5em;"
+        ),
         callback = function(parentInput) {
-            # runJobManagerCommand('delete', jobId = jobId, dryRun = FALSE, force = TRUE)
+            runJobManagerCommand('delete', jobId = jobId, dryRun = FALSE, force = TRUE)
             invalidateStatusTable( invalidateStatusTable() + 1 )
         },
         size = "s", 
@@ -141,79 +193,134 @@ observeEvent(input[[deleteLinkId]], {
 })
 
 #----------------------------------------------------------------------
-# generic handler for MDI job-manager commands
+# cascade to show the initial, complete log report of a selected job
 #----------------------------------------------------------------------
-runJobManagerCommand <- function(command, jobId = NULL, dryRun = TRUE, force = FALSE,
-                                 errorString = 'mdi error:'){
-    setOutputData(NULL, NULL, NULL, FALSE)
-    jobFile <- activeJobFile()
-    req(jobFile)
-    startSpinner(session, command)
-    jobId  <- if(is.null(jobId)) ""  else c("--job", jobId)
-    dryRun <- if(dryRun) "--dry-run" else ""
-    force  <- if(force)  "--force"   else ""
-    args <- c(command, jobId, dryRun, force, jobFile$path)
-    data <- runMdiCommand(args)
-    if(!data$success) return( setOutputData(command, args, data) )
-    data$success <- isMdiSuccess(data$results)
-    setOutputData(command, args, data)
-}
-
-#----------------------------------------------------------------------
-# cascade to show the log report of a selected job
-#----------------------------------------------------------------------
-selectedJob <- rowSelectionObserver('statusTable', input)
-fillOutput_report <- function(){
-    setOutputData(NULL, NULL, NULL, FALSE)
-    jobFile <- activeJobFile()
-    req(jobFile)
+selectedJobI <- rowSelectionObserver('statusTable', input)
+selectedJob <- reactive({
     statusTable <- statusTable()
     req(statusTable)
-    rowI <- selectedJob()
+    rowI <- selectedJobI()
     req(rowI)
-    jobId <- statusTable[rowI, jobID]
+    statusTable[rowI, ]
+})
+selectedJobId <- reactive({
+    job <- selectedJob()
+    req(job)
+    job[, jobID]
+})
+observeEvent(selectedJobI(), { 
+    setOutputData(NULL, NULL, NULL, FALSE)
+    jobId <- selectedJobId()
     req(jobId)
-    runJobManagerCommand('report', jobId = jobId, dryRun = FALSE)
+    runJobManagerCommand('report', jobId = jobId, dryRun = FALSE)        
+})
+
+#----------------------------------------------------------------------
+# inputs panel to enable enhanced, task-level reporting
+#----------------------------------------------------------------------
+allTasks <- "all tasks"
+taskSelector <- reactive({
+    tasks <- selectedJob()[, array]
+    if(is.na(tasks)) "" else tagList(
+        column(
+            width = 1,
+            style = "padding-right: 0;",
+            tags$strong("Task #", style = "float: right; margin-top: 6px;")
+        ), 
+        column(
+            width = 2,
+            selectInput(
+                session$ns("taskNumber"), 
+                NULL, 
+                choices = c(
+                    allTasks, 
+                    as.character(1:max(as.integer(strsplit(tasks, "-")[[1]])))
+                )
+            )
+        )
+    )
+})
+reportButton <- function(){
+    column(
+        width = 2,
+        bsButton(session$ns("report"), "Log Report", style = "default", width = "100%")
+    )      
 }
-observeEvent(selectedJob(), {
-    fillOutput_report()
+enableTaskLevelButtons <- reactive({
+    tasks <- selectedJob()[, array]
+    if(is.na(tasks)) return(TRUE) # non-array, single-task job
+    req(input$taskNumber)
+    req(input$taskNumber != allTasks)    
+})
+output$ls_ <- renderUI({
+    req(enableTaskLevelButtons())
+    column(
+        width = 2,
+        bsButton(session$ns("ls"), "List Output Files", style = "default", width = "100%")
+    )
+})
+output$top_ <- renderUI({
+    req(enableTaskLevelButtons())
+    req(!check.numeric(selectedJob()[, exit_status]))
+    column(
+        width = 2,
+        bsButton(session$ns("top"), "Process Metrics", style = "default", width = "100%")
+    )
+})
+output$taskOptions <- renderUI({
+    job <- selectedJob()
+    req(job)
+    fluidRow(
+        style = "margin-top: 0.5em;",
+        box(
+            width = 12,
+            status = 'primary',
+            solidHeader = FALSE,
+            style = "padding: 10px 0 10px 15px;",
+            fluidRow(
+                taskSelector(),
+                reportButton(),
+                uiOutput(session$ns('ls_')),
+                uiOutput(session$ns('top_'))
+            )
+        )
+    )        
 })
 
-#----------------------------------------------------------------------
-# buttons to get ready to submit
-#----------------------------------------------------------------------
-observeEvent(input$inspect, {
-    runJobManagerCommand('inspect', dryRun = FALSE) # inspect itself enforces --dry-run
+# ----------------------------------------------------------------------
+# task-level reporting/monitoring actions
+# ----------------------------------------------------------------------
+runTaskLevelCommand <- function(command){
+    jobId <- selectedJobId()
+    req(jobId)
+    tasks <- selectedJob()[, array]
+    taskNumber <- if(is.na(tasks)) NA else input$taskNumber
+    jobId <- paste0(jobId, if(is.null(taskNumber) || is.na(taskNumber) || taskNumber == allTasks){
+        ""
+    } else {
+        paste0("[", taskNumber, "]")
+    })
+    runJobManagerCommand(command, jobId = jobId, dryRun = FALSE) 
+}
+observeEvent({ # update command output as selected task changes
+    selectedJobId()
+    input$taskNumber
+}, {
+    req(input$taskNumber)
+    isAllTasks <- input$taskNumber == allTasks
+    command <- outputData()$command
+    req(command)  
+    command <- if(isAllTasks) "report" else command
+    runTaskLevelCommand(command)
 })
-observeEvent(input$mkdir, {
-    runJobManagerCommand('mkdir', force = TRUE)
-})
-
-#----------------------------------------------------------------------
-# dry run job submission buttons (resulting panels reveal buttons for live execution)
-#----------------------------------------------------------------------
-observeEvent(input$submit, {
-    runJobManagerCommand('submit', force = TRUE)
-})
-observeEvent(input$extend, {
-    runJobManagerCommand('extend', force = TRUE)
-})
-
-#----------------------------------------------------------------------
-# status history rollback and purging
-#----------------------------------------------------------------------
-# observeEvent(input$rollback, {
-#     runJobManagerCommand('rollback', force = TRUE) 
-# })
-# observeEvent(input$purge, {
-#     runJobManagerCommand('purge', force = TRUE) 
-# })
+observeEvent(input$report, { runTaskLevelCommand('report') }) # respond to task button clicks
+observeEvent(input$ls,     { runTaskLevelCommand('ls') })
+observeEvent(input$top,    { runTaskLevelCommand('top') })
 
 #----------------------------------------------------------------------
 # render all command outputs
 #----------------------------------------------------------------------
-nullOutput <- list(type = "", text = NULL)
-outputData <- reactiveVal(nullOutput)
+outputData <- reactiveVal(NULL)
 setOutputData <- function(command, args, data, stopSpinner = TRUE){
     if(stopSpinner) stopSpinner(session, command)          
     outputData(list(
@@ -229,8 +336,7 @@ output$command <- renderText({ # show a simplified version of the command output
 })
 output$output <- renderText({ # the output returned by 'mdi <command>'
     x <- outputData()$data
-    req(x)
-    toggle('refreshOutput', condition = !is.null(getFillFn()))    
+    req(x)  
     toggleClass(
         selector = ".command-output-wrapper pre", 
         class = "command-output-error", 
@@ -240,17 +346,14 @@ output$output <- renderText({ # the output returned by 'mdi <command>'
 })
 
 #----------------------------------------------------------------------
-# enable output refresh link
+# enable output refresh icon link
 #----------------------------------------------------------------------
-getFillFn <- function(){
-    req(outputData()$command)
-    fn <- paste('fillOutput', outputData()$command, sep = "_")
-    if(exists(fn)) get(fn) else NULL
-}
 observeEvent(input$refreshOutput, {
-    fn <- getFillFn()
-    req(fn)
-    fn()
+    x <- outputData()
+    req(x)  
+    startSpinner(session, x$command)
+    data <- runMdiCommand(x$args)
+    setOutputData(x$command, x$args, data)
 })
 
 #----------------------------------------------------------------------
@@ -258,28 +361,28 @@ observeEvent(input$refreshOutput, {
 #----------------------------------------------------------------------
 executeButtonMetadata <- list(
     mkdir    = c("Make Directory", "primary", suppressIf = "all output directories already exist"),
-    submit   = c("Submit",   "success"),
-    extend   = c("Extend",   "success"),
-    rollback = c("Rollback", "danger"),
-    purge    = c("Purge",    "danger")
+    submit   = c("Submit",         "success"),
+    extend   = c("Extend",         "success"),
+    rollback = c("Rollback",       "danger"),
+    purge    = c("Purge",          "danger")
 )
-output$executeButton <- renderUI({ # render the Execute button
+output$executeButton <- renderUI({ # render the Execute ... button
     x <- outputData()$command
     req(x)  
     if(x == "report") return(downloadPackageButton())
     d <- executeButtonMetadata[[x]]
     req(d)
-    if(!is.null(d[3]) && !is.na(d[3])){
+    if(!is.null(d[3]) && !is.na(d[3])){ # handle conditional button display
         data <- outputData()$data
         req(data)
         results <- data$results
         req(results)
         if(any(grepl(d[3], results))) return(NULL)
     }
-    label <- paste('Execute', d[1])
-    bsButton(ns('execute'), label, style = d[2], width = "100%")
+    label <- paste('Execute', d[1]) # all buttons labeled "Execute <Command>"
+    bsButton(session$ns('execute'), label, style = d[2], width = "100%")
 })
-observeEvent(input$execute, { # act on the execute button click
+observeEvent(input$execute, { # act on the Execute button click
     command <- outputData()$command
     req(command)
     if(command == "report") return()
@@ -289,9 +392,8 @@ observeEvent(input$execute, { # act on the execute button click
     startSpinner(session, command)
     args <- args[args != "--dry-run"]
     data <- runMdiCommand(args)
-    if(!data$success) return( setOutputData(command, args, data) )
     setOutputData(command, args, data)
-    invalidateStatusTable( invalidateStatusTable() + 1 )
+    if(data$success) invalidateStatusTable( invalidateStatusTable() + 1 )
 })
 
 #----------------------------------------------------------------------
@@ -311,33 +413,28 @@ downloadPackageButton <- function(){
     req(i)
     i <- i + 1 # this line carries the name of the most recently written data package.zip
     packageFile(x[i])
-    downloadButton(ns('download'), label = "Download Package", 
+    downloadButton(session$ns('download'), label = "Download Package", 
                    icon = NULL, width = "100%", # style mimics bsButton style=primary
                    style = "color: white; background-color: #3c8dbc; width: 100%; border-radius: 3px; float: right;")
 }
 output$download <- downloadHandler(
-    filename = function(){
-        basename(packageFile())
-    },
-    content = function(tmpFile){
-        file.copy(packageFile(), tmpFile)
-    }
+    filename = function() basename(packageFile()),
+    content  = function(tmpFile) file.copy(packageFile(), tmpFile)
 )
 
 #----------------------------------------------------------------------
 # define bookmarking actions
 #----------------------------------------------------------------------
-observe({
-    bm <- getModuleBookmark(id, module, bookmark, locks)
-    req(bm)
-})
+# observe({
+#     bm <- getModuleBookmark(id, module, bookmark, locks)
+#     req(bm)
+# })
 
 #----------------------------------------------------------------------
 # set return value
 #----------------------------------------------------------------------
 list(
-    output = list(
-    )
+    output = list()
 )
 
 #----------------------------------------------------------------------

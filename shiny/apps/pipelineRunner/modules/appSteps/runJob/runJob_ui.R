@@ -30,6 +30,8 @@ runJobUI <- function(id, options) {
         selectJobFilesUI(ns('jobFiles')), 
         span(
             class = "requiresJobFile",
+
+            # job file top-level action buttons
             fluidRow(
                 lapply(list(
                     c('inspect',    'Inspect',  'primary', 'examine the parsed values of all job options'),
@@ -45,6 +47,8 @@ runJobUI <- function(id, options) {
                     )                
                 })
             ),
+
+            # job status table for selected job configuration file
             fluidRow(
                 style = "margin-top: 1.5em;",
                 box(
@@ -59,8 +63,13 @@ runJobUI <- function(id, options) {
                     DTOutput(ns('statusTable'))
                 ) 
             ),
+
+            # task-level report/monitoring buttons for selected job
+            uiOutput(ns("taskOptions")),
+
+            # single-pane for viewing all command outputs
             fluidRow(
-                style = "margin-top: 1.5em;",
+                style = "margin-top: 0.5em;",
                 box(
                     width = 12,
                     title = tags$span(
@@ -71,23 +80,25 @@ runJobUI <- function(id, options) {
                     solidHeader = FALSE,
                     fluidRow(
                         style = "margin: 0.5em 0;", 
-                        column(
+                        column( # display of the command whose results are being viewed
                             width = 8,
                             style = "font-size: 1.1em;",
                             tags$strong(textOutput(ns('command'), inline = TRUE))
                         ),                     
-                        column(
+                        column( # button to confirm execution of work after review of dry-run
                             width = 4,
                             uiOutput(ns('executeButton'))
                         )
                     ),
-                    tags$div(
+                    tags$div( # the actual command results output pane
                         class = "command-output-wrapper",
                         verbatimTextOutput(ns('output'))
                     )
                 ) 
             )      
         ),
+
+        # on-screen help
         div(
             class = "requiresJobFileMessage",
             style = "font-size: 1.1em; margin-left: 1em;",
