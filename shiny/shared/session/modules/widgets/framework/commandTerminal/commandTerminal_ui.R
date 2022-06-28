@@ -4,7 +4,7 @@
 
 # module ui function
 commandTerminalUI <- function(id) {
-    if(!(serverEnv$IS_REMOTE || serverEnv$IS_NODE)) return(NULL)
+    if(serverEnv$IS_SERVER) return(NULL)
     ns <- NS(id)
     tagList(
         uiOutput(ns("prompt")),

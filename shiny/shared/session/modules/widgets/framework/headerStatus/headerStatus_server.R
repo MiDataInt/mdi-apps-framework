@@ -25,8 +25,8 @@ output$dataDir <- renderText({
 
 # allow local or remote user to execute arbitrary commands on the system
 # obviously must never be exposed on a public serverserverEnv$IS_SERVER
-if(serverEnv$IS_REMOTE || serverEnv$IS_NODE) observeEvent(input$commandTerminal, {
-    req(serverEnv$IS_REMOTE || serverEnv$IS_NODE)
+if(!serverEnv$IS_SERVER) observeEvent(input$commandTerminal, {
+    req(!serverEnv$IS_SERVER)
     req(headerStatusData$userDisplayName)
     showCommandTerminal(
         session,

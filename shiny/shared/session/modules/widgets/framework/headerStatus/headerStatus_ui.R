@@ -18,14 +18,10 @@ headerStatusUI <- function(id) {
         #   - user's system name on the host machine (when not authenticating)
         textOutput(ns('userDisplayName'), inline = TRUE),
 
-        # command line, if working in remote mode on Linux server
-        if(serverEnv$IS_REMOTE || serverEnv$IS_NODE) tagList(
-            HTML("&nbsp;&nbsp;"),
-            actionLink(ns('commandTerminal'), label = NULL, icon = icon("terminal"), class = "header-status-icon")
-        ) else "",
-
-        # unlock button, if working in local or remote modes
+        # command line and unlock buttons, if working in local or remote modes
         if(!serverEnv$IS_SERVER) tagList(
+            HTML("&nbsp;&nbsp;"),
+            actionLink(ns('commandTerminal'), label = NULL, icon = icon("terminal"), class = "header-status-icon"), # nolint         
             HTML("&nbsp;&nbsp;"),
             actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon")
         ) else "",

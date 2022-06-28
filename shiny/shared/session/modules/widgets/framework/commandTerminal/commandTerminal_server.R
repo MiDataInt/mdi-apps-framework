@@ -8,7 +8,7 @@
 commandTerminalServer <- function(id, user = NULL, dir = NULL, timeout = 10) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
-if(!(serverEnv$IS_REMOTE || serverEnv$IS_NODE)) return(NULL)
+if(serverEnv$IS_SERVER) return(NULL)
 module <- "commandTerminal"
 
 #----------------------------------------------------------------------
@@ -35,8 +35,8 @@ commandEnterKeyActivated <- FALSE
 output$prompt <- renderUI({
     domain <- serverEnv$MDI_REMOTE_DOMAIN
     dir <- workingDir()
-    prompt <- tags$span(if(is.null(domain)) user else paste(user, domain, sep="@"), style = "color: #500;")
-    prompt <- if(is.null(dir)) prompt else paste(prompt, tags$span(dir, style = "color: #008;"), sep=" ")
+    prompt <- tags$span(if(is.null(domain)) user else paste(user, domain, sep = "@"), style = "color: #500;")
+    prompt <- if(is.null(dir)) prompt else paste(prompt, tags$span(dir, style = "color: #00a;"), sep = " ")
     tagList(
         HTML(paste0("[", prompt, "]", "$")),
         serverChooseDirIconUI(session$ns(chooseDirId), class = "mdi-dir-icon")
@@ -62,11 +62,19 @@ observeEvent({
     req(input$command)
     dir <- workingDir()
     req(dir)
-    command <- paste("cd", dir, ";", input$command)
+    command <- paste0("cd '", dir, "'; ", input$command)
+    if(serverEnv$IS_WINDOWS) {
+        drive <- strsplit(dir, "")[[1]][1]
+        command <- gsub(
+            paste0(drive, ":/"), # convert "C:/" to "/mnt/c/", et.
+            paste0("/mnt/", tolower(drive), "/"),
+            paste0('bash -c "', command, '"') # requires Git Bash on Windows
+        )
+    }
     show(selector = spinnerSelector)
     x <- c(
         results(), 
-        paste0('<span style="color: #00e;">', paste("$", input$command), '</span>'),
+        paste0('<span style="color: #00a;">', paste("$", input$command), '</span>'),
         tryCatch({
             system(command, intern = TRUE, timeout = timeout_())
         }, warning = function(w){ # when command executes but it reports an error
@@ -88,13 +96,13 @@ observeEvent({
 results <- reactiveVal("")
 observeEvent(results(), {
     if(!commandEnterKeyActivated) {
-        runjs(paste0("activateCommandTerminalKeys('", prefix,"')"))
+        runjs(paste0("activateCommandTerminalKeys('", prefix, "')"))
         commandEnterKeyActivated <<- TRUE
     }
     results <- results()
     if(length(results) == 1) results <- NULL 
     html("results", html = paste(results[2:length(results)], collapse = "\n"))
-    runjs(paste0("scrollCommandTerminalResults('", prefix,"')"))
+    runjs(paste0("scrollCommandTerminalResults('", prefix, "')"))
 })
 
 #----------------------------------------------------------------------
