@@ -202,3 +202,52 @@ Shiny.addCustomMessageHandler('prRemoveLastInput', function(id) {
         input.remove();
     } 
 });
+
+/*  ------------------------------------------------------------------------
+    command terminal
+    ------------------------------------------------------------------------*/
+let commandTerminalHistory = {
+    commands: [""],
+    offset: 0,
+    current: ""
+}
+let traverseCommandHistory = function(prefix, increment){
+    let nCommands = commandTerminalHistory.commands.length;
+    if(nCommands <= 1) return;
+    let i = commandTerminalHistory.offset + increment;
+    if(i < 0 || i > nCommands - 1) return;
+    let input = $("#" + prefix + "command");
+    if(i === 0 && increment === -1) {
+        input.val(commandTerminalHistory.current);
+        commandTerminalHistory.offset = i;
+        return;
+    }
+    if(i === 1 && increment === 1) commandTerminalHistory.current = input.val();
+    input.val(commandTerminalHistory.commands[i - 1]);
+    commandTerminalHistory.offset = i;
+    Shiny.setInputValue(prefix + "command", input.val()); // otherwise input$command does not stay current
+}
+let addCommandToHistory = function(prefix){ // executed by call from R when command finishes execution
+    let input = $("#" + prefix + "command");
+    let command = input.val();
+    if(command !== commandTerminalHistory.commands[0]) commandTerminalHistory.commands.unshift(command);
+    commandTerminalHistory.offset = 0;
+    commandTerminalHistory.current = "";
+    input.val("");
+}
+let activateCommandTerminalKeys = function(prefix){ // executed once when terminal dialog is opened
+    let input = $("#" + prefix + "command");
+    input.on("keyup", function(e) {
+        if(e.keyCode === 13) {
+            Shiny.setInputValue(prefix + "command", input.val()); // see comment above
+            Shiny.setInputValue(prefix + "commandEnterKey", Math.random(), {priority: "event"});
+        }
+        else if(e.keyCode === 38) traverseCommandHistory(prefix,  1);
+        else if(e.keyCode === 40) traverseCommandHistory(prefix, -1);
+    });
+}
+let scrollCommandTerminalResults = function(prefix){ // keep the results view part at the bottom
+    let elem = document.getElementById(prefix + 'results');
+    elem.scrollTop = elem.scrollHeight;
+    $("#" + prefix + "command").focus();
+}

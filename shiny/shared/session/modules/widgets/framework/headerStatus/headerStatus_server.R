@@ -10,17 +10,32 @@ headerStatusServer <- function(id) {
     moduleServer(id, function(input, output, session) {
         
 # output text
-output$userDisplayName <- renderText({ 
+userDisplayName <- reactive({
     name <- headerStatusData$userDisplayName
     domain <- serverEnv$MDI_REMOTE_DOMAIN
-    if(is.null(domain)) name else paste(name, domain, sep="@")
+    if(is.null(domain)) name else paste(name, domain, sep="@")    
+})
+output$userDisplayName <- renderText({ 
+    userDisplayName()
 })
 output$dataDir <- renderText({ 
     req(headerStatusData$userDisplayName)
     headerStatusData$dataDir 
 })    
 
-# allow remote user to unlock the MDI installation, i.e., all frameworks and suites
+# allow local or remote user to execute arbitrary commands on the system
+# obviously must never be exposed on a public serverserverEnv$IS_SERVER
+if(serverEnv$IS_REMOTE || serverEnv$IS_NODE) observeEvent(input$commandTerminal, {
+    req(serverEnv$IS_REMOTE || serverEnv$IS_NODE)
+    req(headerStatusData$userDisplayName)
+    showCommandTerminal(
+        session,
+        user = headerStatusData$userDisplayName,
+        dir = serverEnv$MDI_DIR
+    )  
+})
+
+# allow local or remote user to unlock the MDI installation, i.e., all frameworks and suites
 observeEvent(input$unlockAllRepos, {
     req(headerStatusData$userDisplayName)
     showUserDialog(
