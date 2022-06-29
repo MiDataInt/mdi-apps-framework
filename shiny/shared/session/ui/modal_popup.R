@@ -54,8 +54,7 @@ showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
     dialogCallback <<- callback
     footer <- switch(type,
         dismissOnly = tagList( # an "information only" dialog
-            # modalButton("Dismiss")
-            actionButton("userDialogOk", "Dismiss")
+            bsButton("userDialogOk", "Dismiss", style = "primary")
         ),
         okOnly = tagList( # an "information only" dialog
             modalButton("OK")

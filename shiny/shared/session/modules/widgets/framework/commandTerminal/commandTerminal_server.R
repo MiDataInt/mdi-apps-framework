@@ -1,11 +1,12 @@
 #----------------------------------------------------------------------
-# reactive components for populating a command terminal dialog
+# reactive components for populating a command terminal emulator dialog
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-commandTerminalServer <- function(id, user = NULL, dir = NULL, timeout = 10) {
+commandTerminalServer <- function(id, user = NULL, dir = NULL, results = "",
+                                  timeout = 10, onExit = NULL) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
 if(serverEnv$IS_SERVER) return(NULL)
@@ -16,11 +17,11 @@ if(serverEnv$IS_SERVER) return(NULL)
 module <- "commandTerminal"
 chooseDirId <- "chooseDir"
 spinnerSelector <- "#commandTerminalSpinner"
-prefix <- session$ns("")
-observers <- list()
+prefix <- session$ns("") # for passing to javascript
+observers <- list() # for module self-destruction
 workingDir <- reactiveVal(dir)
 defaultTimeout <- 10
-timeout_ <- reactive({
+timeout_ <- reactive({ # since we have no way to pass SIGINT to synchronous system()
     x <- input$timeout
     if(is.null(x)) return(timeout)
     x <- trimws(x)
@@ -45,9 +46,7 @@ serverChooseDirIconServer(
     chooseDirId, 
     input, 
     session,
-    chooseFn = function(dir) {
-        changeTerminalDirectory(dir$dir, workingDir, prefix)
-    }
+    chooseFn = function(dir) changeTerminalDirectory(dir$dir, workingDir, prefix)
 )
 
 #----------------------------------------------------------------------
@@ -65,7 +64,8 @@ observers$doCommand <- observeEvent(doCommand(), {
     req(input$command)
     dir <- workingDir()
     req(dir)
-    command <- interceptTerminalCommands(input$command, workingDir = workingDir, prefix = prefix)
+    command <- interceptTerminalCommands(input$command, workingDir = workingDir, 
+                                         prefix = prefix, onExit = onExit)
     req(command)
     show(selector = spinnerSelector)    
     systemCommand <- paste0("cd '", dir, "'; ", command)
@@ -98,16 +98,17 @@ observers$doCommand <- observeEvent(doCommand(), {
 #----------------------------------------------------------------------
 # display the command results in a concatenated pseudo-stream
 #----------------------------------------------------------------------
-results <- reactiveVal("")
+results <- reactiveVal(results)
 observers$results <- observeEvent(results(), {
     results <- results()
     if(length(results) == 1) results <- NULL 
     html("results", html = paste(results[2:length(results)], collapse = "\n"))
     scrollCommandTerminalResults(prefix)
 })
-activateObserver <- observe({
+activateObserver <- observe({ # runs once after UI elements initialize
     results()
     runjs(paste0("activateCommandTerminalKeys('", prefix, "')"))
+    scrollCommandTerminalResults(prefix) # unfortunately, this executes but something else steals focus after
     activateObserver$destroy()
 })
 
@@ -117,13 +118,14 @@ activateObserver <- observe({
 observers$clear <- observeEvent(input$clear, { results("") })
 
 #----------------------------------------------------------------------
-# return value
+# return value for use by destroyModuleObservers
 #----------------------------------------------------------------------
 list(
-    destroy = function(){
-        lapply(observers, function(x) x$destroy())
-        workingDir() # for state persistence between dialog loads
-    }
+    observers = observers,
+    onDestroy = function() list(
+        dir = workingDir(),
+        results = results()
+    )
 )
 
 #----------------------------------------------------------------------

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# static components for populating a command terminal dialog
+# static components for populating a command emulator dialog dialog
 #----------------------------------------------------------------------
 
 # module ui function
