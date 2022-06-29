@@ -9,15 +9,16 @@ commandTerminalServer <- function(id, user = NULL, dir = NULL, timeout = 10) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
 if(serverEnv$IS_SERVER) return(NULL)
-module <- "commandTerminal"
 
 #----------------------------------------------------------------------
 # initialize the terminal
 #----------------------------------------------------------------------
-workingDir <- reactiveVal(dir)
+module <- "commandTerminal"
 chooseDirId <- "chooseDir"
-prefix <- session$ns("")
 spinnerSelector <- "#commandTerminalSpinner"
+prefix <- session$ns("")
+observers <- list()
+workingDir <- reactiveVal(dir)
 defaultTimeout <- 10
 timeout_ <- reactive({
     x <- input$timeout
@@ -30,8 +31,6 @@ timeout_ <- reactive({
 #----------------------------------------------------------------------
 # initialize the command prompt
 #----------------------------------------------------------------------
-commandEnterKey <- reactiveVal(0)
-commandEnterKeyActivated <- FALSE
 output$prompt <- renderUI({
     domain <- serverEnv$MDI_REMOTE_DOMAIN
     dir <- workingDir()
@@ -46,47 +45,53 @@ serverChooseDirIconServer(
     chooseDirId, 
     input, 
     session,
-    chooseFn = function(dir) workingDir(dir$dir)
+    chooseFn = function(dir) {
+        changeTerminalDirectory(dir$dir, workingDir, prefix)
+    }
 )
 
 #----------------------------------------------------------------------
 # execute the command in response to enter key or Execute button click
 #----------------------------------------------------------------------
-observeEvent(input$commandEnterKey, {
-    commandEnterKey(commandEnterKey() + 1)
+doCommand <- reactiveVal(0)
+observers$commandEnterKey <- observeEvent(input$commandEnterKey, {
+    doCommand(doCommand() + 1) 
 })
-observeEvent({
-    input$execute
-    commandEnterKey()
-}, {
+observers$execute <- observeEvent(input$execute, {
+    doCommand(doCommand() + 1) 
+})
+observers$doCommand <- observeEvent(doCommand(), {
+    req(doCommand() > 0)
     req(input$command)
     dir <- workingDir()
     req(dir)
-    command <- paste0("cd '", dir, "'; ", input$command)
+    command <- interceptTerminalCommands(input$command, workingDir = workingDir, prefix = prefix)
+    req(command)
+    show(selector = spinnerSelector)    
+    systemCommand <- paste0("cd '", dir, "'; ", command)
     if(serverEnv$IS_WINDOWS) {
         drive <- strsplit(dir, "")[[1]][1]
-        command <- gsub(
+        systemCommand <- gsub(
             paste0(drive, ":/"), # convert "C:/" to "/mnt/c/", et.
             paste0("/mnt/", tolower(drive), "/"),
-            paste0('bash -c "', command, '"') # requires Git Bash on Windows
+            paste0('bash -c "', systemCommand, '"') # requires Git Bash on Windows
         )
     }
-    show(selector = spinnerSelector)
     x <- c(
         results(), 
-        paste0('<span style="color: #00a;">', paste("$", input$command), '</span>'),
+        paste0('<span style="color: #00a;">', paste("$", command), '</span>'),
         tryCatch({
-            system(command, intern = TRUE, timeout = timeout_())
+            system(systemCommand, intern = TRUE, timeout = timeout_())
         }, warning = function(w){ # when command executes but it reports an error
             if(grepl("timed out after", w)) paste("command timed out after", timeout_(), "seconds")
-            else system(paste(command, "2>&1"), intern = TRUE)
+            else system(paste(systemCommand, "2>&1"), intern = TRUE)
         }, error = function(e){c( # when the command could not be executed and the system reports an error
             "unrecognized or malformed command",
             "could not be executed on the server operating system"
         )}) 
     )
     hide(selector = spinnerSelector)
-    runjs(paste0("addCommandToHistory('", prefix, "')"))
+    addCommandToHistory(prefix)
     results(x)
 })
 
@@ -94,26 +99,32 @@ observeEvent({
 # display the command results in a concatenated pseudo-stream
 #----------------------------------------------------------------------
 results <- reactiveVal("")
-observeEvent(results(), {
-    if(!commandEnterKeyActivated) {
-        runjs(paste0("activateCommandTerminalKeys('", prefix, "')"))
-        commandEnterKeyActivated <<- TRUE
-    }
+observers$results <- observeEvent(results(), {
     results <- results()
     if(length(results) == 1) results <- NULL 
     html("results", html = paste(results[2:length(results)], collapse = "\n"))
-    runjs(paste0("scrollCommandTerminalResults('", prefix, "')"))
+    scrollCommandTerminalResults(prefix)
+})
+activateObserver <- observe({
+    results()
+    runjs(paste0("activateCommandTerminalKeys('", prefix, "')"))
+    activateObserver$destroy()
 })
 
 #----------------------------------------------------------------------
 # clear the results window
 #----------------------------------------------------------------------
-observeEvent(input$clear, { results("") })
+observers$clear <- observeEvent(input$clear, { results("") })
 
 #----------------------------------------------------------------------
-# return nothing
+# return value
 #----------------------------------------------------------------------
-NULL
+list(
+    destroy = function(){
+        lapply(observers, function(x) x$destroy())
+        workingDir() # for state persistence between dialog loads
+    }
+)
 
 #----------------------------------------------------------------------
 # END MODULE SERVER

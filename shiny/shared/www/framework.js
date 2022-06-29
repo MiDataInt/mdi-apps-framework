@@ -227,9 +227,10 @@ let traverseCommandHistory = function(prefix, increment){
     commandTerminalHistory.offset = i;
     Shiny.setInputValue(prefix + "command", input.val()); // otherwise input$command does not stay current
 }
-let addCommandToHistory = function(prefix){ // executed by call from R when command finishes execution
+let addCommandToHistory = function(prefix, command){ // executed by call from R when command finishes execution
     let input = $("#" + prefix + "command");
-    let command = input.val();
+    command = command === "" ? input.val() : command;
+    if(command === "") return;
     if(command !== commandTerminalHistory.commands[0]) commandTerminalHistory.commands.unshift(command);
     commandTerminalHistory.offset = 0;
     commandTerminalHistory.current = "";

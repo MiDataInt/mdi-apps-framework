@@ -20,7 +20,7 @@ commandTerminalUI <- function(id) {
             ),
             column(
                 width = 2,
-                bsButton(ns("execute"), "Execute", style = "primary")
+                bsButton(ns("execute"), "(Re)Execute", style = "primary")
             ),
             style = "margin-bottom: 1em;"
         ),
