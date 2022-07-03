@@ -10,9 +10,14 @@ if(!restricted){
         sourceFileInputUI(id)
     })
 
-
-
     # user status, dataDir and logout in navbar / page header
+    insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
+        ui = tags$i(
+            id = "mainSpinner",
+            class = "fas fa-spinner fa-spin header-large-icon",
+            style = "margin-left: 0.5em; font-size: 1.35em; color: #eee; visibility: hidden;"
+        )
+    )
     if(serverEnv$IS_DEVELOPER){
         insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
@@ -40,11 +45,11 @@ if(!restricted){
     )
     
     # user status, dataDir and logout in navbar / page header
-    insertUI(".navbar-static-top",  where = "beforeEnd", immediate = TRUE,   
+    headerStatusId <- 'headerStatus'
+    headerStatus <- headerStatusServer(headerStatusId)
+    insertUI(".navbar-static-top", where = "beforeEnd", immediate = TRUE,   
         ui = {
-            id <- 'headerStatus'
-            headerStatusServer(id)
-            headerStatusUI(id)
+            headerStatusUI(headerStatusId)
         }
     )
 

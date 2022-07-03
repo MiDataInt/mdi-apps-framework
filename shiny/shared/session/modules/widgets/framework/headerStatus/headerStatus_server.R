@@ -106,10 +106,86 @@ serverChooseDirIconServer(
     }
 )
 
+# maintain a visual display of one or more asynchrous processes launched by user
+createAsyncIcon <- function(taskCounter, class, link, style = ""){
+    icon <- tags$i(
+        class = paste(class, "fas header-large-icon header-async-monitor"),
+        style = paste(style, "cursor: pointer; margin-right: 0.25em; font-size: 1.35em; color: #eee; padding: 0 5px;")
+    )
+    actionLink(
+        session$ns(paste(link, taskCounter, sep = "_")), 
+        icon,
+        onclick = paste0("Shiny.setInputValue('headerStatus-asyncClick', '",  taskCounter, "', {priority: 'event'})")
+    )
+}
+updateAsyncMonitor <- reactiveVal(0)
+output$asyncMonitor <- renderUI({
+    updateAsyncMonitor()
+    lapply(names(asyncTasks), function(taskCounter){
+        task <- asyncTasks[[taskCounter]]
+        if(task$user != headerStatusData$userDisplayName) return("")        
+        data <- task$reactiveVal()
+             if(data$pending) createAsyncIcon(taskCounter, "fa-spinner fa-spin", "pending")
+        else if(data$success) createAsyncIcon(taskCounter, "fa-check", "succeeded", "color: #0a0 !important;")
+        else                  createAsyncIcon(taskCounter, "fa-times", "failed",    "color: #c00 !important;")
+    })
+}) 
+workingAsyncId <- reactiveVal()
+observeEvent(input$asyncClick, {
+    workingAsyncId(input$asyncClick)
+    task <- asyncTasks[[input$asyncClick]]
+    data <- task$reactiveVal()
+    showUserDialog(
+        title = "Asynchronous Task Report",
+        tags$p(tags$strong("Task:"), task$name),
+        tags$p(
+            tags$strong("Status:"),
+                 if(data$pending) "Pending"
+            else if(data$success) "Succeeded"
+            else                  "Failed"
+        ),
+        if(!data$pending) tags$p(
+            tags$strong("Results:"),
+            tags$pre(if(data$success) data$value else data$message, style = "max-height: 500px;")
+        ) else "",
+        size = "m",
+        type = "custom",
+        footer = tagList(
+            bsButton(session$ns("dismissAsync"), "Keep Header Icon",  style = "default"),            
+            bsButton(session$ns("clearAsync"),   "Clear Header Icon", style = "primary")
+        )
+    )
+})
+closeAsyncDialog <- function(clear){
+    removeModal()
+    if(clear){ # eventually, the user clears the icon from their header and from the server log
+        taskId <- workingAsyncId()
+        asyncTasks[[taskId]] <<- NULL      
+        updateAsyncMonitor(updateAsyncMonitor() + 1)
+    }
+}
+observeEvent(input$dismissAsync, { closeAsyncDialog(FALSE) })
+observeEvent(input$clearAsync,   { closeAsyncDialog(TRUE) })
+
 #----------------------------------------------------------------------
-# return nothing
+# return value
 #----------------------------------------------------------------------
-NULL
+list(
+    initalizeAsyncTask = function(name, reactiveVal){
+        asyncTaskCounter <<- asyncTaskCounter + 1
+        taskObserver <- observeEvent(reactiveVal(), {
+            task <- reactiveVal()
+            req(task)
+            updateAsyncMonitor(updateAsyncMonitor() + 1)
+            if(!task$pending) taskObserver$destroy()
+        })
+        asyncTasks[[as.character(asyncTaskCounter)]] <<- list(
+            user = headerStatusData$userDisplayName,
+            name = name,
+            reactiveVal = reactiveVal
+        )
+    }
+)
 
 #----------------------------------------------------------------------
 # END MODULE SERVER

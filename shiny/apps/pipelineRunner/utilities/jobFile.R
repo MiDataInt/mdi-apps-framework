@@ -113,6 +113,7 @@ writeDataYml <- function(jobFilePath, suite, pipeline, newValues,
     # build the nested action options, requested options only
     for(actionName in allActions){ # print options for all actions, even if not executed to protect future interests
         action_ <- template[[actionName]]
+        check <- list()
         for(family in names(action_)){
             family_ <- action_[[family]]
             for(option in names(family_)){
@@ -139,12 +140,41 @@ writeDataYml <- function(jobFilePath, suite, pipeline, newValues,
                     if(is.null(yml[[actionName]])) yml[[actionName]] <- list()
                     if(is.null(yml[[actionName]][[family]])) yml[[actionName]][[family]] <- list()
                     yml[[actionName]][[family]][[option]] <- newValue
+                    option
                 }
+
+                # track task arrays for integrity check
+                check[[option]] <- newValue
             } 
+        }
+
+        # check task array length integrity for all executed actions
+        if(actionName %in% actions){
+            nOptionValues <- unique(sapply(check, length))
+            nArrayLengths <- sum(nOptionValues > 1)
+            if(nArrayLengths > 1) return(list(
+                success = FALSE,
+                message = c(
+                    "Different options have different numbers of values.",
+                    "All options must have either one value or the same number of values as the job array length."
+                )
+            ))
+            arrayLength <- max(nOptionValues)
+            if(nArrayLengths == 1 && 
+               length(unique(check[["output-dir"]])) < arrayLength &&
+               length(unique(check[["data-name" ]])) < arrayLength 
+            ) return(list(
+                success = FALSE,
+                message = c(
+                    "Missing output options for all distinct array tasks.",
+                    "When constructing a job array, you must provide a list of unique values for either 'output-dir' or 'data-name'."
+                )
+            ))
         }
     }
 
     # build and write the final yaml in proper element order
     yml$execute <- actions
     write_yaml(yml, file = jobFilePath)
+    return(list(success = TRUE))
 }

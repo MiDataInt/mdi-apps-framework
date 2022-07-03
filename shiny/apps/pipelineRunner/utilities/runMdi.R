@@ -25,17 +25,20 @@ runMdiCommand <- function(
         command <- paste(mdiCommandTarget, paste(args, collapse = " "))
         if(!FAIL || isMdiSuccess(x, command = command, suite = suite)) list(
             success = TRUE, 
+            command = command,
             results = if(collapse) paste(x, collapse = "\n") else x
         ) else {
             if(!is.null(errorDialog)) errorDialog(command, x)
             list(
-                success = FALSE,
+                success = FALSE, 
+                command = command,
                 results = x  
             )            
         }
     }, error = function(e){ # this capture system2 errors, NOT mdi errors (which return in stderr)
         list(
-            success = FALSE,
+            success = FALSE, 
+            command = command,
             results = e
         )
     })

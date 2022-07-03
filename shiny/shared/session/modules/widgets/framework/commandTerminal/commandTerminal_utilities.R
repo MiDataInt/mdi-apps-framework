@@ -6,24 +6,27 @@
 # launch a stateful terminal emulator
 #----------------------------------------------------------------------
 commandTerminalCache <- list()
-showCommandTerminal <- function(session, user = NULL, dir = NULL){
+showCommandTerminal <- function(session, user = NULL, dir = NULL, forceDir = FALSE, host = NULL){
     id <- "commandTerminalDialog"
     nsId <- session$ns(id)
     cache <- commandTerminalCache[[nsId]]
     onExit <- function(...){
         removeMatchingInputValues(session, id)
         commandTerminalCache[[nsId]] <<- destroyModuleObservers(commandTerminalCache[[nsId]])   
-    }    
+    }
+    dir <- if(is.null(cache$dir) || forceDir) dir else cache$dir
+    results <- if(is.null(cache$results) || is.null(cache$dir) || cache$dir != dir) "" else cache$results
     commandTerminalCache[[nsId]] <<- commandTerminalServer(
         id, 
         user = user, 
-        dir = if(is.null(cache$dir)) dir else cache$dir,
-        results = if(is.null(cache$results)) "" else cache$results,
-        onExit = onExit
+        dir = dir,
+        results = results,
+        onExit = onExit,
+        host = host
     )
     showUserDialog(
         HTML(paste(
-            "Command Terminal Emulator", 
+            paste("Command Terminal Emulator", if(is.null(host)) "" else "(node)"), 
             tags$i(
                 id = "commandTerminalSpinner",
                 class = "fas fa-spinner fa-spin",

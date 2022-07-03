@@ -248,6 +248,14 @@ observe({
 #----------------------------------------------------------------------
 
 # *** job file save action ***
+writeError <- reactiveVal(NULL)
+observeEvent(writeError(), {
+    showUserDialog(
+        title = "Job File Error",
+        lapply(writeError()$message, tags$p),
+        type = "okOnly"
+    )
+}, ignoreInit = TRUE)
 observeEvent(input[[saveJobFileId]], {
     editMode <- editMode()
     if(editMode == editModes$none) return(FALSE)
@@ -260,8 +268,12 @@ observeEvent(input[[saveJobFileId]], {
         tags$p(path, style = "margin-left: 2em;"),
         callback = function(...) {
             isolate({
-                editors[[editMode]]$write(path, path)
-                editors[[editMode]]$save(path)
+                write <- editors[[editMode]]$write(path, path) 
+                if(write$success) editors[[editMode]]$save(path)
+                else writeError(list(
+                    message = write$message, 
+                    force = sample(1e8, 1)
+                ))
             })
         }, 
         type = 'saveCancel',

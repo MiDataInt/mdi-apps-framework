@@ -161,6 +161,10 @@ if(serverEnv$IS_KEYED)  source(file.path('global', 'authentication', 'accessKey.
 loadFrameworkPackages('storr')
 serverEnv$STORR <- storr::storr_rds(serverEnv$STORR_DIR)
 
+# initialize the server-level async monitor (persists between sessions and page reloads)
+asyncTaskCounter <- 0
+asyncTasks <- list()
+
 # declare sessions directory and clear any prior user sessions
 loadFrameworkPackages('shiny')
 addResourcePath('sessions', serverEnv$SESSIONS_DIR) # for temporary session files

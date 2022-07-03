@@ -51,7 +51,8 @@ runJobUI <- function(id, options) {
             # job status table for selected job configuration file
             fluidRow(
                 style = "margin-top: 1.5em;",
-                box(
+                asyncTableUI(
+                    ns('status'), 
                     width = 12,
                     title = tags$span(
                         "Job Statuses", 
@@ -59,9 +60,8 @@ runJobUI <- function(id, options) {
                     ),
                     status = 'primary',
                     solidHeader = FALSE,
-                    style = "padding: 0 0 10px 15px;",
-                    DTOutput(ns('statusTable'))
-                ) 
+                    style = "padding: 0 0 10px 15px;"
+                )
             ),
 
             # task-level report/monitoring buttons for selected job

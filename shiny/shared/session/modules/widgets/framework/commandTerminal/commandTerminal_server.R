@@ -6,7 +6,7 @@
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
 commandTerminalServer <- function(id, user = NULL, dir = NULL, results = "",
-                                  timeout = 10, onExit = NULL) {
+                                  timeout = 10, onExit = NULL, host = NULL) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
 if(serverEnv$IS_SERVER) return(NULL)
@@ -33,7 +33,7 @@ timeout_ <- reactive({ # since we have no way to pass SIGINT to synchronous syst
 # initialize the command prompt
 #----------------------------------------------------------------------
 output$prompt <- renderUI({
-    domain <- serverEnv$MDI_REMOTE_DOMAIN
+    domain <- if(is.null(host)) serverEnv$MDI_REMOTE_DOMAIN else host
     dir <- workingDir()
     prompt <- tags$span(if(is.null(domain)) user else paste(user, domain, sep = "@"), style = "color: #500;")
     prompt <- if(is.null(dir)) prompt else paste(prompt, tags$span(dir, style = "color: #00a;"), sep = " ")
@@ -67,8 +67,9 @@ observers$doCommand <- observeEvent(doCommand(), {
     command <- interceptTerminalCommands(input$command, workingDir = workingDir, 
                                          prefix = prefix, onExit = onExit)
     req(command)
-    show(selector = spinnerSelector)    
-    systemCommand <- paste0("cd '", dir, "'; ", command)
+    show(selector = spinnerSelector)   # enable terminal to work on login host (the default) or a node
+    systemCommand <- if(is.null(host)) paste0(                "cd '", dir, "'; ", command)
+                                  else paste0("ssh ", host, " 'cd ",  dir, "; ",  command, "'")
     if(serverEnv$IS_WINDOWS) {
         drive <- strsplit(dir, "")[[1]][1]
         systemCommand <- gsub(
@@ -79,7 +80,7 @@ observers$doCommand <- observeEvent(doCommand(), {
     }
     x <- c(
         results(), 
-        paste0('<span style="color: #00a;">', paste("$", command), '</span>'),
+        paste0('__LT__span style="color: #00a;">', paste("$", command), '__LT__/span>'),
         tryCatch({
             system(systemCommand, intern = TRUE, timeout = timeout_())
         }, warning = function(w){ # when command executes but it reports an error
@@ -101,8 +102,9 @@ observers$doCommand <- observeEvent(doCommand(), {
 results <- reactiveVal(results)
 observers$results <- observeEvent(results(), {
     results <- results()
-    if(length(results) == 1) results <- NULL 
-    html("results", html = paste(results[2:length(results)], collapse = "\n"))
+    results <- if(length(results) == 1) NULL 
+    else paste(results[2:length(results)], collapse = "\n")
+    html("results", html = gsub("__LT__", "<", gsub("<", "&lt;", results)))
     scrollCommandTerminalResults(prefix)
 })
 activateObserver <- observe({ # runs once after UI elements initialize

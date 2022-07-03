@@ -74,7 +74,7 @@ mdiCheckboxGroupInputDiv <- function(id, onchangeFn, checked){
 mdiCheckboxGroupInput <- function(id, label, value = 0, onchangeFn = NULL, indexed = TRUE){
     if(is.null(value) || length(value) == 0) value <- FALSE
     labelId <- paste(id, "label", sep = "-")
-    checked <- if(as.logical(as.integer(value))) 'checked="checked"' else ""
+    checked <- function(i) if(as.logical(as.integer(value[i]))) 'checked="checked"' else ""
     tags$div(
         id = id,
         class = "form-group shiny-input-checkboxgroup shiny-input-container shiny-bound-input shinyjs-resettable",
@@ -90,8 +90,8 @@ mdiCheckboxGroupInput <- function(id, label, value = 0, onchangeFn = NULL, index
             label
         ),
         if(indexed || length(value) > 1) lapply(seq_along(value), function(i){
-            mdiCheckboxGroupInputDiv(paste(id, i, sep = "_"), onchangeFn, checked)   
+            mdiCheckboxGroupInputDiv(paste(id, i, sep = "_"), onchangeFn, checked(i))   
         })
-        else mdiCheckboxGroupInputDiv(id, onchangeFn, checked)  
+        else mdiCheckboxGroupInputDiv(id, onchangeFn, checked(value))  
     )
 }

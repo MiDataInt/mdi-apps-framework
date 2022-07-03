@@ -78,6 +78,7 @@ list(
     },
     write = function(newPath, oldPath){
         cat(state$working[[oldPath]], file = newPath)
+        list(success = TRUE)
     },
     save = function(path){
         state$disk[[path]] <- state$working[[path]]

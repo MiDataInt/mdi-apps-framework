@@ -89,7 +89,8 @@ Shiny.addCustomMessageHandler('updateTriggerArray', function(trigger) {
     help Shiny show a spinner on certain slow actions
     ------------------------------------------------------------------------*/
 Shiny.addCustomMessageHandler('toggleSpinner', function(visibility) {
-    $(".progress-spinner-div").css('visibility',visibility);
+    // $(".progress-spinner-div").css('visibility',visibility);
+    $("#mainSpinner").css('visibility', visibility);
 });
 
 /*  ------------------------------------------------------------------------

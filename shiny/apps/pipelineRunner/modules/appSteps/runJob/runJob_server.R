@@ -11,6 +11,10 @@ runJobServer <- function(id, options, bookmark, locks) {
 #----------------------------------------------------------------------
 if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
 
+# DEVELOPER ACTION, not as relevant to most users except maybe to poke into data file (samtools view...)
+#   shell          open a command shell in a pipeline action's runtime environment
+# mdi pipeline shell --action --runtime [command]
+
 #----------------------------------------------------------------------
 # initialize module
 #----------------------------------------------------------------------
@@ -47,7 +51,7 @@ observe({
 #----------------------------------------------------------------------
 runJobManagerCommand <- function(command, jobId = NULL, 
                                  dryRun = TRUE, force = FALSE,
-                                 errorString = 'mdi error:'){
+                                 errorString = 'mdi error:', options = ""){
     setOutputData(NULL, NULL, NULL, FALSE)
     jobFile <- activeJobFile()
     req(jobFile)
@@ -98,26 +102,17 @@ nullStatusTable <- data.table(
     maxvmem = ""
 )
 invalidateStatusTable <- reactiveVal(0)
-statusTable <- reactive({
-    input$refreshStatus
-    invalidateStatusTable()
-    jobFile <- activeJobFile()
-    req(jobFile)
+status <- asyncTableServer("status", function(jobFile){
 
-    # write the status to file using mdi status (but don't use it's formatted return value)
-    startSpinner(session, 'mdi status')
-    args <- c('status', jobFile$path)
-    x <- runMdiCommand(args, collapse = FALSE)
-    req(x$success) 
+    # call 'mdi status' to update status files, but use the files, not the mdi return value
+    x <- runMdiCommand(c('status', jobFile$path), collapse = FALSE)
+    if(!x$success) return(nullStatusTable)
 
     # recover the tab-delimited status text from disk
     dataDir <- paste0(".", jobFile$name, ".data")
     statusFile <- paste0(jobFile$name, ".status")
     statusFile <- file.path(jobFile$directory, dataDir, statusFile)
-    if(!file.exists(statusFile)) {
-        stopSpinner(session, 'mdi status')
-        return(nullStatusTable)
-    }
+    if(!file.exists(statusFile)) return(nullStatusTable) 
 
     # parse the status file into a tab delimited table
     x <- strsplit(slurpFile(statusFile), "\n")[[1]]
@@ -141,32 +136,32 @@ statusTable <- reactive({
             session$ns(deleteLinkId), 
             nrow(x), 
             'Delete', 
-            allow = !check.numeric(x$exit_status)
+            allow = !isTerminated(x$exit_status)
         )  
-    )
-    stopSpinner(session, 'mdi status')    
+    )  
     cbind(y, x)
+}, options = list(
+    paging = FALSE,      
+    searching = FALSE            
+))
+statusTableObserver <- observeEvent({
+    input$refreshStatus
+    invalidateStatusTable()
+    activeJobFile()
+}, {
+    jobFile <- activeJobFile()
+    req(jobFile) 
+    status$update(jobFile = jobFile, default = nullStatusTable)
 })
-output$statusTable <- renderDT(
-    { statusTable() },
-    options = list(
-        paging = FALSE,      
-        searching = FALSE            
-    ),
-    class = "display table-compact-4",
-    escape = FALSE, 
-    selection = 'single', 
-    editable = FALSE, 
-    rownames = FALSE # must be true for editing to work, not sure why (datatables peculiarity)
-)
 
 #----------------------------------------------------------------------
 # enable job deletion from within the status table
 #----------------------------------------------------------------------
 deleteLinkId <- 'deleteLink'
 observeEvent(input[[deleteLinkId]], {
-    statusTable <- statusTable()
+    statusTable <- status$tableData()
     req(statusTable)
+    req(!statusTable$pending)
     row <- getTableActionLinkRow(input, deleteLinkId)
     jobName <- statusTable[row, jobName]
     jobId   <- statusTable[row, jobID]
@@ -195,18 +190,22 @@ observeEvent(input[[deleteLinkId]], {
 #----------------------------------------------------------------------
 # cascade to show the initial, complete log report of a selected job
 #----------------------------------------------------------------------
-selectedJobI <- rowSelectionObserver('statusTable', input)
+selectedJobI <- status$table$rows_selected
 selectedJob <- reactive({
-    statusTable <- statusTable()
-    req(statusTable)
     rowI <- selectedJobI()
     req(rowI)
-    statusTable[rowI, ]
+    status$tableData()[rowI, ]
 })
 selectedJobId <- reactive({
     job <- selectedJob()
     req(job)
     job[, jobID]
+})
+isTerminated <- Vectorize(function(exit_status) exit_status == "deleted" || check.numeric(exit_status))
+isTerminatedJob <- reactive({
+    job <- selectedJob()
+    req(job)
+    job[, isTerminated(exit_status)]
 })
 observeEvent(selectedJobI(), { 
     setOutputData(NULL, NULL, NULL, FALSE)
@@ -221,7 +220,7 @@ observeEvent(selectedJobI(), {
 allTasks <- "all tasks"
 taskSelector <- reactive({
     tasks <- selectedJob()[, array]
-    if(is.na(tasks)) "" else tagList(
+    if(is.na(tasks) || tasks == "") "" else tagList(
         column(
             width = 1,
             style = "padding-right: 0;",
@@ -261,7 +260,7 @@ output$ls_ <- renderUI({
 })
 output$top_ <- renderUI({
     req(enableTaskLevelButtons())
-    req(!check.numeric(selectedJob()[, exit_status]))
+    req(!isTerminatedJob())
     column(
         width = 2,
         bsButton(session$ns("top"), "Process Metrics", style = "default", width = "100%")
@@ -270,6 +269,7 @@ output$top_ <- renderUI({
 output$taskOptions <- renderUI({
     job <- selectedJob()
     req(job)
+    req(job[, jobName != "no submitted jobs"])
     fluidRow(
         style = "margin-top: 0.5em;",
         box(
@@ -290,7 +290,8 @@ output$taskOptions <- renderUI({
 # ----------------------------------------------------------------------
 # task-level reporting/monitoring actions
 # ----------------------------------------------------------------------
-runTaskLevelCommand <- function(command){
+expandedJobId <- reactiveVal(NULL)
+runTaskLevelCommand <- function(command, fn = NULL){
     jobId <- selectedJobId()
     req(jobId)
     tasks <- selectedJob()[, array]
@@ -300,7 +301,8 @@ runTaskLevelCommand <- function(command){
     } else {
         paste0("[", taskNumber, "]")
     })
-    runJobManagerCommand(command, jobId = jobId, dryRun = FALSE) 
+    expandedJobId(jobId)
+    runJobManagerCommand(command, jobId = jobId, dryRun = FALSE)  
 }
 observeEvent({ # update command output as selected task changes
     selectedJobId()
@@ -321,6 +323,12 @@ observeEvent(input$top,    { runTaskLevelCommand('top') })
 # render all command outputs
 #----------------------------------------------------------------------
 outputData <- reactiveVal(NULL)
+results <- reactive({ # command output as an array of lines
+    data <- outputData()$data
+    req(data)
+    req(data$results)
+    strsplit(data$results, "\n")[[1]]
+})
 setOutputData <- function(command, args, data, stopSpinner = TRUE){
     if(stopSpinner) stopSpinner(session, command)          
     outputData(list(
@@ -357,35 +365,202 @@ observeEvent(input$refreshOutput, {
 })
 
 #----------------------------------------------------------------------
+# build all required conda environments and/or download Singularity containers
+#----------------------------------------------------------------------
+missingCondaPipelines <- reactiveVal(NULL)
+missingImages <- reactiveVal(list())
+buildEnvironmentButton <- function(){ # must come before executeButtonMetadata
+    results <- results()
+    req(results)
+    blockStarts <- which(results == "---") # boundaries of YAML blocks, a.k.a documents
+    blockEnds   <- which(results == "...")
+    missingCondaPipelines_ <- list()
+    missingImages_ <- list()
+    for(i in seq_along(blockStarts)){
+        yaml <- read_yaml(text = paste0(results[blockStarts[i]:blockEnds[i]], collapse = "\n"))
+        action <- yaml$execute
+        if(is.null(action)) next # false for task and other non-job-level YAML blocks
+        pipeline <- if(grepl("/", yaml$pipeline)) strsplit(yaml$pipeline, "/")[[1]][2] else yaml$pipeline
+        pipeline <- strsplit(pipeline, ":")[[1]][1] # just the pipeline name (no suite or version)
+        singularity <- yaml[[action]]$singularity
+        if(is.null(singularity)){
+            conda <- strsplit(yaml[[action]]$conda$prefix, "\\s+")[[1]][1]
+            if(!dir.exists(conda)) missingCondaPipelines_[[pipeline]] <- pipeline
+        } else { # both the host system and the pipeline support containers and runtime = auto or container
+            image <- rev(strsplit(singularity$image, "/")[[1]])
+            imageFile <- file.path(serverEnv$MDI_DIR, "containers", image[2], pipeline, paste0(sub(":v", "-v", image[1]), ".sif"))
+            if(!file.exists(imageFile)) missingImages_[[singularity$image]] <- pipeline
+        }
+    }       
+    missingCondaPipelines(missingCondaPipelines_)
+    missingImages(missingImages_)
+    if(length(missingCondaPipelines_) > 0 || length(missingImages_) > 0){
+        bsButton(session$ns('environments'), "Build/Download Environment(s)", style = "primary", width = "100%")
+    } else ""
+}
+buildEnvironments <- function(jobFile, missingCondaPipelines, missingImages){
+    results <- c()
+    if(length(missingCondaPipelines) > 0) for(pipeline in unique(unlist(missingCondaPipelines))){
+        results <- c(results, runMdiCommand(args = c(pipeline, "conda", "--create", "--force"))$results)
+    }
+    if(length(missingImages) > 0) for(pipeline in unique(unlist(missingImages))){
+        results <- c(results, runMdiCommand(args = c(pipeline, "checkContainer", jobFile))$results)
+    }
+    paste(results, collapse = "\n\n")
+}
+observeEvent(input$environments, {
+    jobFile <- activeJobFile()
+    missingCondaPipelines <- missingCondaPipelines()
+    missingImages <- missingImages()
+    showUserDialog(
+        title = "Confirm Asynchronous Build",
+        tags$p("The following execution environments will be built or downloaded asynchronously.",
+               "You may keep working until the process completes and then submit your jobs."),
+        if(length(missingCondaPipelines) > 0) tagList(
+            tags$p(tags$strong("Conda Environments"), style = "margin-bottom: 0;"),
+            lapply(names(missingCondaPipelines), tags$p, style = "padding-left: 2em;")
+        ) else "",
+        if(length(missingImages) > 0) tagList(
+            tags$p(tags$strong("Singularity Containers"), style = "margin-bottom: 0;"),
+            lapply(names(missingImages), tags$p, style = "padding-left: 2em;")
+        ) else "",
+        callback = function(...) mdi_async(
+            buildEnvironments,
+            reactiveVal(""), # a new reactive for this task  
+            name = "buildEnvironments",
+            header = TRUE,
+            jobFile = jobFile,
+            missingCondaPipelines = missingCondaPipelines,
+            missingImages = missingImages
+        ),
+        size = "m"
+    )
+})
+
+#----------------------------------------------------------------------
+# download a data package from a job for use in Stage 2 apps
+#----------------------------------------------------------------------
+packageFile <- reactiveVal(NULL)
+downloadPackageButton <- function(){ # must come before executeButtonMetadata
+    packageFile(NULL)
+    results <- results()
+    req(results)
+    is <- which(grepl("writing Stage 2 package file", results))
+    req(is)
+    i <- max(is)
+    req(i)
+    i <- i + 1 # this line carries the name of the most recently written data package.zip
+    packageFile(results[i])
+    downloadButton(session$ns('download'), label = "Download Package", 
+                   icon = NULL, width = "100%", # style mimics bsButton style=primary
+                   style = "color: white; background-color: #3c8dbc; width: 100%; border-radius: 3px; float: right;")
+}
+output$download <- downloadHandler(
+    filename = function() basename(packageFile()),
+    content  = function(tmpFile) file.copy(packageFile(), tmpFile)
+)
+
+#----------------------------------------------------------------------
+# open a terminal emulator in an output directory ...
+#----------------------------------------------------------------------
+# ... one the server/login node
+showOutputDirTerminal <- function(ssh = FALSE){ # must come before executeButtonMetadata
+    if(ssh){
+        jobId <- expandedJobId()        
+        jobFile <- activeJobFile() # collect job metadata from log report
+        x <- runMdiCommand(args = c("report", "-j", jobId, jobFile$path), collapse = FALSE)
+        if(!x$success) return(NULL)
+        x <- sapply(c('host:', 'output-dir:', 'data-name:'), function(option){
+            i <- which(grepl(option, x$results))[1] # mdi metadata always before job-specific logs
+            trimws(strsplit(x$results[i], option)[[1]][2])
+        })
+        dir <- paste(x[2:3], collapse = "/")
+        host <- x[1]
+        req(host)
+    } else {
+        results <- results()
+        req(results)
+        dir <- results[1]
+        host <- NULL
+    }
+    req(dir)
+    showCommandTerminal(
+        session, 
+        user = headerStatusData$userDisplayName, 
+        dir = dir,
+        forceDir = TRUE,
+        host = host
+    )
+}
+# ... on the node running the task
+showNodeDirTerminal <- function(){ # must come before executeButtonMetadata
+    showOutputDirTerminal(ssh = TRUE)
+}
+
+#----------------------------------------------------------------------
 # enable final execution, i.e., after (from within) a --dry-run display
 #----------------------------------------------------------------------
 executeButtonMetadata <- list(
-    mkdir    = c("Make Directory", "primary", suppressIf = "all output directories already exist"),
-    submit   = c("Submit",         "success"),
-    extend   = c("Extend",         "success"),
-    rollback = c("Rollback",       "danger"),
-    purge    = c("Purge",          "danger")
+    inspect = list(
+        button = buildEnvironmentButton,
+        execute = function(...) NULL
+    ),
+    mkdir = list(
+        label = "Make Directory", 
+        style = "primary", 
+        suppressIf = "all output directories already exist"
+    ),
+    submit = list(
+        label = "Execute Submit",         
+        style = "success"
+    ),
+    extend = list(
+        label = "Execute Extend",         
+        style = "success"
+    ),
+    rollback = list(
+        label = "Execute Rollback",       
+        style = "danger"
+    ),
+    purge = list(
+        label = "Execute Purge",          
+        style = "danger"
+    ),
+    report = list(
+        button = downloadPackageButton,
+        execute = function(...) NULL
+    ),
+    ls = list(
+        label = "Open in Terminal",          
+        style = "default",
+        execute = showOutputDirTerminal
+    ),
+    top = list(
+        label = "Open Node in Terminal",          
+        style = "default",
+        execute = showNodeDirTerminal
+    )
 )
 output$executeButton <- renderUI({ # render the Execute ... button
-    x <- outputData()$command
-    req(x)  
-    if(x == "report") return(downloadPackageButton())
-    d <- executeButtonMetadata[[x]]
-    req(d)
-    if(!is.null(d[3]) && !is.na(d[3])){ # handle conditional button display
+    command <- outputData()$command
+    req(command)  
+    d <- executeButtonMetadata[[command]]   
+    req(d)     
+    if(!is.null(d$button)) return(d$button()) # handle button overrides
+    if(!is.null(d$suppressIf)){ # handle conditional button display
         data <- outputData()$data
         req(data)
         results <- data$results
         req(results)
-        if(any(grepl(d[3], results))) return(NULL)
+        if(any(grepl(d$suppressIf, results))) return(NULL)
     }
-    label <- paste('Execute', d[1]) # all buttons labeled "Execute <Command>"
-    bsButton(session$ns('execute'), label, style = d[2], width = "100%")
+    bsButton(session$ns('execute'), d$label, style = d$style, width = "100%")
 })
 observeEvent(input$execute, { # act on the Execute button click
     command <- outputData()$command
     req(command)
-    if(command == "report") return()
+    d <- executeButtonMetadata[[command]] 
+    if(!is.null(d$execute)) return(d$execute()) # handle button overrides 
     args <- outputData()$args
     req(args)
     command <- 'execute'
@@ -395,32 +570,6 @@ observeEvent(input$execute, { # act on the Execute button click
     setOutputData(command, args, data)
     if(data$success) invalidateStatusTable( invalidateStatusTable() + 1 )
 })
-
-#----------------------------------------------------------------------
-# download a data package from a job for use in Stage 2 apps
-#----------------------------------------------------------------------
-packageFile <- reactiveVal(NULL)
-downloadPackageButton <- function(){
-    packageFile(NULL)
-    x <- outputData()$data
-    req(x)
-    x <- x$results
-    req(x)
-    x <- strsplit(x, "\n")[[1]]
-    is <- which(grepl("writing Stage 2 package file", x))
-    req(is)
-    i <- max(is)
-    req(i)
-    i <- i + 1 # this line carries the name of the most recently written data package.zip
-    packageFile(x[i])
-    downloadButton(session$ns('download'), label = "Download Package", 
-                   icon = NULL, width = "100%", # style mimics bsButton style=primary
-                   style = "color: white; background-color: #3c8dbc; width: 100%; border-radius: 3px; float: right;")
-}
-output$download <- downloadHandler(
-    filename = function() basename(packageFile()),
-    content  = function(tmpFile) file.copy(packageFile(), tmpFile)
-)
 
 #----------------------------------------------------------------------
 # define bookmarking actions
