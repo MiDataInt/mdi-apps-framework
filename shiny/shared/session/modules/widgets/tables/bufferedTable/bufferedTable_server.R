@@ -137,6 +137,7 @@ output$download <- downloadHandler(
 #----------------------------------------------------------------------
 list(
     rows_selected = reactive({ input[[selectedId]] }), # alternative way for caller to use selected rows
+    selectionObserver = rowSelectionObserver(tableId, input),
     selectRows = function(rows) selectRows(proxy, rows), # for setting the row selection
     updateCell = updateCell,
     buffer = buffer

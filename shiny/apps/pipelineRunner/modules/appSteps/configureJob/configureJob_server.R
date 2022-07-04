@@ -160,6 +160,11 @@ observeEvent(jobFiles$selected(), {
         selector = "div.requiresJobFileMessage", 
         condition = !isSelection
     )
+    html(
+        id = session$ns("jobFiles-titleSuffix"), 
+        asis = TRUE, 
+        html = if(is.na(selectedRow)) "" else paste0(" - ", jobFiles$list[[selectedRow]]$name)
+    )
 })
 
 #----------------------------------------------------------------------

@@ -16,6 +16,9 @@
 hr {
     border-color: #ccc;
 }
+.mdi-update-pending {
+    opacity: 0.5;
+}
 
 /*  ------------------------------------------------------------------------
     frivolous rotation of the logo on page load
@@ -91,6 +94,10 @@ body, html {
 .header-status-icon, .header-status-dir-icon {
     color: #a6921e;
     cursor: pointer;
+}
+i#mainSpinner:hover, i.header-async-monitor.fa-spinner:hover { /* avoid weird background spin effect */
+    color: #eee !important;
+    background-color: transparent !important;
 }
 
 /*  ------------------------------------------------------------------------
@@ -197,6 +204,9 @@ h3:first-of-type {
     padding: 0 15px;
     border-top: 1px solid #73712c;
     border-left: 1px solid #73712c;
+}
+.content-wrapper {
+    overflow: scroll; /* so that the ui width is always accounted for */
 }
 .form-group, .progress {
     margin-bottom: 0;

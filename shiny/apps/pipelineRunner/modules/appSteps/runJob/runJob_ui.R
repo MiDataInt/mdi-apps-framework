@@ -19,7 +19,7 @@ runJobUI <- function(id, options) {
 
     # reused elements
     refreshButton <- function(id) tags$span(
-        style = "font-size: 0.8em; margin-left: 1rem;",
+        style = "font-size: 0.8em; margin: auto 1rem;",
         actionLink(ns(id), NULL, icon = icon("sync"))
     )
 
@@ -55,12 +55,15 @@ runJobUI <- function(id, options) {
                     ns('status'), 
                     width = 12,
                     title = tags$span(
-                        "Job Statuses", 
-                        refreshButton('refreshStatus')
+                        refreshButton('refreshStatus'),                       
+                        "Job Statuses"
+
                     ),
                     status = 'primary',
                     solidHeader = FALSE,
-                    style = "padding: 0 0 10px 15px;"
+                    style = "padding: 0 0 10px 15px;",
+                    collapsible = TRUE,
+                    collapsed = FALSE
                 )
             ),
 
@@ -73,12 +76,13 @@ runJobUI <- function(id, options) {
                 box(
                     width = 12,
                     title = tags$span(
-                        "Command Output", 
-                        refreshButton('refreshOutput')
+                        refreshButton('refreshOutput'),                        
+                        "Command Output"
                     ),
                     status = 'primary',
                     solidHeader = FALSE,
                     fluidRow(
+                        id = ns("output-header"),
                         style = "margin: 0.5em 0;", 
                         column( # display of the command whose results are being viewed
                             width = 8,
@@ -90,10 +94,7 @@ runJobUI <- function(id, options) {
                             uiOutput(ns('executeButton'))
                         )
                     ),
-                    tags$div( # the actual command results output pane
-                        class = "command-output-wrapper",
-                        verbatimTextOutput(ns('output'))
-                    )
+                    asyncDivUI(ns('output'))
                 ) 
             )      
         ),

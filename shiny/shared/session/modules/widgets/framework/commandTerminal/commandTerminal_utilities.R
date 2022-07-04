@@ -6,7 +6,16 @@
 # launch a stateful terminal emulator
 #----------------------------------------------------------------------
 commandTerminalCache <- list()
-showCommandTerminal <- function(session, user = NULL, dir = NULL, forceDir = FALSE, host = NULL){
+showCommandTerminal <- function(
+    session, 
+    user = NULL,        # name of the user on the host system
+    dir = NULL,         # the suggested directory in which to open the terminal
+    forceDir = FALSE,   # always use `dir`, even if there may be a cached value
+    host = NULL,        # the host to ssh into when running terminal commands
+    pipeline = NULL,    # as used in 'mdi <pipeline> shell --action <action> --runtime <runtime>''
+    action = NULL,      # to execute commands in a pipeline action's environment
+    runtime = NULL
+){
     id <- "commandTerminalDialog"
     nsId <- session$ns(id)
     cache <- commandTerminalCache[[nsId]]
@@ -22,7 +31,10 @@ showCommandTerminal <- function(session, user = NULL, dir = NULL, forceDir = FAL
         dir = dir,
         results = results,
         onExit = onExit,
-        host = host
+        host = host,
+        pipeline = pipeline,
+        action = action,
+        runtime = runtime
     )
     showUserDialog(
         HTML(paste(
@@ -33,7 +45,7 @@ showCommandTerminal <- function(session, user = NULL, dir = NULL, forceDir = FAL
                 style = "margin-left: 2em; color: #3c8dbc; display: none;"
             )
         )), 
-        commandTerminalUI(nsId),
+        commandTerminalUI(nsId, pipeline, action),
         size = "l", 
         type = 'dismissOnly', 
         easyClose = FALSE,

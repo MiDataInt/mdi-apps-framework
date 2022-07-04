@@ -5,8 +5,18 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-commandTerminalServer <- function(id, user = NULL, dir = NULL, results = "",
-                                  timeout = 10, onExit = NULL, host = NULL) {
+commandTerminalServer <- function(
+    id, 
+    user = NULL,    # see showCommandTerminal for documentation of options
+    dir = NULL,     # generally, you do not call commandTerminalServer directly
+    results = "",   
+    timeout = 10, 
+    onExit = NULL, 
+    host = NULL,
+    pipeline = NULL,
+    action = NULL,    
+    runtime = NULL
+) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
 if(serverEnv$IS_SERVER) return(NULL)
@@ -50,6 +60,26 @@ serverChooseDirIconServer(
 )
 
 #----------------------------------------------------------------------
+# initialize the command runtime
+#----------------------------------------------------------------------
+isRuntime <- !is.null(pipeline) && !is.null(action) && !is.null(runtime)
+runtimeCommand <- " "  
+runtimePrompt <- "$"
+if(isRuntime) observers$runtime <- observeEvent(input$runtime, {
+    if(input$runtime){
+        runtimeCommand <<- {
+            mdiCommandTarget <- file.path(serverEnv$MDI_DIR, 'mdi')
+            developerFlag <- if(serverEnv$IS_DEVELOPER) '-d' else ''
+            paste(mdiCommandTarget, developerFlag, pipeline, "shell", "--action", action, "--runtime", runtime, '')
+        } 
+        runtimePrompt <<- paste0("[", pipeline, " ", action, "]", "$")
+    } else {
+        runtimeCommand <<- " "  
+        runtimePrompt <<- "$"
+    }
+})
+
+#----------------------------------------------------------------------
 # execute the command in response to enter key or Execute button click
 #----------------------------------------------------------------------
 doCommand <- reactiveVal(0)
@@ -67,25 +97,28 @@ observers$doCommand <- observeEvent(doCommand(), {
     command <- interceptTerminalCommands(input$command, workingDir = workingDir, 
                                          prefix = prefix, onExit = onExit)
     req(command)
-    show(selector = spinnerSelector)   # enable terminal to work on login host (the default) or a node
-    systemCommand <- if(is.null(host)) paste0(                "cd '", dir, "'; ", command)
-                                  else paste0("ssh ", host, " 'cd ",  dir, "; ",  command, "'")
-    if(serverEnv$IS_WINDOWS) {
+    show(selector = spinnerSelector)  
+    systemCommand <- if(is.null(host)) { # enable terminal to work on login host (the default) or a node
+        paste0(                "cd '", dir, "'; ", runtimeCommand, command, " 2>&1")
+    } else {
+        paste0("ssh ", host, " 'cd ",  dir, "; ",  runtimeCommand, command, " 2>&1", "'")
+    }
+    if(serverEnv$IS_WINDOWS) { # convert Windows to Linux compatible; requires Git Bash
         drive <- strsplit(dir, "")[[1]][1]
         systemCommand <- gsub(
             paste0(drive, ":/"), # convert "C:/" to "/mnt/c/", et.
             paste0("/mnt/", tolower(drive), "/"),
-            paste0('bash -c "', systemCommand, '"') # requires Git Bash on Windows
+            paste0('bash -c "', systemCommand, '"')
         )
     }
-    x <- c(
+    x <- c( # execute and collect the command's output
         results(), 
-        paste0('__LT__span style="color: #00a;">', paste("$", command), '__LT__/span>'),
+        paste0('__LT__span style="color: #00a;">', paste(runtimePrompt, command), '__LT__/span>'),
         tryCatch({
             system(systemCommand, intern = TRUE, timeout = timeout_())
         }, warning = function(w){ # when command executes but it reports an error
             if(grepl("timed out after", w)) paste("command timed out after", timeout_(), "seconds")
-            else system(paste(systemCommand, "2>&1"), intern = TRUE)
+            else system(paste(systemCommand), intern = TRUE)
         }, error = function(e){c( # when the command could not be executed and the system reports an error
             "unrecognized or malformed command",
             "could not be executed on the server operating system"

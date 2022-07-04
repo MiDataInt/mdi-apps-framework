@@ -11,10 +11,6 @@ runJobServer <- function(id, options, bookmark, locks) {
 #----------------------------------------------------------------------
 if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
 
-# DEVELOPER ACTION, not as relevant to most users except maybe to poke into data file (samtools view...)
-#   shell          open a command shell in a pipeline action's runtime environment
-# mdi pipeline shell --action --runtime [command]
-
 #----------------------------------------------------------------------
 # initialize module
 #----------------------------------------------------------------------
@@ -49,19 +45,30 @@ observe({
 #----------------------------------------------------------------------
 # generic handler for MDI job-manager commands
 #----------------------------------------------------------------------
+mdiOutput <- asyncDivServer('output', dataFn = doMdi, uiFn = fillPre, class = "command-output-wrapper",
+                            async = TRUE, maskIds = session$ns("output-header"))
+doMdi <- function(command, args, refreshable = TRUE, invalidateStatus = FALSE) {
+    data <- runMdiCommand(args)
+    list(
+        command = if(is.null(data)) "" else command,
+        args = args,
+        data = data,
+        refreshable = refreshable,
+        invalidateStatus = invalidateStatus
+    )
+}
 runJobManagerCommand <- function(command, jobId = NULL, 
                                  dryRun = TRUE, force = FALSE,
-                                 errorString = 'mdi error:', options = ""){
-    setOutputData(NULL, NULL, NULL, FALSE)
+                                 errorString = 'mdi error:', options = "",
+                                 refreshable = TRUE, invalidateStatus = FALSE){
     jobFile <- activeJobFile()
     req(jobFile)
-    startSpinner(session, command)
     jobId  <- if(is.null(jobId)) ""  else c("--job", jobId)
     dryRun <- if(dryRun) "--dry-run" else ""
     force  <- if(force)  "--force"   else ""
     args <- c(command, jobId, dryRun, force, jobFile$path)
-    data <- runMdiCommand(args)
-    setOutputData(command, args, data)
+    mdiOutput$update(command = command, args = args, 
+                     refreshable = refreshable, invalidateStatus = invalidateStatus)
 }
 
 #----------------------------------------------------------------------
@@ -101,7 +108,7 @@ nullStatusTable <- data.table(
     walltime = "",
     maxvmem = ""
 )
-invalidateStatusTable <- reactiveVal(0)
+invalidateStatus <- reactiveVal(0)
 status <- asyncTableServer("status", function(jobFile){
 
     # call 'mdi status' to update status files, but use the files, not the mdi return value
@@ -146,7 +153,7 @@ status <- asyncTableServer("status", function(jobFile){
 ))
 statusTableObserver <- observeEvent({
     input$refreshStatus
-    invalidateStatusTable()
+    invalidateStatus()
     activeJobFile()
 }, {
     jobFile <- activeJobFile()
@@ -161,7 +168,7 @@ deleteLinkId <- 'deleteLink'
 observeEvent(input[[deleteLinkId]], {
     statusTable <- status$tableData()
     req(statusTable)
-    req(!statusTable$pending)
+    req(!isTerminated(statusTable$exit_status))
     row <- getTableActionLinkRow(input, deleteLinkId)
     jobName <- statusTable[row, jobName]
     jobId   <- statusTable[row, jobID]
@@ -179,8 +186,9 @@ observeEvent(input[[deleteLinkId]], {
             style = "margin-left: 0.5em;"
         ),
         callback = function(parentInput) {
-            runJobManagerCommand('delete', jobId = jobId, dryRun = FALSE, force = TRUE)
-            invalidateStatusTable( invalidateStatusTable() + 1 )
+            runJobManagerCommand('delete', jobId = jobId, 
+                                  dryRun = FALSE, force = TRUE,
+                                  refreshable = FALSE, invalidateStatus = TRUE)
         },
         size = "s", 
         type = 'deleteCancel'
@@ -190,7 +198,7 @@ observeEvent(input[[deleteLinkId]], {
 #----------------------------------------------------------------------
 # cascade to show the initial, complete log report of a selected job
 #----------------------------------------------------------------------
-selectedJobI <- status$table$rows_selected
+selectedJobI <- status$table$selectionObserver
 selectedJob <- reactive({
     rowI <- selectedJobI()
     req(rowI)
@@ -208,10 +216,17 @@ isTerminatedJob <- reactive({
     job[, isTerminated(exit_status)]
 })
 observeEvent(selectedJobI(), { 
-    setOutputData(NULL, NULL, NULL, FALSE)
     jobId <- selectedJobId()
     req(jobId)
     runJobManagerCommand('report', jobId = jobId, dryRun = FALSE)        
+})
+observeEvent(selectedJobI(), {
+    jobI <- selectedJobI()
+    html(
+        id = session$ns("status-table-titleSuffix"), 
+        asis = TRUE, 
+        html = if(is.na(jobI)) "" else paste0(" - ", status$tableData()[jobI, jobName])
+    )
 })
 
 #----------------------------------------------------------------------
@@ -291,12 +306,23 @@ output$taskOptions <- renderUI({
 # task-level reporting/monitoring actions
 # ----------------------------------------------------------------------
 expandedJobId <- reactiveVal(NULL)
+taskNumber <- reactive({
+    jobId <- selectedJobId()
+    req(jobId)
+    tasks <- selectedJob()[, array]
+    taskNumber <- if(
+        is.null(tasks) || 
+        is.na(tasks) || 
+        tasks == "" || 
+        input$taskNumber == allTasks
+    ) NA else as.integer(input$taskNumber)
+})
 runTaskLevelCommand <- function(command, fn = NULL){
     jobId <- selectedJobId()
     req(jobId)
     tasks <- selectedJob()[, array]
-    taskNumber <- if(is.na(tasks)) NA else input$taskNumber
-    jobId <- paste0(jobId, if(is.null(taskNumber) || is.na(taskNumber) || taskNumber == allTasks){
+    taskNumber <- taskNumber()
+    jobId <- paste0(jobId, if(is.null(taskNumber) || is.na(taskNumber)){
         ""
     } else {
         paste0("[", taskNumber, "]")
@@ -310,7 +336,7 @@ observeEvent({ # update command output as selected task changes
 }, {
     req(input$taskNumber)
     isAllTasks <- input$taskNumber == allTasks
-    command <- outputData()$command
+    command <- mdiOutput$data()$command
     req(command)  
     command <- if(isAllTasks) "report" else command
     runTaskLevelCommand(command)
@@ -322,46 +348,37 @@ observeEvent(input$top,    { runTaskLevelCommand('top') })
 #----------------------------------------------------------------------
 # render all command outputs
 #----------------------------------------------------------------------
-outputData <- reactiveVal(NULL)
 results <- reactive({ # command output as an array of lines
-    data <- outputData()$data
+    data <- mdiOutput$data()$data
     req(data)
     req(data$results)
     strsplit(data$results, "\n")[[1]]
 })
-setOutputData <- function(command, args, data, stopSpinner = TRUE){
-    if(stopSpinner) stopSpinner(session, command)          
-    outputData(list(
-        command = if(is.null(data)) "" else command,
-        args = args,
-        data = data
-    ))
-}
 output$command <- renderText({ # show a simplified version of the command output being displayed
-    x <- outputData()$args
+    x <- mdiOutput$data()$args
     req(x)  
     paste(sapply(c("mdi", x), basename), collapse = " ")
 })
-output$output <- renderText({ # the output returned by 'mdi <command>'
-    x <- outputData()$data
-    req(x)  
-    toggleClass(
-        selector = ".command-output-wrapper pre", 
-        class = "command-output-error", 
-        condition = !x$success
+fillPre <- function(mdiOutputData){
+    x <- mdiOutputData$data
+    if(x$success && mdiOutputData$invalidateStatus) 
+        invalidateStatus(isolate({ invalidateStatus() }) + 1)
+    toggle(session$ns("refreshOutput"), asis = TRUE, condition = mdiOutputData$refreshable)
+    tags$pre( 
+        class = if(x$success) "" else "command-output-error",
+        paste(x$results, collapse = "\n") 
     )
-    paste(x$results, collapse = "\n")
-})
+}
 
 #----------------------------------------------------------------------
 # enable output refresh icon link
 #----------------------------------------------------------------------
 observeEvent(input$refreshOutput, {
-    x <- outputData()
+    x <- mdiOutput$data()
     req(x)  
-    startSpinner(session, x$command)
-    data <- runMdiCommand(x$args)
-    setOutputData(x$command, x$args, data)
+    mdiOutput$update(command = x$command, args = x$args,
+                     refreshable = x$refreshable, # must always be TRUE to get here
+                     invalidateStatus = x$invalidateStatus)
 })
 
 #----------------------------------------------------------------------
@@ -380,10 +397,9 @@ buildEnvironmentButton <- function(){ # must come before executeButtonMetadata
         yaml <- read_yaml(text = paste0(results[blockStarts[i]:blockEnds[i]], collapse = "\n"))
         action <- yaml$execute
         if(is.null(action)) next # false for task and other non-job-level YAML blocks
-        pipeline <- if(grepl("/", yaml$pipeline)) strsplit(yaml$pipeline, "/")[[1]][2] else yaml$pipeline
-        pipeline <- strsplit(pipeline, ":")[[1]][1] # just the pipeline name (no suite or version)
+        pipeline <- getShortPipelineName(yaml$pipeline)
         singularity <- yaml[[action]]$singularity
-        if(is.null(singularity)){
+        if(TRUE || is.null(singularity)){
             conda <- strsplit(yaml[[action]]$conda$prefix, "\\s+")[[1]][1]
             if(!dir.exists(conda)) missingCondaPipelines_[[pipeline]] <- pipeline
         } else { # both the host system and the pipeline support containers and runtime = auto or container
@@ -465,31 +481,35 @@ output$download <- downloadHandler(
 #----------------------------------------------------------------------
 # ... one the server/login node
 showOutputDirTerminal <- function(ssh = FALSE){ # must come before executeButtonMetadata
+
+    # use the job's report to learn how to load the terminal
+    report <- parsePipelineJobReport(expandedJobId(), activeJobFile())   
+    req(report)
+    dir <- file.path(
+        getTaskOptions(report, 'output', 'output-dir'), 
+        getTaskOptions(report, 'output', 'data-name')
+    )
+    req(dir)
+    req(dir.exists(dir))
+
+    # set the remote host for jobs that are still running
     if(ssh){
-        jobId <- expandedJobId()        
-        jobFile <- activeJobFile() # collect job metadata from log report
-        x <- runMdiCommand(args = c("report", "-j", jobId, jobFile$path), collapse = FALSE)
-        if(!x$success) return(NULL)
-        x <- sapply(c('host:', 'output-dir:', 'data-name:'), function(option){
-            i <- which(grepl(option, x$results))[1] # mdi metadata always before job-specific logs
-            trimws(strsplit(x$results[i], option)[[1]][2])
-        })
-        dir <- paste(x[2:3], collapse = "/")
-        host <- x[1]
+        host <- report$jobManager$host
         req(host)
     } else {
-        results <- results()
-        req(results)
-        dir <- results[1]
         host <- NULL
     }
-    req(dir)
+
+    # open the terminal with a runtime environment that is valid if job has finished
     showCommandTerminal(
         session, 
         user = headerStatusData$userDisplayName, 
         dir = dir,
         forceDir = TRUE,
-        host = host
+        host = host,
+        pipeline = getShortPipelineName(report$options$pipeline),
+        action   = report$options$execute,
+        runtime  = getTaskOptions(report, 'resources', 'runtime')
     )
 }
 # ... on the node running the task
@@ -508,23 +528,28 @@ executeButtonMetadata <- list(
     mkdir = list(
         label = "Make Directory", 
         style = "primary", 
-        suppressIf = "all output directories already exist"
+        suppressIf = "all output directories already exist",
+        invalidateStatus = FALSE
     ),
     submit = list(
         label = "Execute Submit",         
-        style = "success"
+        style = "success",
+        invalidateStatus = TRUE
     ),
     extend = list(
         label = "Execute Extend",         
-        style = "success"
+        style = "success",
+        invalidateStatus = TRUE
     ),
     rollback = list(
         label = "Execute Rollback",       
-        style = "danger"
+        style = "danger",
+        invalidateStatus = TRUE
     ),
     purge = list(
         label = "Execute Purge",          
-        style = "danger"
+        style = "danger",
+        invalidateStatus = TRUE
     ),
     report = list(
         button = downloadPackageButton,
@@ -542,33 +567,35 @@ executeButtonMetadata <- list(
     )
 )
 output$executeButton <- renderUI({ # render the Execute ... button
-    command <- outputData()$command
-    req(command)  
-    d <- executeButtonMetadata[[command]]   
-    req(d)     
-    if(!is.null(d$button)) return(d$button()) # handle button overrides
-    if(!is.null(d$suppressIf)){ # handle conditional button display
-        data <- outputData()$data
+    outputData <- mdiOutput$data()
+    req(outputData)
+    command <- outputData$command
+    req(command)
+    button <- executeButtonMetadata[[command]] 
+    req(button)
+    if(!is.null(button$button)) return(button$button()) # handle button overrides
+    if(!is.null(button$suppressIf)){ # handle conditional button display
+        data <- outputData$data
         req(data)
         results <- data$results
         req(results)
-        if(any(grepl(d$suppressIf, results))) return(NULL)
+        if(any(grepl(button$suppressIf, results))) return(NULL)
     }
-    bsButton(session$ns('execute'), d$label, style = d$style, width = "100%")
+    bsButton(session$ns('execute'), button$label, style = button$style, width = "100%")
 })
 observeEvent(input$execute, { # act on the Execute button click
-    command <- outputData()$command
+    outputData <- mdiOutput$data()
+    req(outputData)
+    command <- outputData$command
     req(command)
-    d <- executeButtonMetadata[[command]] 
-    if(!is.null(d$execute)) return(d$execute()) # handle button overrides 
-    args <- outputData()$args
+    button <- executeButtonMetadata[[command]] 
+    if(!is.null(button$execute)) return(button$execute()) # handle button overrides 
+    args <- outputData$args
     req(args)
-    command <- 'execute'
-    startSpinner(session, command)
     args <- args[args != "--dry-run"]
-    data <- runMdiCommand(args)
-    setOutputData(command, args, data)
-    if(data$success) invalidateStatusTable( invalidateStatusTable() + 1 )
+    mdiOutput$update(command = command, args = args,
+                     refreshable = FALSE, # Execute actions are terminal commands
+                     invalidateStatus = button$invalidateStatus)
 })
 
 #----------------------------------------------------------------------

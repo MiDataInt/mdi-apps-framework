@@ -8,6 +8,7 @@ mdi_async <- function(
     default = NULL,     # the value passed to reactiveVal when taskFn fails
     promise = FALSE,    # if TRUE, return the task's promise, otherwise return NULL
     header = FALSE,     # if TRUE, feedback on the task progress and success is provided in the main page header
+    async = TRUE,       # in select circumstances, caller may wish to force synchronous execution of the same task
     ...                 # additional arguments passed to taskFn
 ){
     # communicate the initiation of the intent to perform the task    
@@ -23,7 +24,8 @@ mdi_async <- function(
     }
     reportTaskProgress(pending = TRUE)
 
-    # request fulfillment of the task
+    # initalize the promise and execution plan
+    plan(if(async) multicore else sequential)
     p <- future_promise(taskFn(...)) %>% then(
 
         # return task metadata and result value on success

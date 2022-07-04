@@ -148,11 +148,11 @@ observeEvent(input$asyncClick, {
             tags$strong("Results:"),
             tags$pre(if(data$success) data$value else data$message, style = "max-height: 500px;")
         ) else "",
-        size = "m",
+        size = if(data$pending) "s" else "l",
         type = "custom",
         footer = tagList(
-            bsButton(session$ns("dismissAsync"), "Keep Header Icon",  style = "default"),            
-            bsButton(session$ns("clearAsync"),   "Clear Header Icon", style = "primary")
+            bsButton(session$ns("dismissAsync"), "Keep Header Icon", style = "default"),            
+            if(data$pending) "" else bsButton(session$ns("clearAsync"), "Clear Header Icon", style = "primary")
         )
     )
 })

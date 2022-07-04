@@ -86,11 +86,14 @@ Shiny.addCustomMessageHandler('updateTriggerArray', function(trigger) {
 });
 
 /*  ------------------------------------------------------------------------
-    help Shiny show a spinner on certain slow actions
+    help Shiny show a spinner and mask elements on certain slow actions
     ------------------------------------------------------------------------*/
 Shiny.addCustomMessageHandler('toggleSpinner', function(visibility) {
     // $(".progress-spinner-div").css('visibility',visibility);
     $("#mainSpinner").css('visibility', visibility);
+});
+Shiny.addCustomMessageHandler('maskElement', function(options) {
+    $("#" + options.id).css('opacity', options.masked === true ? 0.5 : 1);
 });
 
 /*  ------------------------------------------------------------------------
