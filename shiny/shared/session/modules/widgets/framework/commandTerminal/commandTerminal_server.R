@@ -148,6 +148,16 @@ activateObserver <- observe({ # runs once after UI elements initialize
 })
 
 #----------------------------------------------------------------------
+# toggle the terminal dimenstions
+#----------------------------------------------------------------------
+observers$toggleWidth <- observeEvent(input$toggleWidth, { 
+    toggleClass(selector = ".modal-dialog", class = "modal-xl")
+})
+observers$toggleHeight <- observeEvent(input$toggleHeight, { 
+    toggleClass(selector = ".command-terminal", class = "command-terminal-xl")
+})
+
+#----------------------------------------------------------------------
 # clear the results window
 #----------------------------------------------------------------------
 observers$clear <- observeEvent(input$clear, { results("") })

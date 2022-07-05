@@ -39,8 +39,10 @@ commandTerminalUI <- function(id, pipeline = NULL, action = NULL) {
         tags$pre( # the pre-formatted command results, i.e., the command's output
             id = ns("results"), 
             "",
-            style = "height: 500px"
+            class = "command-terminal command-terminal-lg"
         ),
+        actionLink(ns("toggleWidth"),  "Toggle Width",  style = "margin-right: 15px;"),
+        actionLink(ns("toggleHeight"), "Toggle Height", style = "margin-right: 15px;"),
         actionLink(ns("clear"), "Clear the results pane")
     )
 }

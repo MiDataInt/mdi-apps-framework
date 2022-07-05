@@ -14,6 +14,20 @@
 # thus, efficient code editing/debugging will liberally use utility functions
 # but changes to module components and structures always require page reloads
 #----------------------------------------------------------------------
+reloadAllAppScripts <- function(session, app){ # utility function also called by ace editor onDestroy
+    startSpinner(session, "reloadAppScripts")
+    #--------------------------------------------------------------
+    loadAllRScripts('global', recursive = TRUE)
+    loadAppScriptDirectory('session')
+    #--------------------------------------------------------------
+    if(!is.null(app$DIRECTORY)){
+        loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
+        loadAppScriptDirectory(app$sources$suiteSessionDir)
+        loadAppScriptDirectory(app$DIRECTORY)
+    }
+    #--------------------------------------------------------------
+    stopSpinner(session, "reloadAppScripts")
+}
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
@@ -28,12 +42,7 @@ reloadAppScriptsServer <- function(id) {
 blur <- paste0("document.getElementById('", session$ns('reload'),"').blur();")
 observeEvent(input$reload, {
     runjs(blur)
-    startSpinner(session, "reloadAppScripts")
-    loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
-    loadAppScriptDirectory(app$sources$suiteSessionDir)
-    loadAppScriptDirectory(app$DIRECTORY)
-    # TODO: other paths to reload here?
-    stopSpinner(session, "reloadAppScripts")
+    reloadAllAppScripts(session, app)
 })
 
 #----------------------------------------------------------------------

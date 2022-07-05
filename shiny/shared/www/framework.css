@@ -372,7 +372,7 @@ table.dataTable tbody tr.selected {
 }
 
 /*  ------------------------------------------------------------------------
-    modal popups / dialogs
+    modal popups / dialogs / command terminal / Ace editor
     ------------------------------------------------------------------------*/
 .full-screen-modal {
     padding: 0;
@@ -383,6 +383,70 @@ table.dataTable tbody tr.selected {
 }
 #modal-dialog-error {
     color: rgb(200,0,0);
+}
+.modal-xl { /* settable but not defined by shiny */
+    width: 1200px;
+}
+.command-terminal-lg, .ace-editor-lg {
+    height: 500px;
+}
+.command-terminal-xl, .ace-editor-xl {
+    height: 650px;
+}
+.ace-editor-tree-lg {
+    height: 529px;
+}
+.ace-editor-tree-xl {
+    height: 679px;
+}
+.aceEditorDialog-file {
+    line-height: 2em; 
+    /* border-left: 47px solid #eee;  */
+    padding-left: 10px; 
+    font-style: italic; 
+    border-bottom: 1px solid #ddd;
+}
+.aceEditorDialog-file .shiny-text-output {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+}
+.aceEditor-controls {
+    border-bottom: 1px solid #ddd;
+}
+.aceEditor-controls .selectize-control {
+    margin-bottom: 0;
+}
+.aceEditor-tab {
+    display: inline-block;    
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    line-height: 31px;
+    white-space: nowrap;
+    padding: 0 10px;
+    color: #333;
+    cursor: pointer;       
+}
+.aceEditor-tab-active {
+    background-color: #efefef;
+    color: black;
+    box-shadow: 1px 1px 1px #ccc;
+}
+.aceEditor-tab-changed {
+    color: #0174BB;
+}
+.aceEditor-tab-close { 
+    margin-left: 5px;
+}
+.aceEditor-tab-save { 
+    margin-right: 5px;
+}
+.aceEditor-tab-close:hover, 
+.aceEditor-tab-switch:hover, 
+.aceEditor-tab-save:hover {
+    color: #BA5827;
 }
 
 /*  ------------------------------------------------------------------------

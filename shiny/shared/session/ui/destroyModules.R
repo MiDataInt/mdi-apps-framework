@@ -10,11 +10,13 @@
 # and allows the same module instance id to be reused to load a module multiple times
 # without the problems that arise from stale values from the previous instance
 #----------------------------------------------------------------------
-removeMatchingInputValues <- function(session, id){ # note that session$ns(id) is called here
+removeMatchingInputValues <- function(session, id, exclude = character()){ # note that session$ns(id) is called here
     .values <- .subset2(session$input, "impl")$.values # .subset2 essentially equivalent to [[
     keys <- .values$keys()
     isOurs <- startsWith(keys, session$ns(id))
-    sapply(keys[isOurs], .values$remove) # thus, the VALUE of the input is purged
+    sapply(keys[isOurs], function(key){
+        if(!(key %in% exclude)) .values$remove(key) # thus, the VALUE of the input is purged
+    }) 
 }
 #----------------------------------------------------------------------
 # destroyModuleObservers() allows interested modules to optionally:

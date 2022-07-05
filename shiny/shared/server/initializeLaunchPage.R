@@ -14,8 +14,8 @@ if(!restricted){
     insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
         ui = tags$i(
             id = "mainSpinner",
-            class = "fas fa-spinner fa-spin header-large-icon",
-            style = "margin-left: 0.5em; font-size: 1.35em; color: #eee; visibility: hidden;"
+            class = "fas fa-spinner fa-spin header-large-icon", # shinyTree in aceEditor overrides line-height in .header-large-icon
+            style = "margin-left: 0.5em; font-size: 1.35em; color: #eee; visibility: hidden; line-height: 47px;"
         )
     )
     if(serverEnv$IS_DEVELOPER){

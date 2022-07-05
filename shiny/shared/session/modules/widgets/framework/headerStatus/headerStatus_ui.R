@@ -22,7 +22,9 @@ headerStatusUI <- function(id) {
             # command line and unlock buttons, if working in local or remote modes
             if(!serverEnv$IS_SERVER) tagList(
                 HTML("&nbsp;&nbsp;"),
-                actionLink(ns('commandTerminal'), label = NULL, icon = icon("terminal"), class = "header-status-icon"), # nolint         
+                actionLink(ns('commandTerminal'), label = NULL, icon = icon("terminal"), class = "header-status-icon"), # nolint 
+                HTML("&nbsp;&nbsp;"),
+                actionLink(ns('aceEditor'), label = NULL, icon = icon("code"), class = "header-status-icon"), # nolint      
                 HTML("&nbsp;&nbsp;"),
                 actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon")
             ) else "",

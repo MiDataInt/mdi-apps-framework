@@ -111,6 +111,7 @@ Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
 Shiny.addCustomMessageHandler('initializeAceCodeReader', function(editorId) {
     initializeAceCodeEditor(editorId, true);
 });
+// getAceCodeContents and setAceCodeContents are for older, single-session editors
 Shiny.addCustomMessageHandler('getAceCodeContents', function(options) {
     let code = window[options.editorId].getValue();
     Shiny.setInputValue(options.editorId + "-contents", 
@@ -119,6 +120,59 @@ Shiny.addCustomMessageHandler('getAceCodeContents', function(options) {
 });
 Shiny.addCustomMessageHandler('setAceCodeContents', function(options) {
     window[options.editorId].session.setValue(options.code);
+});
+// the following are for more current usage of mutli-session editors
+let aceSessionModes = {
+    yml: "ace/mode/yaml",
+    R:   "ace/mode/r",
+    md:  "ace/mode/markdown"
+};
+let aceTabs = {};
+let aceActivePath = "";
+Shiny.addCustomMessageHandler('initializeAceSession', function(options) {
+    let ext = options.path.split('.').pop();
+    let mode = aceSessionModes[ext];
+    if(mode === undefined) mode = aceSessionModes.R;
+    if(aceTabs[options.path] === undefined){
+        let session = ace.createEditSession(options.contents, mode);
+        aceTabs[options.path] = {
+            disk: options.contents,
+            session: session
+        };
+        session.on('change', function(delta) {
+            Shiny.setInputValue(
+                options.editorId + "-changed", 
+                {
+                    path: options.path, 
+                    changed: session.getValue() !== aceTabs[options.path].disk
+                }, 
+                { priority: "event" }
+            );
+        });
+    }
+    aceActivePath = options.path;    
+    window[options.editorId].setSession(aceTabs[options.path].session);
+});
+let saveAceSessionContents = function(editorId, path){
+    let tab = aceTabs[path];
+    Shiny.setInputValue(
+        editorId + "-contents", 
+        {
+            path: path, 
+            contents: tab === undefined ? undefined : tab.session.getValue()
+        }, 
+        { priority: "event" }
+    );
+}
+Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
+    delete aceTabs[options.closingPath];
+    if(options.newPath === null){
+        aceActivePath = "";        
+        window[options.editorId].setSession(ace.createEditSession("", aceSessionModes.R));
+    } else {
+        aceActivePath = options.newPath; 
+        window[options.editorId].setSession(aceTabs[options.newPath].session);
+    }
 });
 
 /*  ------------------------------------------------------------------------

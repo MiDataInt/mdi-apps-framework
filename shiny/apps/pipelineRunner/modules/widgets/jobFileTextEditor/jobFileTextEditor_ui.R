@@ -4,11 +4,7 @@
 
 # module ui function
 jobFileTextEditorUI <- function(id) {
-
-    # initialize namespace
     ns <- NS(id)
-
-    # TODO: extract this Ace editor box with nice formatting to a widget module
     fluidRow(box(
         width = 12,
         title = "Job File Editor",

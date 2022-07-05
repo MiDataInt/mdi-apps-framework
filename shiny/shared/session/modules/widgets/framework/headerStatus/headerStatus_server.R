@@ -35,6 +35,19 @@ if(!serverEnv$IS_SERVER) observeEvent(input$commandTerminal, {
     )  
 })
 
+# allow all users to view the site's code, and developers to edit
+observeEvent(input$aceEditor, {
+    showAceEditor(
+        session,
+        options = list(
+            baseDir = c(app$DIRECTORY, serverEnv$SHARED_DIR),
+            editable = serverEnv$IS_DEVELOPER,
+            fileTree = TRUE,
+            multiPane = TRUE
+        )
+    )  
+})
+
 # allow local or remote user to unlock the MDI installation, i.e., all frameworks and suites
 observeEvent(input$unlockAllRepos, {
     req(headerStatusData$userDisplayName)
