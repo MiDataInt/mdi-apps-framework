@@ -437,6 +437,9 @@ table.dataTable tbody tr.selected {
 .aceEditor-tab-changed {
     color: #0174BB;
 }
+.aceEditor-tab-error {
+    color: #a00;
+}
 .aceEditor-tab-close { 
     margin-left: 5px;
 }

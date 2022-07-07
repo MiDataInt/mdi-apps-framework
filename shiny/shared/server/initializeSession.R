@@ -46,26 +46,54 @@ sourceExternalScript <- function(suite, shinyPath){
     if(!file.exists(file)) file <- getPath("definitive")
     if(file.exists(file)) source(file)
 }
+onScriptSourceError <- function(script, local){ # catch script source errors
+    sapply(c( # load just what is need to show the offending script in the code editor
+        "global/utilities/ui.R",
+        "global/utilities/logging.R",
+        "global/utilities/strings.R", 
+        "session/ui/modal_popup.R",
+        "session/modules/widgets/framework/aceEditor/aceEditor_ui.R",
+        "session/modules/widgets/framework/aceEditor/aceEditor_server.R",
+        "session/modules/widgets/framework/aceEditor/aceEditor_utilities.R"
+    ), source, local = local)
+    showAceEditor(
+        session, 
+        showFile = file.path(script),
+        editable = serverEnv$IS_DEVELOPER
+    )
+}
 loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
-    if(is.null(dir) || !dir.exists(dir)) return(NULL)
+    if(is.null(dir) || !dir.exists(dir)) return(TRUE)
     scripts <- list.files(dir, '\\.R$', full.names = TRUE, recursive = recursive)
     if(is.null(local)) local <- sessionEnv
+    sourceFailure <- FALSE
     for(script in scripts) {
         if(!endsWith(script, '/global.R') && 
            !grepl('INLINE_ONLY', script, fixed = TRUE)) { # scripts intended to be sourced inline into other scripts
             # message(script)
-            source(script, local = local)
+            tryCatch({
+                source(script, local = local)
+            }, error = function(e){
+                print(e)
+                onScriptSourceError(script, local)
+                sourceFailure <<- TRUE
+            })
+            if(sourceFailure) return(FALSE)
         }
     }
+    return(TRUE)
 }
 loadAppScriptDirectory <- function(dir, local=NULL){
-    loadAllRScripts(dir, recursive = FALSE, local = local)
+    success <- loadAllRScripts(dir, recursive = FALSE, local = local)
+    if(!success) return(FALSE)
     for(subDir in c('modules', 'types', 'ui', 'utilities')) {
-        loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
+        success <- loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
+        if(!success) return(FALSE)
     }
+    TRUE
 }
-loadAllRScripts('global', recursive = TRUE)
-loadAppScriptDirectory('session')
+initializeSessionSuccess <- loadAllRScripts('global', recursive = TRUE)
+if(initializeSessionSuccess) initializeSessionSuccess <- loadAppScriptDirectory('session')
 
 # initialize git repository tracking
 gitStatusData <- reactiveValues(

@@ -5,35 +5,32 @@
 # module ui function
 aceEditorUI <- function(
     id, 
-    options = list(
-        baseDir   = character(),
-        editable  = FALSE,
-        fileTree  = FALSE,
-        multiPane = FALSE
-    ),
-    state = list()
+    baseDirs = NULL, # one or more directories from which all files are shown as trees
+    showFile = NULL, # a single target file to show in lieu of baseDirs
+    baseDir  = NULL  # which of baseDirs or showFile to place into view
 ) {
     ns <- NS(id)
-    widths <- list(
-        tree   = if(options$fileTree) 4  else 0,
-        editor = if(options$fileTree) 8 else 12
-    )
-    names(options$baseDir) <- basename(options$baseDir)
+    widths <- list(tree = 4, editor = 8)
+    if(!is.null(showFile)){
+        baseDirs <- dirname(showFile)
+        baseDir <- baseDirs
+    }
+    names(baseDirs) <- basename(baseDirs)
     tagList(
         fluidRow(
             class = "aceEditor-controls",
-            if(options$fileTree) column(
+            column(
                 width = widths$tree,
-                selectInput(ns("baseDir"), label = NULL, choices = options$baseDir, selected = state$baseDir)
-            ) else "",
-            if(options$multiPane) column(
+                selectInput(ns("baseDir"), label = NULL, choices = baseDirs, selected = baseDir)
+            ),
+            column(
                 width = widths$editor,
                 style = "padding-left: 0;",
                 uiOutput(ns("tabs"))
-            ) else ""
+            )
         ),
         fluidRow(
-            if(options$fileTree) column(
+            column(
                 width = widths$tree,
                 class = "ace-editor-tree-lg",
                 style = "overflow: auto; padding-right: 0;",
@@ -55,7 +52,7 @@ aceEditorUI <- function(
                     animation = FALSE,
                     contextmenu = FALSE
                 )    
-            ) else "",
+            ),
             column(
                 width = widths$editor,
                 style = "padding-left: 0; border-left: 1px solid #ddd;",

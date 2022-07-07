@@ -38,7 +38,8 @@ CONSTANTS <- list(
         loginPage      = 'login-page',
         launchPage     = 'launch-page',
         serverBusy     = 'server-busy',
-        pipelineRunner = 'pipelineRunner'
+        pipelineRunner = 'pipelineRunner',
+        scriptSourceError = 'script-source-error'
     ),
     
     # the standardized content file types found in project zips

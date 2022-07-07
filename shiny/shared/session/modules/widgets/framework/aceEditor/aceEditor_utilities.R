@@ -8,12 +8,13 @@
 aceEditorCache <- list()
 showAceEditor <- function(
     session, 
-    options = list(
-        baseDir   = character(),
-        editable  = FALSE,
-        fileTree  = FALSE,
-        multiPane = FALSE
-    )
+    baseDirs = NULL,    # one or more directories from which all files are shown as trees
+    showFile = NULL,    # a single target file to show in lieu of baseDirs
+    editable  = FALSE,  # whether to allow users to edit the files they open
+    loaded = NULL,      # a list of files that have been previously opened in this R session
+    tabs = NULL,        # a data.table of information about the files currently opened in tabs
+    tall = FALSE,       # whether the dialog is currently extra-large (xl)
+    wide = FALSE
 ){
     id <- "aceEditorDialog"
     nsId <- session$ns(id)
@@ -25,14 +26,18 @@ showAceEditor <- function(
     }
     aceEditorCache[[nsId]] <<- aceEditorServer(
         id, 
-        options = options,
-        state = cache$state,
+        baseDirs = baseDirs,
+        showFile = showFile,
+        editable = editable,
+        loaded = cache$loaded,
+        tabs = cache$tabs,
+        tall = if(!is.null(cache$tall)) cache$tall else tall,
+        wide = if(!is.null(cache$wide)) cache$wide else wide,
         onExit = onExit
     )
-    isOption <- function(x) !is.null(options[[x]]) && options[[x]]
     showUserDialog(
         HTML(paste(
-            paste("Code", if(isOption("editable")) "Editor" else "Viewer"), 
+            paste("Code", if(editable) "Editor" else "Viewer"), 
             tags$i(
                 id = "aceEditorSpinner",
                 class = "fas fa-spinner fa-spin",
@@ -41,8 +46,9 @@ showAceEditor <- function(
         )), 
         aceEditorUI(
             nsId, 
-            options = options,
-            state = cache$state
+            baseDirs = baseDirs,
+            showFile = showFile,
+            baseDir  = cache$baseDir
         ),
         size = "l", 
         type = 'dismissOnly', 
@@ -55,20 +61,17 @@ showAceEditor <- function(
 #----------------------------------------------------------------------
 # editor support functions
 #----------------------------------------------------------------------
-initializeAceEditor <- function(editorId, editable){ # initalize the editor itself
+initializeAceEditor <- function(editorId, editable){ # initialize the editor itself
     initMessage <- if(editable) "initializeAceCodeEditor" else "initializeAceCodeReader"
     session$sendCustomMessage(initMessage, editorId)
     TRUE
 }
-initializeAceSession <- function(editorId, path, contents){ # initialize a file for editing
-    isNew <- is.null(contents)
-    if(isNew) contents <- loadResourceText(path)
+initializeAceSession <- function(editorId, path, loaded){ # initialize a file for editing
     session$sendCustomMessage("initializeAceSession", list(
         editorId = editorId,
         path = path,
-        contents = if(isNew) contents else NULL
+        contents = if(!is.null(loaded) && loaded) NULL else loadResourceText(path)
     ))
-    contents
 }
 getAceSessionContents <- function(editorId, path){
     session$sendCustomMessage("getAceSessionContents", list(
@@ -77,7 +80,6 @@ getAceSessionContents <- function(editorId, path){
     ))
 }
 terminateAceSession <- function(editorId, closingPath, newPath){ # close a file
-    dprint(paste("terminateAceSession", closingPath, newPath))
     session$sendCustomMessage("terminateAceSession", list(
         editorId = editorId,
         closingPath = closingPath,

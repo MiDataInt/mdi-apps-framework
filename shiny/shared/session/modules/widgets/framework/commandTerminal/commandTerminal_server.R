@@ -5,21 +5,23 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-commandTerminalServer <- function(
-    id, 
-    user = NULL,    # see showCommandTerminal for documentation of options
-    dir = NULL,     # generally, you do not call commandTerminalServer directly
-    results = "",   
-    timeout = 10, 
-    onExit = NULL, 
-    host = NULL,
-    pipeline = NULL,
-    action = NULL,    
-    runtime = NULL
+commandTerminalServer <- function( # generally, you do not call commandTerminalServer directly
+    id,                            # see showCommandTerminal()
+    host = NULL,        # the host to ssh into when running terminal commands
+    pipeline = NULL,    # as used in 'mdi <pipeline> shell --action <action> --runtime <runtime>''
+    action = NULL,      #   to execute commands in a pipeline action's environment
+    runtime = NULL,
+    dir = NULL,         # the directory in which to open the terminal
+    results = "",       # starting contents of the command results pane
+    tall = FALSE,       # whether the dialog is currently extra-large (xl)
+    wide = FALSE,
+    onExit = NULL    
 ) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
 if(serverEnv$IS_SERVER) return(NULL)
+user <- headerStatusData$userDisplayName
+req(user)
 
 #----------------------------------------------------------------------
 # initialize the terminal
@@ -33,9 +35,9 @@ workingDir <- reactiveVal(dir)
 defaultTimeout <- 10
 timeout_ <- reactive({ # since we have no way to pass SIGINT to synchronous system()
     x <- input$timeout
-    if(is.null(x)) return(timeout)
+    if(is.null(x)) return(defaultTimeout)
     x <- trimws(x)
-    if(x == "" || x == "0") return(timeout)
+    if(x == "" || grepl("\\S", x)) return(defaultTimeout)
     as.integer(x)
 })
 
@@ -119,10 +121,15 @@ observers$doCommand <- observeEvent(doCommand(), {
         }, warning = function(w){ # when command executes but it reports an error
             if(grepl("timed out after", w)) paste("command timed out after", timeout_(), "seconds")
             else system(paste(systemCommand), intern = TRUE)
-        }, error = function(e){c( # when the command could not be executed and the system reports an error
-            "unrecognized or malformed command",
-            "could not be executed on the server operating system"
-        )}) 
+        }, error = function(e){ # when the command could not be executed and the system reports an error
+            reportProgress(e$message)
+            paste(
+                e$message,
+                "unrecognized or malformed command",
+                "could not be executed on the server operating system",
+                sep = "\n"
+            )
+        }) 
     )
     hide(selector = spinnerSelector)
     addCommandToHistory(prefix)
@@ -148,14 +155,29 @@ activateObserver <- observe({ # runs once after UI elements initialize
 })
 
 #----------------------------------------------------------------------
-# toggle the terminal dimenstions
+# toggle the terminal dimensions
 #----------------------------------------------------------------------
+toggleSize <- function(){
+    toggleClass(selector = ".modal-dialog", class = "modal-xl", condition = isWide)
+    toggleClass(selector = ".command-terminal", class = "command-terminal-xl", condition = isTall)
+}
 observers$toggleWidth <- observeEvent(input$toggleWidth, { 
-    toggleClass(selector = ".modal-dialog", class = "modal-xl")
+    wide <<- !wide
+    toggleSize()
 })
 observers$toggleHeight <- observeEvent(input$toggleHeight, { 
-    toggleClass(selector = ".command-terminal", class = "command-terminal-xl")
+    tall <<- !tall    
+    toggleSize()
 })
+
+# #----------------------------------------------------------------------
+# # restore state on first load
+# #----------------------------------------------------------------------
+# initState <- observeEvent(tabs(), {
+#     if(nrow(tabs()) > 0) setActiveTab(tabs()[active == TRUE, path])
+#     toggleSize()
+#     initState$destroy()
+# })
 
 #----------------------------------------------------------------------
 # clear the results window
@@ -163,14 +185,18 @@ observers$toggleHeight <- observeEvent(input$toggleHeight, {
 observers$clear <- observeEvent(input$clear, { results("") })
 
 #----------------------------------------------------------------------
-# return value for use by destroyModuleObservers
+# return value
 #----------------------------------------------------------------------
 list(
-    observers = observers,
-    onDestroy = function() list(
-        dir = workingDir(),
-        results = results()
-    )
+    observers = observers, # for use by destroyModuleObservers
+    onDestroy = function() {
+        list( # return the module's cached state object
+            dir = workingDir(),
+            results = results(),
+            tall = tall,
+            wide = wide
+        )
+    }
 )
 
 #----------------------------------------------------------------------

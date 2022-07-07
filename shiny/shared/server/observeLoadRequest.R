@@ -32,7 +32,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     gitStatusData$suite$head <- getGitHead(gitStatusData$suite)
 
     # TODO: check working version, bookmark version, latest version, etc.
-    # offer user the option to swithc to matching legacy or latest version, after checking for breaking changes
+    # offer user the option to switch to matching legacy or latest version, after checking for breaking changes
     # if bookmark being loaded, check bookmark versions against latest (and working if different)
     # if date file being loaded (i.e, without prior version info), check working against latest
 

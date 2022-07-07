@@ -502,14 +502,13 @@ showOutputDirTerminal <- function(ssh = FALSE){ # must come before executeButton
 
     # open the terminal with a runtime environment that is valid if job has finished
     showCommandTerminal(
-        session, 
-        user = headerStatusData$userDisplayName, 
-        dir = dir,
-        forceDir = TRUE,
+        session,
         host = host,
         pipeline = getShortPipelineName(report$options$pipeline),
-        action   = report$options$execute,
-        runtime  = getTaskOptions(report, 'resources', 'runtime')
+        action = report$options$execute,
+        runtime = getTaskOptions(report, 'resources', 'runtime'),
+        dir = dir,
+        forceDir = TRUE
     )
 }
 # ... on the node running the task

@@ -8,13 +8,14 @@
 commandTerminalCache <- list()
 showCommandTerminal <- function(
     session, 
-    user = NULL,        # name of the user on the host system
-    dir = NULL,         # the suggested directory in which to open the terminal
-    forceDir = FALSE,   # always use `dir`, even if there may be a cached value
     host = NULL,        # the host to ssh into when running terminal commands
     pipeline = NULL,    # as used in 'mdi <pipeline> shell --action <action> --runtime <runtime>''
-    action = NULL,      # to execute commands in a pipeline action's environment
-    runtime = NULL
+    action = NULL,      #   to execute commands in a pipeline action's environment
+    runtime = NULL,
+    dir = NULL,         # the suggested directory in which to open the terminal
+    forceDir = FALSE,    # always use `dir`, even if there is a cached value
+    tall = FALSE,       # whether the dialog is currently extra-large (xl)
+    wide = FALSE
 ){
     id <- "commandTerminalDialog"
     nsId <- session$ns(id)
@@ -27,14 +28,15 @@ showCommandTerminal <- function(
     results <- if(is.null(cache$results) || is.null(cache$dir) || cache$dir != dir) "" else cache$results
     commandTerminalCache[[nsId]] <<- commandTerminalServer(
         id, 
-        user = user, 
-        dir = dir,
-        results = results,
-        onExit = onExit,
         host = host,
         pipeline = pipeline,
         action = action,
-        runtime = runtime
+        runtime = runtime,
+        dir = dir,
+        results = results,
+        tall = if(!is.null(cache$tall)) cache$tall else tall,
+        wide = if(!is.null(cache$wide)) cache$wide else wide,
+        onExit = onExit
     )
     showUserDialog(
         HTML(paste(
@@ -45,7 +47,11 @@ showCommandTerminal <- function(
                 style = "margin-left: 2em; color: #3c8dbc; display: none;"
             )
         )), 
-        commandTerminalUI(nsId, pipeline, action),
+        commandTerminalUI(
+            nsId, 
+            pipeline = pipeline, 
+            action = action
+        ),
         size = "l", 
         type = 'dismissOnly', 
         easyClose = FALSE,
@@ -55,7 +61,7 @@ showCommandTerminal <- function(
 }
 
 #----------------------------------------------------------------------
-# manipulate the DOM inputs and working diretory
+# manipulate the DOM inputs and working directory
 #---------------------------------------------------------------------
 addCommandToHistory <- function(prefix, command = ""){
     runjs(paste0("addCommandToHistory('", prefix, "', '", command, "')"))

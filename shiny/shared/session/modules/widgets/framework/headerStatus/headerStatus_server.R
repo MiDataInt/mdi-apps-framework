@@ -24,13 +24,12 @@ output$dataDir <- renderText({
 })    
 
 # allow local or remote user to execute arbitrary commands on the system
-# obviously must never be exposed on a public serverserverEnv$IS_SERVER
+# obviously must never be exposed on a public server
 if(!serverEnv$IS_SERVER) observeEvent(input$commandTerminal, {
     req(!serverEnv$IS_SERVER)
     req(headerStatusData$userDisplayName)
     showCommandTerminal(
         session,
-        user = headerStatusData$userDisplayName,
         dir = serverEnv$MDI_DIR
     )  
 })
@@ -39,12 +38,8 @@ if(!serverEnv$IS_SERVER) observeEvent(input$commandTerminal, {
 observeEvent(input$aceEditor, {
     showAceEditor(
         session,
-        options = list(
-            baseDir = c(app$DIRECTORY, serverEnv$SHARED_DIR),
-            editable = serverEnv$IS_DEVELOPER,
-            fileTree = TRUE,
-            multiPane = TRUE
-        )
+        baseDirs = c(app$DIRECTORY, serverEnv$SHARED_DIR)
+        editable = serverEnv$IS_DEVELOPER
     )  
 })
 

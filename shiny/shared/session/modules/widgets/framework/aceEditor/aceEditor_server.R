@@ -5,16 +5,16 @@
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
-aceEditorServer <- function(
-    id, 
-    options = list(
-        baseDir   = character(),
-        editable  = FALSE,
-        fileTree  = FALSE,
-        multiPane = FALSE
-    ),
-    state = list(),
-    onExit = NULL
+aceEditorServer <- function( # generally, you do not call aceEditorServer directly
+    id,                      # see showAceEditor()
+    baseDirs = NULL,    # one or more directories from which all files are shown as trees
+    showFile = NULL,    # a single target file to show in lieu of baseDirs
+    editable = FALSE,   # whether to allow users to edit the files they open
+    loaded = NULL,      # a list of files that have been previously opened in this R session
+    tabs = NULL,        # a data.table of information about the files currently opened in tabs
+    tall = FALSE,       # whether the dialog is currently extra-large (xl)
+    wide = FALSE,
+    onExit = NULL       # function called when the dialog is dismissed
 ){
     moduleServer(id, function(input, output, session){
 #----------------------------------------------------------------------
@@ -22,6 +22,7 @@ aceEditorServer <- function(
 #----------------------------------------------------------------------
 # initialize the module
 #----------------------------------------------------------------------
+aceIsInitialized <- FALSE
 module <- "aceEditor"
 editorId <- session$ns("ace")
 changedId  <- "ace-changed"
@@ -32,16 +33,18 @@ switchId   <- "ace-switch"
 nsSwitchId  <- session$ns(switchId)
 spinnerSelector <- "#aceEditorSpinner"
 observers <- list() # for module self-destruction
-aceIsInitialized <- FALSE
+isSingleFile <- !is.null(showFile)
+if(is.null(loaded)) loaded <- list()
 
 #----------------------------------------------------------------------
 # the file selector tree
 #----------------------------------------------------------------------
-files <- reactiveValues() # named vectors of files (name = path, value = path relative to baseDir) by baseDir # nolint
+files <- reactiveValues() # named vectors of files (name = path, value = path relative to baseDir) by baseDir
 output$tree <- shinyTree::renderTree({
     req(input$baseDir)
     show(selector = spinnerSelector)
-    relPaths <- list.files(input$baseDir, recursive = TRUE)
+    relPaths <- if(isSingleFile) basename(showFile)
+                else list.files(input$baseDir, recursive = TRUE)   
     paths <- file.path(input$baseDir, relPaths)
     names(relPaths) <- paths
     files[[input$baseDir]] <- relPaths
@@ -73,23 +76,25 @@ output$file <- renderText({ # must remove leading "./" for rtl ellipsis to work 
 #----------------------------------------------------------------------
 # the file tabs
 #----------------------------------------------------------------------
-tabs <- reactiveVal(if(is.null(state$tabs)) data.table(
+tabs <- reactiveVal(if(is.null(tabs)) data.table(
     path = character(), 
     active = logical(),
-    changed = logical()
-) else state$tabs)
+    changed = logical(),
+    error = logical()
+) else tabs)
 setActiveTab <- function(activePath, closingPath = NULL){
     show(selector = spinnerSelector)
     tabs <- tabs()
     if(!is.null(activePath)){
         tabs$active <- FALSE
         if(activePath %in% tabs$path) tabs[path == activePath, active := TRUE]        
-        else tabs <- rbind(tabs, data.table(path = activePath, active = TRUE, changed = FALSE))
+        else tabs <- rbind(tabs, data.table(path = activePath, active = TRUE, 
+                                            changed = FALSE, error = FALSE))
     }
-    if(!aceIsInitialized) aceIsInitialized <<- initializeAceEditor(editorId, options$editable)
+    if(!aceIsInitialized) aceIsInitialized <<- initializeAceEditor(editorId, editable)
     if(is.null(closingPath)){
-        contents <- initializeAceSession(editorId, activePath, state$disk[[activePath]])
-        if(!is.null(contents)) state$disk[[activePath]] <- contents
+        initializeAceSession(editorId, activePath, loaded[[activePath]])
+        loaded[[activePath]] <<- TRUE
     } else {
         terminateAceSession(editorId, closingPath, activePath)
     }
@@ -104,20 +109,21 @@ output$tabs <- renderUI({
     lapply(seq_len(nrow(tabs)), function(i){
         activeClass  <- if(tabs[i, active])  "aceEditor-tab-active" else ""
         changedClass <- if(tabs[i, changed]) "aceEditor-tab-changed" else ""
+        errorClass   <- if(tabs[i, error])   "aceEditor-tab-error" else ""
         tags$div(
-            class = paste("aceEditor-tab", activeClass, changedClass), 
+            class = paste("aceEditor-tab", activeClass, changedClass, errorClass), 
             if(tabs[i, changed]) tags$i(
                 class = "aceEditor-tab-save fa fa-hdd-o", 
-                onclick=paste0("saveAceSessionContents('", editorId, "', '", tabs[i, path], "', { priority: 'event' })")
+                onclick = paste0("saveAceSessionContents('", editorId, "', '", tabs[i, path], "', { priority: 'event' })")
             ) else "",
             tags$span(
                 class = "aceEditor-tab-switch", 
                 basename(tabs[i, path]),
-                onclick=paste0("Shiny.setInputValue('", nsSwitchId, "', '", tabs[i, path], "', { priority: 'event' })")
+                onclick = paste0("Shiny.setInputValue('", nsSwitchId, "', '", tabs[i, path], "', { priority: 'event' })")
             ), 
             tags$i(
                 class = "aceEditor-tab-close fa fa-times", 
-                onclick=paste0("Shiny.setInputValue('", nsCloseId, "', '", tabs[i, path], "', { priority: 'event' })")
+                onclick = paste0("Shiny.setInputValue('", nsCloseId, "', '", tabs[i, path], "', { priority: 'event' })")
             )
         )
     })
@@ -173,16 +179,18 @@ observers$contentsId <- observeEvent(input[[contentsId]], {
 #----------------------------------------------------------------------
 # toggle the editor dimensions
 #----------------------------------------------------------------------
-isWide <- if(is.null(state$isWide) || !state$isWide) FALSE else TRUE
-isTall <- if(is.null(state$isTall) || !state$isTall) FALSE else TRUE
+toggleSize <- function(){
+    toggleClass(selector = ".modal-dialog", class = "modal-xl", condition = wide)
+    toggleClass(selector = ".ace-editor-lg", class = "ace-editor-xl", condition = tall)
+    toggleClass(selector = ".ace-editor-tree-lg", class = "ace-editor-tree-xl", condition = tall)
+}
 observers$toggleWidth <- observeEvent(input$toggleWidth, { 
-    toggleClass(selector = ".modal-dialog", class = "modal-xl")
-    isWide <<- !isWide
+    wide <<- !wide
+    toggleSize()
 })
 observers$toggleHeight <- observeEvent(input$toggleHeight, { 
-    toggleClass(selector = ".ace-editor-lg", class = "ace-editor-xl")
-    toggleClass(selector = ".ace-editor-tree-lg", class = "ace-editor-tree-xl")
-    isTall <<- !isTall
+    tall <<- !tall    
+    toggleSize()
 })
 
 #----------------------------------------------------------------------
@@ -190,13 +198,7 @@ observers$toggleHeight <- observeEvent(input$toggleHeight, {
 #----------------------------------------------------------------------
 initState <- observeEvent(tabs(), {
     if(nrow(tabs()) > 0) setActiveTab(tabs()[active == TRUE, path])
-    if(isWide){
-       toggleClass(selector = ".modal-dialog", class = "modal-xl", condition = TRUE)
-    }
-    if(isTall) {
-        toggleClass(selector = ".ace-editor-lg", class = "ace-editor-xl", condition = TRUE)
-        toggleClass(selector = ".ace-editor-tree-lg", class = "ace-editor-tree-xl", condition = TRUE)
-    }
+    toggleSize()
     initState$destroy()
 })
 
@@ -207,13 +209,12 @@ list(
     observers = observers, # for use by destroyModuleObservers
     onDestroy = function() {
         reloadAllAppScripts(session, app)
-        list(
-            state = list(
-                baseDir = input$baseDir,
-                tabs = tabs(),
-                isWide = isWide,
-                isTall = isTall
-            )
+        list(  # return the module's cached state object
+            baseDir = input$baseDir, # used by UI
+            loaded = loaded, # used by server          
+            tabs = tabs(),
+            tall = tall,
+            wide = wide
         )        
     }
 )

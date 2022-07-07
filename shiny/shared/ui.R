@@ -73,6 +73,11 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
         style = "display: none;",
         includeMarkdown( file.path('static/server-busy.md') )
     ),
+    tags$div( # framework script source error page
+        id = "script-source-error",
+        style = "display: none;",
+        includeMarkdown( file.path('static/script-source-error.md') )
+    ),
     # actionButton('loadDebugRestart', 'loadDebugRestart'),
     # actionButton('loadDebugMessage', 'loadDebugMessage 222'),
     plotlyOutput('nullPlotly', height = "0px", width = "0px") # must do now so plotly.js etc. are loaded  
