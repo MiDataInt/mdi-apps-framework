@@ -25,8 +25,6 @@ headerStatusUI <- function(id) {
                 actionLink(ns('commandTerminal'), label = NULL, icon = icon("terminal"), class = "header-status-icon"), # nolint 
                 HTML("&nbsp;&nbsp;"),
                 actionLink(ns('aceEditor'), label = NULL, icon = icon("code"), class = "header-status-icon"), # nolint      
-                HTML("&nbsp;&nbsp;"),
-                actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon")
             ) else "",
 
             # logout button, if REQUIRES_AUTHENTICATION
@@ -48,7 +46,9 @@ headerStatusUI <- function(id) {
                         class = "header-status-dir-icon", 
                         title = "Select an MDI data directory (must end with 'mdi/data')"
                     )                
-                } else ""
+                } else "",
+                HTML("&nbsp;&nbsp;"),
+                actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon")                
             )}
         ),         
         tags$div(

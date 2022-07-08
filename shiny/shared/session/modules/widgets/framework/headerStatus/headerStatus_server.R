@@ -38,7 +38,7 @@ if(!serverEnv$IS_SERVER) observeEvent(input$commandTerminal, {
 observeEvent(input$aceEditor, {
     showAceEditor(
         session,
-        baseDirs = c(app$DIRECTORY, serverEnv$SHARED_DIR)
+        baseDirs = c(app$DIRECTORY, serverEnv$SHARED_DIR),
         editable = serverEnv$IS_DEVELOPER
     )  
 })

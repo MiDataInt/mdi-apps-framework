@@ -46,20 +46,24 @@ sourceExternalScript <- function(suite, shinyPath){
     if(!file.exists(file)) file <- getPath("definitive")
     if(file.exists(file)) source(file)
 }
-onScriptSourceError <- function(script, local){ # catch script source errors
-    sapply(c( # load just what is need to show the offending script in the code editor
+onScriptSourceError <- function(script, local, error){ # catch script source errors
+    sapply(c( # load just what is need to handle the offending script in the code editor
         "global/utilities/ui.R",
         "global/utilities/logging.R",
         "global/utilities/strings.R", 
         "session/ui/modal_popup.R",
+        "session/ui/destroyModules.R",
         "session/modules/widgets/framework/aceEditor/aceEditor_ui.R",
         "session/modules/widgets/framework/aceEditor/aceEditor_server.R",
-        "session/modules/widgets/framework/aceEditor/aceEditor_utilities.R"
+        "session/modules/widgets/framework/aceEditor/aceEditor_utilities.R",
+        "session/modules/widgets/framework/reloadAppScripts/reloadAppScripts_server.R"
     ), source, local = local)
     showAceEditor(
         session, 
         showFile = file.path(script),
-        editable = serverEnv$IS_DEVELOPER
+        editable = serverEnv$IS_DEVELOPER,
+        sourceError = error,
+        sourceErrorType = sessionEnv$sourceLoadType
     )
 }
 loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
@@ -75,7 +79,7 @@ loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
                 source(script, local = local)
             }, error = function(e){
                 print(e)
-                onScriptSourceError(script, local)
+                onScriptSourceError(script, local, e)
                 sourceFailure <<- TRUE
             })
             if(sourceFailure) return(FALSE)
@@ -92,8 +96,10 @@ loadAppScriptDirectory <- function(dir, local=NULL){
     }
     TRUE
 }
+sessionEnv$sourceLoadType <- "framework"
 initializeSessionSuccess <- loadAllRScripts('global', recursive = TRUE)
 if(initializeSessionSuccess) initializeSessionSuccess <- loadAppScriptDirectory('session')
+sessionEnv$sourceLoadType <- ""
 
 # initialize git repository tracking
 gitStatusData <- reactiveValues(

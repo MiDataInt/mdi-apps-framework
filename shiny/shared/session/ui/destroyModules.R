@@ -6,8 +6,8 @@
 # see mdi-apps-framework/shiny/shared/session/modules/widgets/framework/commandTerminal
 # for a complete working example
 #----------------------------------------------------------------------
-# removeMatchingInputValues() prevents zombie inputs from consuming memory
-# and allows the same module instance id to be reused to load a module multiple times
+# removeMatchingInputValues() and removeInputFromSession() prevent zombie inputs from consuming memory
+# and allow the same id to be reused to load a module or UI element multiple times
 # without the problems that arise from stale values from the previous instance
 #----------------------------------------------------------------------
 removeMatchingInputValues <- function(session, id, exclude = character()){ # note that session$ns(id) is called here
@@ -17,6 +17,10 @@ removeMatchingInputValues <- function(session, id, exclude = character()){ # not
     sapply(keys[isOurs], function(key){
         if(!(key %in% exclude)) .values$remove(key) # thus, the VALUE of the input is purged
     }) 
+}
+removeInputFromSession <- function(session, key = NULL, id = NULL){
+    if(is.null(key)) key <- session$ns(id)
+    .subset2(session$input, "impl")$.values$remove(key)
 }
 #----------------------------------------------------------------------
 # destroyModuleObservers() allows interested modules to optionally:

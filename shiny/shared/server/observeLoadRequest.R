@@ -2,7 +2,11 @@
 # target app loading; activated by file inputs on launch page
 #----------------------------------------------------------------------
 loadRequest <- reactiveVal(list())
-observeLoadRequest <- observeEvent(loadRequest(), {
+retryLoadRequest <- reactiveVal(0)
+observeLoadRequest <- observeEvent({
+    loadRequest()
+    retryLoadRequest()
+}, {
     req(loadRequest()$app)
     startSpinner(session, 'observeLoadRequest') 
 
@@ -38,9 +42,14 @@ observeLoadRequest <- observeEvent(loadRequest(), {
 
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
-    loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
-    loadAppScriptDirectory(app$sources$suiteSessionDir)
-    loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    sessionEnv$sourceLoadType <- "app"
+    loadSuccess <- loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
+    if(!loadSuccess) return(NULL)
+    loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)
+    if(!loadSuccess) return(NULL)
+    loadSuccess <- loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    if(!loadSuccess) return(NULL)
+    sessionEnv$sourceLoadType <- ""
 
     # validate and establish the module dependency chain
     failure <- initializeAppStepNamesByType()

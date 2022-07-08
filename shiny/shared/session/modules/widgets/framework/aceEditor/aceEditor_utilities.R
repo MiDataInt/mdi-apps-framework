@@ -14,7 +14,9 @@ showAceEditor <- function(
     loaded = NULL,      # a list of files that have been previously opened in this R session
     tabs = NULL,        # a data.table of information about the files currently opened in tabs
     tall = FALSE,       # whether the dialog is currently extra-large (xl)
-    wide = FALSE
+    wide = FALSE,
+    sourceError = NULL, # when the editor is opened due to a script source error
+    sourceErrorType = ""
 ){
     id <- "aceEditorDialog"
     nsId <- session$ns(id)
@@ -33,11 +35,12 @@ showAceEditor <- function(
         tabs = cache$tabs,
         tall = if(!is.null(cache$tall)) cache$tall else tall,
         wide = if(!is.null(cache$wide)) cache$wide else wide,
-        onExit = onExit
+        sourceError = sourceError,
+        sourceErrorType = sourceErrorType
     )
     showUserDialog(
         HTML(paste(
-            paste("Code", if(editable) "Editor" else "Viewer"), 
+            paste("Code", if(editable) "Editor" else "Viewer", if(is.null(sourceError)) "" else "- error sourcing script"), 
             tags$i(
                 id = "aceEditorSpinner",
                 class = "fas fa-spinner fa-spin",
@@ -67,14 +70,16 @@ initializeAceEditor <- function(editorId, editable){ # initialize the editor its
     TRUE
 }
 initializeAceSession <- function(editorId, path, loaded){ # initialize a file for editing
+    contents <- if(is.null(loaded) || !loaded) gsub("\\r", "", loadResourceText(path)) else NULL
     session$sendCustomMessage("initializeAceSession", list(
         editorId = editorId,
         path = path,
-        contents = if(!is.null(loaded) && loaded) NULL else loadResourceText(path)
+        contents = contents
     ))
+    contents
 }
-getAceSessionContents <- function(editorId, path){
-    session$sendCustomMessage("getAceSessionContents", list(
+resetSessionContents <- function(editorId, path){
+    session$sendCustomMessage("resetSessionContents", list(
         editorId = editorId,
         path = path
     ))

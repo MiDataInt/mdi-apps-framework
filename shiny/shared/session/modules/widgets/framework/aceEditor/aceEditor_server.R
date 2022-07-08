@@ -14,7 +14,8 @@ aceEditorServer <- function( # generally, you do not call aceEditorServer direct
     tabs = NULL,        # a data.table of information about the files currently opened in tabs
     tall = FALSE,       # whether the dialog is currently extra-large (xl)
     wide = FALSE,
-    onExit = NULL       # function called when the dialog is dismissed
+    sourceError = NULL, # when the editor is opened due to a script source error
+    sourceErrorType = ""
 ){
     moduleServer(id, function(input, output, session){
 #----------------------------------------------------------------------
@@ -29,6 +30,8 @@ changedId  <- "ace-changed"
 contentsId <- "ace-contents"
 closeId    <- "ace-close"
 nsCloseId  <- session$ns(closeId)
+discardId  <- "ace-discard"
+nsDiscardId  <- session$ns(discardId)
 switchId   <- "ace-switch"
 nsSwitchId  <- session$ns(switchId)
 spinnerSelector <- "#aceEditorSpinner"
@@ -52,10 +55,10 @@ output$tree <- shinyTree::renderTree({
     tree <- data.tree::as.Node(data.frame(pathString = x))
     x <- as.list(tree)
     x$name <- NULL
+    if(isSingleFile) isolate({ setActiveTab(paths) })
     hide(selector = spinnerSelector)
     x
 })
-
 # respond to a file tree click
 observers$tree <- observeEvent(input$tree, {
     req(input$tree)
@@ -67,7 +70,6 @@ observers$tree <- observeEvent(input$tree, {
     req(x %in% files[[input$baseDir]]) # this line suppresses directories in the tree
     setActiveTab(file.path(input$baseDir, x))
 })
-
 # show the full path of the selected file in the editor pane
 output$file <- renderText({ # must remove leading "./" for rtl ellipsis to work correctly 
     substring(tabs()[active == TRUE, path], 2) 
@@ -80,56 +82,66 @@ tabs <- reactiveVal(if(is.null(tabs)) data.table(
     path = character(), 
     active = logical(),
     changed = logical(),
-    error = logical()
+    error = logical(),
+    message = character()
 ) else tabs)
 setActiveTab <- function(activePath, closingPath = NULL){
     show(selector = spinnerSelector)
-    tabs <- tabs()
+    tabs <- tabs()        
     if(!is.null(activePath)){
         tabs$active <- FALSE
         if(activePath %in% tabs$path) tabs[path == activePath, active := TRUE]        
         else tabs <- rbind(tabs, data.table(path = activePath, active = TRUE, 
-                                            changed = FALSE, error = FALSE))
+                                            changed = FALSE, error = FALSE, message = ""))
     }
     if(!aceIsInitialized) aceIsInitialized <<- initializeAceEditor(editorId, editable)
     if(is.null(closingPath)){
-        initializeAceSession(editorId, activePath, loaded[[activePath]])
+        contents <- initializeAceSession(editorId, activePath, loaded[[activePath]])
         loaded[[activePath]] <<- TRUE
     } else {
+        contents <- NULL
         terminateAceSession(editorId, closingPath, activePath)
     }
-    tabs(tabs)  
-    hide(selector = spinnerSelector)
+    tabs(tabs) 
+    hide(selector = spinnerSelector)         
+    checkCodeSyntax(activePath, contents)     
 }
 invalidateTabs <- reactiveVal(0)
 output$tabs <- renderUI({
     invalidateTabs()
     tabs <- tabs()
     req(tabs)
-    lapply(seq_len(nrow(tabs)), function(i){
-        activeClass  <- if(tabs[i, active])  "aceEditor-tab-active" else ""
-        changedClass <- if(tabs[i, changed]) "aceEditor-tab-changed" else ""
-        errorClass   <- if(tabs[i, error])   "aceEditor-tab-error" else ""
-        tags$div(
-            class = paste("aceEditor-tab", activeClass, changedClass, errorClass), 
-            if(tabs[i, changed]) tags$i(
-                class = "aceEditor-tab-save fa fa-hdd-o", 
-                onclick = paste0("saveAceSessionContents('", editorId, "', '", tabs[i, path], "', { priority: 'event' })")
-            ) else "",
-            tags$span(
-                class = "aceEditor-tab-switch", 
-                basename(tabs[i, path]),
-                onclick = paste0("Shiny.setInputValue('", nsSwitchId, "', '", tabs[i, path], "', { priority: 'event' })")
-            ), 
-            tags$i(
-                class = "aceEditor-tab-close fa fa-times", 
-                onclick = paste0("Shiny.setInputValue('", nsCloseId, "', '", tabs[i, path], "', { priority: 'event' })")
+    tagList(
+        lapply(seq_len(nrow(tabs)), function(i){
+            activeClass  <- if(tabs[i, active])  "aceEditor-tab-active"  else ""
+            changedClass <- if(tabs[i, changed]) "aceEditor-tab-changed" else ""
+            errorClass   <- if(tabs[i, error])   "aceEditor-tab-error"   else ""
+            tags$div(
+                class = paste("aceEditor-tab", activeClass),
+                tags$span(
+                    class = paste("aceEditor-tab-switch", changedClass, errorClass), 
+                    basename(tabs[i, path]),
+                    onclick = paste0("Shiny.setInputValue('", nsSwitchId, "', '", tabs[i, path], "', { priority: 'event' })")
+                ), 
+                if(tabs[i, changed]) tags$i( # show EITHER a file close X or a file save icon
+                    class = "aceEditor-tab-save fa fa-hdd-o", 
+                    onclick = paste0("saveAceSessionContents('", editorId, "', '", tabs[i, path], "', 'save', { priority: 'event' })")
+                ) else "",
+                if(!isSingleFile && !tabs[i, changed]) tags$i(
+                    class = "aceEditor-tab-close fa fa-times", 
+                    onclick = paste0("Shiny.setInputValue('", nsCloseId, "', '", tabs[i, path], "', { priority: 'event' })")
+                ) else ""
             )
-        )
-    })
+        }),
+        if(isSingleFile  && tabs[1, changed]) tags$a(
+            "Discard Changes", 
+            onclick = paste0("resetSessionContents('", editorId, "', '", tabs[1, path], "', { priority: 'event' })"),
+            style = "margin-left: 15px; cursor: pointer;"
+        ) else ""
+    )
 })
 observers$switchId <- observeEvent(input[[switchId]], {
-    newPath <- input[[switchId]]
+    newPath <- input[[switchId]] # when a currently inactive tab is clicked
     req(newPath)
     activePath <- tabs()[active == TRUE, path]
     req(activePath)
@@ -137,7 +149,7 @@ observers$switchId <- observeEvent(input[[switchId]], {
     setActiveTab(newPath)
 })
 observers$closeId <- observeEvent(input[[closeId]], {
-    closingPath <- input[[closeId]]
+    closingPath <- input[[closeId]] # the X icon that close files AND discards all changes
     req(closingPath)
     tabs <- tabs()    
     closingI <- tabs[path == closingPath, .I]
@@ -152,11 +164,23 @@ observers$closeId <- observeEvent(input[[closeId]], {
     tabs(tabs)
     setActiveTab(newPath, closingPath)
 })
+observers$discardId <- observeEvent(input[[discardId]], {
+    tabs <- tabs()   # used in single-file mode only in lieu of X icon
+    req(tabs)  
+    path <- tabs[1, path]
+    req(path)
+    checkCodeSyntax(path, input[[discardId]])
+    tabs[1, changed := FALSE]
+    tabs(tabs)
+    setActiveTab(path)
+    invalidateError(invalidateError() + 1)
+    invalidateTabs(invalidateTabs() + 1)
+})
 
 #---------------------------------------------------------------------
 # the Ace editor
 #----------------------------------------------------------------------
-# monitor files for changed status
+# monitor files for changed status (a simple flag, does not receive editor contents on every keystroke)
 observers$changedId <- observeEvent(input[[changedId]], {
     tab <- input[[changedId]]
     tabs <- tabs()
@@ -166,13 +190,18 @@ observers$changedId <- observeEvent(input[[changedId]], {
 })
 # save the contents of changed files when the file save icon is clicked
 observers$contentsId <- observeEvent(input[[contentsId]], { 
-    show(selector = spinnerSelector)
     tab <- input[[contentsId]]
-    tabs <- tabs()
-    cat(tab$contents, file = tab$path)
-    tabs[path == tab$path, changed := FALSE]
-    tabs(tabs)
-    hide(selector = spinnerSelector)    
+    tab$contents <- gsub("\\r", "", tab$contents)
+    checkCodeSyntax(tab$path, tab$contents)
+    if(tab$action == "save") {
+        tabs <- tabs()
+        if(!tabs[path == tab$path, error]){
+            cat(tab$contents, file = tab$path)    
+            tabs[path == tab$path, changed := FALSE]
+            tabs(tabs)
+        }  
+    }     
+    invalidateError(invalidateError() + 1)
     invalidateTabs(invalidateTabs() + 1)
 })
 
@@ -183,6 +212,7 @@ toggleSize <- function(){
     toggleClass(selector = ".modal-dialog", class = "modal-xl", condition = wide)
     toggleClass(selector = ".ace-editor-lg", class = "ace-editor-xl", condition = tall)
     toggleClass(selector = ".ace-editor-tree-lg", class = "ace-editor-tree-xl", condition = tall)
+    aceIsInitialized <<- initializeAceEditor(editorId, editable)
 }
 observers$toggleWidth <- observeEvent(input$toggleWidth, { 
     wide <<- !wide
@@ -194,28 +224,86 @@ observers$toggleHeight <- observeEvent(input$toggleHeight, {
 })
 
 #----------------------------------------------------------------------
+# report syntax errors for supported languages; intermittent, not dynamic
+#----------------------------------------------------------------------
+noSyntax <- "syntax checking not supported"
+noErrors <- "no syntax errors detected"
+supportedExtensions <- c("R", "yml")
+checkCodeSyntax <- function(path_, contents){
+    req(contents)
+    extension <- rev(strsplit(path_, "\\.")[[1]])[1]
+    tabs <- tabs()
+    tabs[path == path_, message := tryCatch({
+        if(extension %in% supportedExtensions){
+            invisible(switch(
+                extension,
+                R   = parse(text = contents),
+                yml = read_yaml(text = contents)
+            ))
+            noErrors
+        } else {
+            noSyntax
+        }
+    }, error = function(e) trimws(e$message))]
+    tabs[path == path_, error := !(message %in% c(noSyntax, noErrors))]
+    tabs(tabs)
+}
+observers$checkSyntax <- observeEvent(input$checkSyntax, { # (Re)Check Syntax link click
+    tabs <- tabs()
+    req(tabs)
+    path <- tabs[active == TRUE, path]
+    req(path)
+    runjs(paste0("saveAceSessionContents('", editorId, "', '", path, "', 'syntax', { priority: 'event' })"))
+})
+invalidateError <- reactiveVal(0)
+output$error <- renderText({
+    invalidateError()
+    if(!is.null(sourceError)){ # one-time display of an initial R script source error
+        message <- sourceError$message
+        sourceError <<- NULL
+        return(message)
+    }
+    tabs <- tabs()
+    req(tabs)
+    message <- tabs[active == TRUE, message]
+    req(message)
+    message
+})
+
+#----------------------------------------------------------------------
 # restore state on first load
 #----------------------------------------------------------------------
-initState <- observeEvent(tabs(), {
+initStateTrigger <- reactiveVal(1)
+initState <- observeEvent(initStateTrigger(), {
     if(nrow(tabs()) > 0) setActiveTab(tabs()[active == TRUE, path])
     toggleSize()
+    initStateTrigger <<- NULL
     initState$destroy()
 })
 
 #----------------------------------------------------------------------
 # return value
 #----------------------------------------------------------------------
+sourceErrorType # required, otherwise lazy evaluation won't propagate value into onDestroy
 list(
     observers = observers, # for use by destroyModuleObservers
     onDestroy = function() {
-        reloadAllAppScripts(session, app)
+        if(sourceErrorType == "framework"){
+            runjs("location.reload();")
+            return(NULL)
+        } else if(sourceErrorType == "app"){
+            retryLoadRequest( retryLoadRequest() + 1 )
+            return(NULL)
+        } else {
+            reloadAllAppScripts(session, app)
+        }
         list(  # return the module's cached state object
             baseDir = input$baseDir, # used by UI
             loaded = loaded, # used by server          
             tabs = tabs(),
             tall = tall,
             wide = wide
-        )        
+        )               
     }
 )
 

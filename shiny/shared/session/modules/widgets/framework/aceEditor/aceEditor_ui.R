@@ -20,17 +20,17 @@ aceEditorUI <- function(
         fluidRow(
             class = "aceEditor-controls",
             column(
-                width = widths$tree,
+                width = widths$tree, # choose the root of the file tree
                 selectInput(ns("baseDir"), label = NULL, choices = baseDirs, selected = baseDir)
             ),
             column(
-                width = widths$editor,
+                width = widths$editor, # the file tabs
                 style = "padding-left: 0;",
                 uiOutput(ns("tabs"))
             )
         ),
         fluidRow(
-            column(
+            column( # the file navigation tree
                 width = widths$tree,
                 class = "ace-editor-tree-lg",
                 style = "overflow: auto; padding-right: 0;",
@@ -66,10 +66,17 @@ aceEditorUI <- function(
                 )               
             )
         ),
-        fluidRow(column(
+        fluidRow(column( # syntax check reporting
+            width = 12,
+            class = "ace-editor-error-wrapper",
+            style = "border: 1px solid #ddd; margin-bottom: 5px; background-color: #f5f5f5;",
+            verbatimTextOutput(ns("error"))
+        )),
+        fluidRow(column( # some additional links
             width = 12,
             actionLink(ns("toggleWidth"),  "Toggle Width",  style = "margin-right: 15px;"),
-            actionLink(ns("toggleHeight"), "Toggle Height", style = "margin-right: 15px;")
+            actionLink(ns("toggleHeight"), "Toggle Height", style = "margin-right: 15px;"),
+            actionLink(ns("checkSyntax"),  "(Re)Check Syntax", style = "margin-right: 15px;")
         ))
     )
 }

@@ -413,6 +413,11 @@ table.dataTable tbody tr.selected {
     direction: rtl;
     text-align: left;
 }
+.ace-editor-error-wrapper pre {
+    border: none;
+    background-color: inherit;
+    margin-bottom: 0;
+}
 .aceEditor-controls {
     border-bottom: 1px solid #ddd;
 }
@@ -440,11 +445,8 @@ table.dataTable tbody tr.selected {
 .aceEditor-tab-error {
     color: #a00;
 }
-.aceEditor-tab-close { 
+.aceEditor-tab-close, .aceEditor-tab-save { 
     margin-left: 5px;
-}
-.aceEditor-tab-save { 
-    margin-right: 5px;
 }
 .aceEditor-tab-close:hover, 
 .aceEditor-tab-switch:hover, 
