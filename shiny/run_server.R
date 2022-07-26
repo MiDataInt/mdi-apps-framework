@@ -42,6 +42,10 @@ serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
 serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
 serverEnv$IS_LOCAL_BROWSER <- !serverEnv$IS_ONDEMAND # here, the browser runs on the server
 serverEnv$REQUIRES_AUTHENTICATION <- serverEnv$IS_SERVER # other users already validated themselves via SSH, etc.
+checkMdiRemoteKey <- function(queryString){ # enforce single-user access when running remotely on a shared resource
+    is.null(serverEnv$MDI_REMOTE_KEY) || # not a remote server
+    (!is.null(queryString$mdiRemoteKey) && queryString$mdiRemoteKey == serverEnv$MDI_REMOTE_KEY)
+}
 
 # set the interface the server listens to; only select cases listen beyond localhost
 serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)

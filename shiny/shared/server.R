@@ -10,6 +10,9 @@ serverFn <- function(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted=FALSE){
     queryString <- parseQueryString(isolate(session$clientData$url_search))
+
+    # enforce single-user access when running remotely on a shared resource
+    if(!checkMdiRemoteKey(queryString)) return(NULL)
     if(length(queryString) > 0) updateQueryString("?", mode = "push") # clear the url
 
     # public servers demand user authentication; ui is redirecting
