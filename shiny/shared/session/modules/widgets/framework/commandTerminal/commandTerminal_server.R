@@ -158,8 +158,8 @@ activateObserver <- observe({ # runs once after UI elements initialize
 # toggle the terminal dimensions
 #----------------------------------------------------------------------
 toggleSize <- function(){
-    toggleClass(selector = ".modal-dialog", class = "modal-xl", condition = isWide)
-    toggleClass(selector = ".command-terminal", class = "command-terminal-xl", condition = isTall)
+    toggleClass(selector = ".modal-dialog", class = "modal-xl", condition = wide)
+    toggleClass(selector = ".command-terminal", class = "command-terminal-xl", condition = tall)
 }
 observers$toggleWidth <- observeEvent(input$toggleWidth, { 
     wide <<- !wide
