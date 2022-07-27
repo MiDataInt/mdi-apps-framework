@@ -13,7 +13,10 @@ serverFn <- function(input, output, session,
 
     # enforce single-user access when running remotely on a shared resource
     if(!checkMdiRemoteKey(queryString)) return(NULL)
-    if(length(queryString) > 0) updateQueryString("?", mode = "push") # clear the url
+    if(length(queryString) > 0) updateQueryString( # clear the url
+        paste0("?", getRemoteKeyQueryString()), 
+        mode = "push"
+    )
 
     # public servers demand user authentication; ui is redirecting
     if(serverEnv$REQUIRES_AUTHENTICATION &&  # allow all local page loads

@@ -46,6 +46,10 @@ checkMdiRemoteKey <- function(queryString){ # enforce single-user access when ru
     is.null(serverEnv$MDI_REMOTE_KEY) || # not a remote server
     (!is.null(queryString$mdiRemoteKey) && queryString$mdiRemoteKey == serverEnv$MDI_REMOTE_KEY)
 }
+getRemoteKeyQueryString <- function(){ # help assemble page reload URLs with remote keys
+    if(is.null(serverEnv$MDI_REMOTE_KEY)) ""
+    else paste0("mdiRemoteKey=",serverEnv$MDI_REMOTE_KEY)
+}
 
 # set the interface the server listens to; only select cases listen beyond localhost
 serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
