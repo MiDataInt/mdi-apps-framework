@@ -33,7 +33,14 @@ blur <- paste0("document.getElementById('", session$ns('show'),"').blur();")
 
 # act on use icon click
 observeEvent(input$show, {
-    runjs(paste(open, blur))
+    if(is.null(serverEnv$MDI_IS_ELECTRON)){ # open in standard web browser tab
+        runjs(paste(open, blur))
+    } else { # open in electron tab
+        session$sendCustomMessage("frameworkToElectron", list(
+            type = "showDocumentation", 
+            data = url
+        ))
+    }
 })
 
 #----------------------------------------------------------------------
