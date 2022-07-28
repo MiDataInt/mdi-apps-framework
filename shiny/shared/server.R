@@ -9,7 +9,13 @@
 serverFn <- function(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted=FALSE){
+
+    # collect client data
     queryString <- parseQueryString(isolate(session$clientData$url_search))
+    if(!serverEnv$IS_SERVER) isolate({
+        port <- session$clientData$url_port
+        if(!is.null(port) && port != "") setServerPort(as.integer(port))
+    })
 
     # enforce single-user access when running remotely on a shared resource
     if(!checkMdiRemoteKey(queryString)) return(NULL)

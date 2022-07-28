@@ -52,7 +52,8 @@ getRemoteKeyQueryString <- function(){ # help assemble page reload URLs with rem
 }
 
 # set the interface the server listens to; only select cases listen beyond localhost
-serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
+if(!is.null(serverEnv$SERVER_PORT)) serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
+setServerPort <- function(port) serverEnv$SERVER_PORT <<- port
 serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_ONDEMAND){
     "127.0.0.1"
 } else if(serverEnv$IS_NODE || serverEnv$IS_SERVER) {
@@ -204,7 +205,7 @@ Sys.setenv(SHINY_SERVER_VERSION = '999.999.999') # suppress a baseless Shiny Ser
 runApp(
     appDir = '.',
     host = serverEnv$HOST,   
-    port = serverEnv$SERVER_PORT,
+    port = serverEnv$SERVER_PORT, # on _first_ call, could be NULL for port auto-selection by Shiny
     launch.browser = serverEnv$LAUNCH_BROWSER
 )
 
@@ -223,7 +224,8 @@ if(Sys.getenv('MDI_FORCE_RESTART') != ""){
         mode = serverEnv$SERVER_MODE,   
         install = install, 
         url = serverEnv$SERVER_URL,
-        port = as.integer(serverEnv$SERVER_PORT),
+        port = if(is.null(serverEnv$SERVER_PORT)) NULL # expect this to be set by server.R
+               else as.integer(serverEnv$SERVER_PORT),
         browser = as.logical(serverEnv$LAUNCH_BROWSER),
         debug = as.logical(serverEnv$DEBUG),
         developer = as.logical(serverEnv$IS_DEVELOPER)       
