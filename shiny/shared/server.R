@@ -50,7 +50,6 @@ serverFn <- function(input, output, session,
     # observeEvent(input$loadDebugMessage, {
     #     message('input$loadDebugMessage 222')
     # })
-    message("mdi-apps-framework ready")
 }
 
 #----------------------------------------------------------------------

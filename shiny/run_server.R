@@ -110,13 +110,13 @@ isParentProcess <- TRUE
 
 #----------------------------------------------------------------------
 # server auto-restarts when stopApp is called at session end, or upon config change
+source(file.path('global', 'packages', 'packages.R'))
+unloadMdiManagerPackages()
+loadFrameworkPackages(runServerInitPackages, isInit = TRUE)
 while(TRUE){
 #----------------------------------------------------------------------
 
 # load the Stage 2 apps config
-source(file.path('global', 'packages', 'packages.R'))
-unloadMdiManagerPackages()
-loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
 
@@ -167,7 +167,6 @@ if(serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'googleAPI.
 if(serverEnv$IS_KEYED)  source(file.path('global', 'authentication', 'accessKey.R'))
 
 # initialize storr key-value on-disk storage
-loadFrameworkPackages('storr')
 serverEnv$STORR <- storr::storr_rds(serverEnv$STORR_DIR)
 
 # initialize the server-level async monitor (persists between sessions and page reloads)
@@ -175,7 +174,6 @@ asyncTaskCounter <- 0
 asyncTasks <- list()
 
 # declare sessions directory and clear any prior user sessions
-loadFrameworkPackages('shiny')
 addResourcePath('sessions', serverEnv$SESSIONS_DIR) # for temporary session files
 invisible(unlink(
     list.files(serverEnv$SESSIONS_DIR, full.names = TRUE, include.dirs = TRUE),
