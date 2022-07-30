@@ -5,6 +5,12 @@
 #    serverEnv$LIBRARY_DIR
 #    plus any paths set in suite or base Singularity containers
 #----------------------------------------------------------------------
+runServerInitPackages <- c( # packages required prior to calling Shiny:runApp()
+    "httr", 
+    "yaml", 
+    "storr", 
+    "shiny"
+)
 
 #----------------------------------------------------------------------
 # load and attach initial Shiny dependencies required to run the framework UI
@@ -26,12 +32,15 @@ unloadRStudioPackages <- function(){
         sapply(c('tinytex', 'tools', 'yaml', 'xfun'), unloadNamespace) # order is important
     }, error = function(e) NULL)
 }
-loadFrameworkPackages <- function(packages){
+loadFrameworkPackages <- function(packages, isInit = FALSE){
     suppressWarnings({
         sapply(
             packages,
-            library,
-            character.only = TRUE
+            function(package) {
+                if(!isInit && package %in% runServerInitPackages) return(NULL)
+                message(paste("loading package:", package))
+                library(package, character.only = TRUE, warn.conflicts = FALSE)
+            }
         )
     })
 }

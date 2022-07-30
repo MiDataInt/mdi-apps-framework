@@ -1,5 +1,3 @@
-/*  shiny.js defines client-side functions */
-
 /*  ------------------------------------------------------------------------
     dynamically resize content wrapper to allow it to carry the scrollbar (i.e. header stays fixed)
     ------------------------------------------------------------------------*/
@@ -189,17 +187,6 @@ Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
 });
 
 /*  ------------------------------------------------------------------------
-    handle Summernote Editor
-Shiny.addCustomMessageHandler('getSummernoteCodeContents', function(editorId) {
-    let code = $("#" + editorId).summernote('code');
-    Shiny.setInputValue(editorId + "-contents", code, {priority: "event"});
-});
-Shiny.addCustomMessageHandler('setSummernoteCodeContents', function(options) {
-    $("#" + options.editorId).summernote('code', options.code);
-});
-    ------------------------------------------------------------------------*/
-
-/*  ------------------------------------------------------------------------
     DT table action links
     ------------------------------------------------------------------------*/
 let handleActionClick = function(parentId, instanceId, confirmMessage){
@@ -275,7 +262,7 @@ Shiny.addCustomMessageHandler('prRemoveLastInput', function(id) {
 });
 
 /*  ------------------------------------------------------------------------
-    command terminal
+    command terminal emulator
     ------------------------------------------------------------------------*/
 let commandTerminalHistory = {
     commands: [""],
@@ -323,3 +310,11 @@ let scrollCommandTerminalResults = function(prefix){ // keep the results view pa
     elem.scrollTop = elem.scrollHeight;
     $("#" + prefix + "command").focus();
 }
+
+/*  ------------------------------------------------------------------------
+    inter-process communcation (IPC) from mdi-apps-framework to the optional mdi-apps-launcher wrapper
+    ------------------------------------------------------------------------*/
+Shiny.addCustomMessageHandler('frameworkToElectron', function(message) {
+    if(window.mdiElectron && window.mdiElectron.frameworkToElectron) 
+        window.mdiElectron.frameworkToElectron(message.type, message.data);
+});

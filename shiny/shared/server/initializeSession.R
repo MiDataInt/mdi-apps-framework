@@ -111,6 +111,11 @@ gitStatusData <- reactiveValues(
 
 # activate our custom page reset action; reloads the page as is, to update all code
 observeEvent(input$resetPage, {
-    updateQueryString("?resetPage=1", mode = "push") # clear the url
+    remoteKey <- getRemoteKeyQueryString()
+    if(remoteKey != "") remoteKey <- paste0("&", remoteKey)
+    updateQueryString(
+        paste0("?resetPage=1", remoteKey), 
+        mode = "push"
+    )
     refresh()
 })

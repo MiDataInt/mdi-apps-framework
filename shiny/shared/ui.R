@@ -132,8 +132,7 @@ handleLoginResponse <- function(cookie, queryString, handler){
     success <- handler(cookie$sessionKey, queryString)
     getLaunchPage(cookie, restricted = !success)
 }
-parseAuthenticationRequest <- function(request, cookie){
-    queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
+parseAuthenticationRequest <- function(queryString, cookie){
 
     # handle accessKey submission
     if(!is.null(queryString$accessKey)){
@@ -175,9 +174,15 @@ parseAuthenticationRequest <- function(request, cookie){
 #----------------------------------------------------------------------
 ui <- function(request){
     # message('--------- RUNNING shared/ui.R::ui() ---------')
+    queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
     cookie <- parseCookie(request$HTTP_COOKIE) # parseCookie is an MDI-encoded helper function
-    if(serverEnv$REQUIRES_AUTHENTICATION){ # public servers demand a valid identity
-        parseAuthenticationRequest(request, cookie)
+
+    # enforce single-user access when running remotely on a shared resource
+    if(!checkMdiRemoteKey(queryString)) return("bad request: no access")
+    
+    # public servers demand a valid identity
+    if(serverEnv$REQUIRES_AUTHENTICATION){ 
+        parseAuthenticationRequest(queryString, cookie)
     } else {
         getLaunchPage(cookie)
     }

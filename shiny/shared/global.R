@@ -44,7 +44,7 @@ if(isParentProcess){
 # will fail if any package has not previously been installed into R
 # NB: packages are loaded into an R process, i.e., at the server, not session, level
 unloadRStudioPackages()
-loadFrameworkPackages('yaml')
+loadFrameworkPackages('yaml', isInit = TRUE) # since removed by unloadRStudioPackages()
 frameworkPackages <- read_yaml( file.path('global', 'packages', 'packages.yml') )
 loadMainPackages()
 if(isParentProcess){
