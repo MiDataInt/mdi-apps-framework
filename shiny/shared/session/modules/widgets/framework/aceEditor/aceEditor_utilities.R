@@ -5,14 +5,12 @@
 #----------------------------------------------------------------------
 # launch a stateful code viewer/editor
 #----------------------------------------------------------------------
-aceEditorCache <- list()
 showAceEditor <- function(
     session, 
     baseDirs = NULL,    # one or more directories from which all files are shown as trees
     showFile = NULL,    # a single target file to show in lieu of baseDirs
-    editable  = FALSE,  # whether to allow users to edit the files they open
+    editable = FALSE,   # whether to allow users to edit the files they open
     loaded = NULL,      # a list of files that have been previously opened in this R session
-    tabs = NULL,        # a data.table of information about the files currently opened in tabs
     tall = FALSE,       # whether the dialog is currently extra-large (xl)
     wide = FALSE,
     sourceError = NULL, # when the editor is opened due to a script source error
@@ -31,7 +29,7 @@ showAceEditor <- function(
         baseDirs = baseDirs,
         showFile = showFile,
         editable = editable,
-        loaded = cache$loaded,
+        loaded = if(is.null(loaded)) cache$loaded else loaded,
         tabs = cache$tabs,
         tall = if(!is.null(cache$tall)) cache$tall else tall,
         wide = if(!is.null(cache$wide)) cache$wide else wide,

@@ -5,7 +5,6 @@
 #----------------------------------------------------------------------
 # launch a stateful terminal emulator
 #----------------------------------------------------------------------
-commandTerminalCache <- list()
 showCommandTerminal <- function(
     session, 
     host = NULL,        # the host to ssh into when running terminal commands
@@ -13,7 +12,7 @@ showCommandTerminal <- function(
     action = NULL,      #   to execute commands in a pipeline action's environment
     runtime = NULL,
     dir = NULL,         # the suggested directory in which to open the terminal
-    forceDir = FALSE,    # always use `dir`, even if there is a cached value
+    forceDir = FALSE,   # always use `dir`, even if there is a cached value
     tall = FALSE,       # whether the dialog is currently extra-large (xl)
     wide = FALSE
 ){

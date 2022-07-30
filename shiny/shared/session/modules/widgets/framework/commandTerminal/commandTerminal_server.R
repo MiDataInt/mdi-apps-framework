@@ -170,15 +170,6 @@ observers$toggleHeight <- observeEvent(input$toggleHeight, {
     toggleSize()
 })
 
-# #----------------------------------------------------------------------
-# # restore state on first load
-# #----------------------------------------------------------------------
-# initState <- observeEvent(tabs(), {
-#     if(nrow(tabs()) > 0) setActiveTab(tabs()[active == TRUE, path])
-#     toggleSize()
-#     initState$destroy()
-# })
-
 #----------------------------------------------------------------------
 # clear the results window
 #----------------------------------------------------------------------

@@ -37,6 +37,8 @@ headerStatusData <- reactiveValues( # for UI display
                       else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
     dataDir = R.utils::getAbsolutePath(serverEnv$DATA_DIR)
 )
+commandTerminalCache <- list()
+aceEditorCache <- list()
 
 # load support scripts required to run the framework
 # note that scripts are loaded at the session, not the global, level

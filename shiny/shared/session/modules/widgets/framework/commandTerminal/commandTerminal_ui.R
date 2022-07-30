@@ -4,7 +4,7 @@
 
 # module ui function
 commandTerminalUI <- function(id, pipeline = NULL, action = NULL) {
-    if(serverEnv$IS_SERVER) return("")
+    if(serverEnv$IS_SERVER) return("") # never allow command execution on public server
     ns <- NS(id)
     isRuntime <- !is.null(pipeline) && !is.null(action)
     if(isRuntime) runtime <- paste(pipeline, action)

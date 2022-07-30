@@ -20,7 +20,7 @@ sourceFileUploadUI <- function(id, options) {
 
     # return the UI contents
     standardSequentialTabItem(
-        options$longLabel, 
+        HTML(paste( options$longLabel, codeDialogUI(ns('code')) )), 
         leaderText, 
     
         # enable merging additional sample sources into this one
