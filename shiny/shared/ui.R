@@ -11,10 +11,6 @@ htmlHeadElements <- tags$head(
     tags$link(href = "framework.css", rel = "stylesheet", type = "text/css"), # framework js and css
     tags$script(src = "framework.js", type = "text/javascript", charset = "utf-8"),
     tags$script(src = "ace/src-min-noconflict/ace.js", type = "text/javascript", charset = "utf-8")
-    # if(serverEnv$IS_DEVELOPER){tagList( # enable developer tools
-    #     tags$script(src = "summernote-0.8.18-dist/summernote-lite.min.js", type = "text/javascript", charset = "utf-8"), # nolint
-    #     tags$link(href  = "summernote-0.8.18-dist/summernote-lite.min.css", rel = "stylesheet", type = "text/css")
-    # )} else ""
 )
 
 # LOGIN PAGE CONTENT: prompt for user authentication in server mode

@@ -1,7 +1,7 @@
 **What is Globus?**
 
 Globus is a web-based service for
-<a href="https://www.globus.org/data-transfer" target="_globus">
+<a href="https://www.globus.org/data-transfer" target="_blank">
 fast and reliable data transfer</a>.
 You can also use your Globus account to authenticate and log in to this site.
 
