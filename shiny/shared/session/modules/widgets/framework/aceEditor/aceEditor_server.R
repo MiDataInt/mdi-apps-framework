@@ -162,6 +162,7 @@ observers$closeId <- observeEvent(input[[closeId]], {
         newPath <- NULL
     }
     tabs(tabs)
+    loaded[closingPath] <<- FALSE
     setActiveTab(newPath, closingPath)
 })
 observers$discardId <- observeEvent(input[[discardId]], {
