@@ -10,6 +10,18 @@ $(document).ready(function() {
     $(".main-header .logo").on('click', function(){
         Shiny.setInputValue('resetPage', true, {priority: "event"}); 
     });
+    if(window.mdiElectron && window.mdiElectron.frameworkToElectron){ // capture external web links into desktop app
+        $(document).on("click", "a", function(event){
+            const linkTarget = $(event.target).attr('target');
+            if(linkTarget){ // all external links are expected to set a target
+                event.preventDefault();
+                window.mdiElectron.frameworkToElectron("externalLink", {
+                    url: $(event.target).attr('href'),
+                    target: linkTarget
+                });
+            }
+        });
+    }
 });
 
 /*  ------------------------------------------------------------------------

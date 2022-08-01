@@ -13,7 +13,7 @@ getAppOverviewHtml <- function(nAppSteps){
                 if(is.null(docs)) "" else tags$a(
                     href = docs, 
                     style = "font-size: 0.7em; margin-left: 10px;", 
-                    target = "_blank",
+                    target = "Docs",
                     icon('book')
                 )
             ))),

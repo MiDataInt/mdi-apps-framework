@@ -28,7 +28,7 @@ if(is.null(url)) url <- paste0(
     docPath, 
     if(is.null(anchor)) "" else paste0("#", anchor)
 )
-open <- paste0("window.open('", url,"', 'mdi_docs');")
+open <- paste0("window.open('", url,"', 'Docs');")
 blur <- paste0("document.getElementById('", session$ns('show'),"').blur();")
 
 # act on use icon click
