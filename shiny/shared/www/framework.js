@@ -14,11 +14,14 @@ $(document).ready(function() {
         $(document).on("click", "a", function(event){
             const linkTarget = $(event.target).attr('target');
             if(linkTarget){ // all external links are expected to set a target
-                event.preventDefault();
-                window.mdiElectron.frameworkToElectron("externalLink", {
-                    url: $(event.target).attr('href'),
-                    target: linkTarget
-                });
+                const url = $(event.target).attr('href');
+                if(!url.includes("/download/")){ // don't mask Save Bookmark
+                    event.preventDefault(); // TODO: this is preventing Save Bookmark from functioning
+                    window.mdiElectron.frameworkToElectron("externalLink", {
+                        url: url,
+                        target: linkTarget
+                    });
+                }
             }
         });
     }
