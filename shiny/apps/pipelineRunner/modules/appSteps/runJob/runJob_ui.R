@@ -20,7 +20,7 @@ runJobUI <- function(id, options) {
     # reused elements
     refreshButton <- function(id) tags$span(
         style = "font-size: 0.8em; margin: auto 1rem;",
-        actionLink(ns(id), NULL, icon = icon("sync"))
+        actionLink(ns(id), NULL, icon = icon("sync", verify_fa = FALSE))
     )
 
     # return the UI contents

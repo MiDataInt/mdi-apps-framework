@@ -8,7 +8,7 @@ configEditorLinkUI <- function(id) {
     actionLink(
         ns('open'), 
         label = NULL, 
-        icon = icon("cog"),
+        icon = icon("cog", verify_fa = FALSE),
         class = "header-large-icon"
     )
 }
