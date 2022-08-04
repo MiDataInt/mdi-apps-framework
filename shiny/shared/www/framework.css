@@ -23,9 +23,9 @@ hr {
 /*  ------------------------------------------------------------------------
     frivolous rotation of the logo on page load
     ------------------------------------------------------------------------*/
-@keyframes rotatePortal {
+@keyframes rotateLogo {
   from { transform: rotate(0deg); }
-  to   { transform: rotate(-359deg); }
+  to   { transform: rotate(359deg); }
 }
 
 /*  ------------------------------------------------------------------------

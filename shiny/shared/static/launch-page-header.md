@@ -1,7 +1,6 @@
 <img 
-    src="logo/portal_blur.png" 
-    height="35px" 
-    style="animation: rotatePortal 1s 1 linear;" 
+    src="logo/mdi-logo.svg" 
+    style="height: 30px; margin-right: 5px; animation: rotateLogo 0.75s 1 linear;" 
 /> 
 The 
 <strong><a id="mdi-external-link" href="https://midataint.github.io/" target="Docs">Michigan Data Interface</a></strong> (MDI)

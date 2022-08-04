@@ -7,7 +7,7 @@
 
 # STYLES AND SCRIPTS, loaded into html <head>
 htmlHeadElements <- tags$head(
-    tags$link(rel = "icon", type = "image/png", href = "logo/favicon-16x16.png"), # favicon
+    tags$link(rel = "icon", type = "image/svg+xml", href = "logo/mdi-logo.svg"),
     tags$link(href = "framework.css", rel = "stylesheet", type = "text/css"), # framework js and css
     tags$script(src = "framework.js", type = "text/javascript", charset = "utf-8"),
     tags$script(src = "ace/src-min-noconflict/ace.js", type = "text/javascript", charset = "utf-8")
