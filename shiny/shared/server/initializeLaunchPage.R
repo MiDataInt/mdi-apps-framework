@@ -26,6 +26,13 @@ if(!restricted){
                 reloadAppScriptsUI(id)
             }
         )
+        insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
+            ui = {
+                id <- 'addMdiToolsLink'
+                addMdiToolsLinkServer(id)
+                addMdiToolsLinkUI(id)
+            }
+        )
     }    
     if(checkConfigEditPermission()){
         insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
@@ -84,7 +91,10 @@ if(!restricted){
         )
     })
 
-    # enable the Pipeline Runner app from a cold start link, i.e., with no uploaded input file
+    # enable the appChooser dialog and Pipeline Runner app from cold start links, i.e., with no uploaded input file
+    observeEvent(input$chooseAnApp, {
+        showAppChooser(session)
+    })
     observeEvent(input$launchPipelineRunner, {
         loadRequest(list(
             app = "pipelineRunner",
