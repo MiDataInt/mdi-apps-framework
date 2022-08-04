@@ -11,6 +11,7 @@ sourceFileUploadServer <- function(id, options, bookmark, locks) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'sourceFileUpload' # for reportProgress tracing
 #----------------------------------------------------------------------
+codeDialogServer("code", appStep = module)
 
 #----------------------------------------------------------------------
 # define session-level and module-level variables

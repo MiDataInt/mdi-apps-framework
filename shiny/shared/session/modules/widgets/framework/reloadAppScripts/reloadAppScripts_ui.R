@@ -8,7 +8,7 @@ reloadAppScriptsUI <- function(id) {
     actionLink(
         ns('reload'), 
         label = NULL, 
-        icon = icon("sync"),
+        icon = icon("sync", verify_fa = FALSE),
         class = "header-large-icon"
     )
 }

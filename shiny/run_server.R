@@ -31,6 +31,7 @@ setServerEnv <- function(name, default = NULL, type = as.character){
 for(name in c('DEBUG', 'IS_DEVELOPER', 'IS_HOSTED', 'LAUNCH_BROWSER')) {
     serverEnv[[name]] <- as.logical(serverEnv[[name]])
 }
+if(serverEnv$IS_DEVELOPER) serverEnv$DEBUG <- TRUE
 
 # set structured environment variables based on mode
 serverEnv$IS_WINDOWS  <- .Platform$OS.type != "unix"
@@ -41,9 +42,18 @@ serverEnv$IS_ONDEMAND <- serverEnv$SERVER_MODE == 'ondemand'
 serverEnv$IS_SERVER   <- serverEnv$SERVER_MODE == 'server'
 serverEnv$IS_LOCAL_BROWSER <- !serverEnv$IS_ONDEMAND # here, the browser runs on the server
 serverEnv$REQUIRES_AUTHENTICATION <- serverEnv$IS_SERVER # other users already validated themselves via SSH, etc.
+checkMdiRemoteKey <- function(queryString){ # enforce single-user access when running remotely on a shared resource
+    is.null(serverEnv$MDI_REMOTE_KEY) || # not a remote server
+    (!is.null(queryString$mdiRemoteKey) && queryString$mdiRemoteKey == serverEnv$MDI_REMOTE_KEY)
+}
+getRemoteKeyQueryString <- function(){ # help assemble page reload URLs with remote keys
+    if(is.null(serverEnv$MDI_REMOTE_KEY)) ""
+    else paste0("mdiRemoteKey=",serverEnv$MDI_REMOTE_KEY)
+}
 
 # set the interface the server listens to; only select cases listen beyond localhost
-serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
+if(!is.null(serverEnv$SERVER_PORT)) serverEnv$SERVER_PORT <- as.integer(serverEnv$SERVER_PORT)
+setServerPort <- function(port) serverEnv$SERVER_PORT <<- port
 serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_ONDEMAND){
     "127.0.0.1"
 } else if(serverEnv$IS_NODE || serverEnv$IS_SERVER) {
@@ -100,15 +110,24 @@ isParentProcess <- TRUE
 
 #----------------------------------------------------------------------
 # server auto-restarts when stopApp is called at session end, or upon config change
+source(file.path('global', 'packages', 'packages.R'))
+unloadMdiManagerPackages()
+loadFrameworkPackages(runServerInitPackages, isInit = TRUE)
 while(TRUE){
 #----------------------------------------------------------------------
 
 # load the Stage 2 apps config
-source(file.path('global', 'packages', 'packages.R'))
-unloadMdiManagerPackages()
-loadFrameworkPackages(c('httr', 'yaml'))
 serverConfig <- read_yaml(file.path(serverEnv$MDI_DIR, 'config', 'stage2-apps.yml'))
 if(is.null(serverConfig$site_name)) serverConfig$site_name <- 'MDI'
+
+# determine whether the Pipeline Runner app is allowed
+serverEnv$SUPPRESS_PIPELINE_RUNNER <- 
+    serverEnv$IS_WINDOWS || # fail conditions that suppress Pipeline Runner
+    serverEnv$IS_LOCAL || 
+    is.null(serverConfig$pipeline_runner) ||         
+    (is.logical(serverConfig$pipeline_runner) && !serverConfig$pipeline_runner) ||
+    (is.character(serverConfig$pipeline_runner) && serverConfig$pipeline_runner != "auto") ||
+    (is.character(serverConfig$pipeline_runner) && serverEnv$IS_SERVER) 
 
 # create the persistent cache object shared across all sessions
 # not for sensitive data in public server modes, etc.
@@ -148,11 +167,13 @@ if(serverEnv$IS_GOOGLE) source(file.path('global', 'authentication', 'googleAPI.
 if(serverEnv$IS_KEYED)  source(file.path('global', 'authentication', 'accessKey.R'))
 
 # initialize storr key-value on-disk storage
-loadFrameworkPackages('storr')
 serverEnv$STORR <- storr::storr_rds(serverEnv$STORR_DIR)
 
+# initialize the server-level async monitor (persists between sessions and page reloads)
+asyncTaskCounter <- 0
+asyncTasks <- list()
+
 # declare sessions directory and clear any prior user sessions
-loadFrameworkPackages('shiny')
 addResourcePath('sessions', serverEnv$SESSIONS_DIR) # for temporary session files
 invisible(unlink(
     list.files(serverEnv$SESSIONS_DIR, full.names = TRUE, include.dirs = TRUE),
@@ -182,7 +203,7 @@ Sys.setenv(SHINY_SERVER_VERSION = '999.999.999') # suppress a baseless Shiny Ser
 runApp(
     appDir = '.',
     host = serverEnv$HOST,   
-    port = serverEnv$SERVER_PORT,
+    port = serverEnv$SERVER_PORT, # on _first_ call, could be NULL for port auto-selection by Shiny
     launch.browser = serverEnv$LAUNCH_BROWSER
 )
 
@@ -201,7 +222,8 @@ if(Sys.getenv('MDI_FORCE_RESTART') != ""){
         mode = serverEnv$SERVER_MODE,   
         install = install, 
         url = serverEnv$SERVER_URL,
-        port = as.integer(serverEnv$SERVER_PORT),
+        port = if(is.null(serverEnv$SERVER_PORT)) NULL # expect this to be set by server.R
+               else as.integer(serverEnv$SERVER_PORT),
         browser = as.logical(serverEnv$LAUNCH_BROWSER),
         debug = as.logical(serverEnv$DEBUG),
         developer = as.logical(serverEnv$IS_DEVELOPER)       

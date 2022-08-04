@@ -5,27 +5,46 @@
 #----------------------------------------------------------------------
 
 # module ui function
-sourceFileInputUI <- function(id, appName=NULL, externalSuffixes=c(), width='100%') {
+sourceFileInputUI <- function(
+    id, 
+    appName=NULL, 
+    externalSuffixes=c(), 
+    width='100%', 
+    createButtonUI = NULL
+) {
     
     # initialize namespace
     ns <- NS(id)
 
-    # as needed, enable the server-side file browser ...
-    if(exposeServerFiles()){
-        localWidth <- 9        
-        fileServerButton <- column(
-            width = 12 - localWidth, 
-            serverSourceFilesButtonUI( ns('serverFileInput') )
+    # as needed, enable the Create New button ...
+    localWidth <- 12
+    buttonWidth <- 3
+    if(!is.null(createButtonUI)){
+        localWidth <- localWidth - buttonWidth
+        createNewButton <- column(
+            width = buttonWidth, 
+            createButtonUI(ns('createNew'), width = "100%")
         )
     } else {
-        localWidth <- 12        
+        createNewButton <- ""
+    }
+
+    # ... and the server-side file browser ...
+    if(exposeServerFiles()){
+        localWidth <- localWidth - buttonWidth
+        fileServerButton <- column(
+            width = buttonWidth, 
+            serverSourceFilesButtonUI(ns('serverFileInput'))
+        )
+    } else {   
         fileServerButton <- ""
     }
 
     # ... and always the local file upload input
     tags$div(
         fluidRow(
-            class = "file-input-controls",    
+            class = "file-input-controls",  
+            createNewButton,  
             fileServerButton,
             column(
                 width = localWidth, 

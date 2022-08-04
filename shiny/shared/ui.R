@@ -7,14 +7,10 @@
 
 # STYLES AND SCRIPTS, loaded into html <head>
 htmlHeadElements <- tags$head(
-    tags$link(rel = "icon", type = "image/png", href = "logo/favicon-16x16.png"), # favicon
+    tags$link(rel = "icon", type = "image/svg+xml", href = "logo/mdi-logo.svg"),
     tags$link(href = "framework.css", rel = "stylesheet", type = "text/css"), # framework js and css
     tags$script(src = "framework.js", type = "text/javascript", charset = "utf-8"),
     tags$script(src = "ace/src-min-noconflict/ace.js", type = "text/javascript", charset = "utf-8")
-    # if(serverEnv$IS_DEVELOPER){tagList( # enable developer tools
-    #     tags$script(src = "summernote-0.8.18-dist/summernote-lite.min.js", type = "text/javascript", charset = "utf-8"), # nolint
-    #     tags$link(href  = "summernote-0.8.18-dist/summernote-lite.min.css", rel = "stylesheet", type = "text/css")
-    # )} else ""
 )
 
 # LOGIN PAGE CONTENT: prompt for user authentication in server mode
@@ -63,15 +59,20 @@ dataImportTabItem <- tabItem(tabName = "dataImport", tags$div(class = "text-bloc
         style = "display: none;", # server.R selects the proper content to show
         includeMarkdown( uiLaunchHeader ),
         uiOutput('mainFileInputUI'),
-        if(serverEnv$IS_WINDOWS) ""  
-        else includeMarkdown( file.path('static/launch-page-stage1.md') ), # OS dependent
-             includeMarkdown( file.path('static/launch-page-stage2.md') ), # always present
+        if(serverEnv$SUPPRESS_PIPELINE_RUNNER) ""  
+        else includeMarkdown( file.path('static/launch-page-stage1.md') ),
+             includeMarkdown( file.path('static/launch-page-stage2.md') ), # app loading always supporting
         uiOutput('bookmarkHistoryList')
     ),
     tags$div( # server busy page
         id = "server-busy",
         style = "display: none;",
         includeMarkdown( file.path('static/server-busy.md') )
+    ),
+    tags$div( # framework script source error page
+        id = "script-source-error",
+        style = "display: none;",
+        includeMarkdown( file.path('static/script-source-error.md') )
     ),
     # actionButton('loadDebugRestart', 'loadDebugRestart'),
     # actionButton('loadDebugMessage', 'loadDebugMessage 222'),
@@ -115,7 +116,6 @@ getLaunchPage <- function(cookie, restricted = FALSE){
         # body content, i.e., panels associated with each dashboard option
         dashboardBody(
             useShinyjs(), # enable shinyjs
-            bsTooltip("mdi-external-link", ""), # enable shinyBS:addTooltip
             HTML(paste0("<input type=hidden id='sessionNonce' value='",
                         setSessionKeyNonce(cookie$sessionKey), "' />")),
             tabItems(firsttTabItem)
@@ -128,8 +128,7 @@ handleLoginResponse <- function(cookie, queryString, handler){
     success <- handler(cookie$sessionKey, queryString)
     getLaunchPage(cookie, restricted = !success)
 }
-parseAuthenticationRequest <- function(request, cookie){
-    queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
+parseAuthenticationRequest <- function(queryString, cookie){
 
     # handle accessKey submission
     if(!is.null(queryString$accessKey)){
@@ -171,9 +170,15 @@ parseAuthenticationRequest <- function(request, cookie){
 #----------------------------------------------------------------------
 ui <- function(request){
     # message('--------- RUNNING shared/ui.R::ui() ---------')
+    queryString <- parseQueryString(request$QUERY_STRING) # parseQueryString is an httr function
     cookie <- parseCookie(request$HTTP_COOKIE) # parseCookie is an MDI-encoded helper function
-    if(serverEnv$REQUIRES_AUTHENTICATION){ # public servers demand a valid identity
-        parseAuthenticationRequest(request, cookie)
+
+    # enforce single-user access when running remotely on a shared resource
+    if(!checkMdiRemoteKey(queryString)) return("bad request: no access")
+    
+    # public servers demand a valid identity
+    if(serverEnv$REQUIRES_AUTHENTICATION){ 
+        parseAuthenticationRequest(queryString, cookie)
     } else {
         getLaunchPage(cookie)
     }

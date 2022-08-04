@@ -10,11 +10,16 @@ if(!restricted){
         sourceFileInputUI(id)
     })
 
-
-
     # user status, dataDir and logout in navbar / page header
+    insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
+        ui = tags$i(
+            id = "mainSpinner",
+            class = "fas fa-spinner fa-spin header-large-icon", # shinyTree in aceEditor overrides line-height in .header-large-icon
+            style = "margin-left: 0.5em; font-size: 1.35em; color: #eee; visibility: hidden; line-height: 47px;"
+        )
+    )
     if(serverEnv$IS_DEVELOPER){
-        insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
+        insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
                 id <- 'reloadAppScripts'
                 reloadAppScriptsServer(id)
@@ -23,7 +28,7 @@ if(!restricted){
         )
     }    
     if(checkConfigEditPermission()){
-        insertUI(".navbar-static-top .sidebar-toggle",  where = "afterEnd", immediate = TRUE,   
+        insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
                 id <- 'configEditorLink'
                 configEditorLinkServer(id)
@@ -31,13 +36,20 @@ if(!restricted){
             }
         )
     }
-
-    # user status, dataDir and logout in navbar / page header
-    insertUI(".navbar-static-top",  where = "beforeEnd", immediate = TRUE,   
+    insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
         ui = {
-            id <- 'headerStatus'
-            headerStatusServer(id)
-            headerStatusUI(id)
+            id <- 'stage2-apps-docs'
+            documentationLinkServer(id, url = "https://midataint.github.io/docs/usage/#stage-2-apps")
+            documentationLinkUI(id, isAppHeader = TRUE)
+        }
+    )
+    
+    # user status, dataDir and logout in navbar / page header
+    headerStatusId <- 'headerStatus'
+    headerStatus <- headerStatusServer(headerStatusId)
+    insertUI(".navbar-static-top", where = "beforeEnd", immediate = TRUE,   
+        ui = {
+            headerStatusUI(headerStatusId)
         }
     )
 

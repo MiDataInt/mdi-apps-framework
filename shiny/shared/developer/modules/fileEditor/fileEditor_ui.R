@@ -14,7 +14,7 @@ fileEditorUI <- function(id, options) {
 
     # incorporate options text into templates
     leaderText <- tagList(
-        #tags$p("Use this code editor to edit the files in your local magc-portal-apps repository.")
+        #tags$p("Use this code editor to edit the files in your local repository.")
         tags$p("")
     )
 

@@ -2,7 +2,7 @@
 saveYourWorkLinks <- function(){
 
     # in server mode, show two buttons, one for local download, one for shinyFiles
-    if(serverEnv$IS_SERVER){
+    if(!serverEnv$IS_LOCAL){
         addServerAnalysisSetObserver()
         tagList(
             tags$p(

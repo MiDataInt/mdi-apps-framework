@@ -14,7 +14,8 @@ bufferedTableServer <- function(
     editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), handler=function(d), boxColumn=1, [rawColumn=2])) # nolint
     selection = 'single',
     selectionFn = function(selectedRows) NULL,
-    options = list() # passed as is to renderDT
+    options = list(), # passed as is to renderDT
+    async = NULL # for internal use only; set to mdi_async object by asyncTableServer
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -32,9 +33,15 @@ buffer <- reactiveVal()
 # will redraw anytime tableData invalidates; caller must control via isolate({}) in tableData
 output[[tableId]] <- renderDT(
     {
-        d <- tableData()
+        d <- if(is.null(async)){
+            tableData()
+        } else {
+            x <- async()
+            req(x)
+            if(x$pending) NULL else x$value
+        }
         buffer(d)
-        d
+        d        
     },
     options = options,
     class = "display table-compact-4",
@@ -130,6 +137,7 @@ output$download <- downloadHandler(
 #----------------------------------------------------------------------
 list(
     rows_selected = reactive({ input[[selectedId]] }), # alternative way for caller to use selected rows
+    selectionObserver = rowSelectionObserver(tableId, input),
     selectRows = function(rows) selectRows(proxy, rows), # for setting the row selection
     updateCell = updateCell,
     buffer = buffer

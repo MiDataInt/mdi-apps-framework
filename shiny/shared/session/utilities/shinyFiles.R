@@ -89,13 +89,13 @@ addServerBookmarkObserver <- function(id, input, saveFn, paths){
 }
 
 #----------------------------------------------------------------------
-# a generic icon to choose a server directory, used by Pipeline Runner
+# a generic icon to choose a server directory, used by Pipeline Runner and in header status
 #----------------------------------------------------------------------
-serverChooseDirIconUI <- function(id, class = "pr-dir-icon"){
+serverChooseDirIconUI <- function(id, class = "pr-dir-icon", title = "Select a directory"){
     shinyDirLink(
         id,
         NULL,
-        "Select a directory",
+        title,
         class = class,
         icon = icon("folder"),
         style = "width: 100%",

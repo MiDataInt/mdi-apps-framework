@@ -9,9 +9,13 @@
 
 # objects instantiated here are available to all appStep modules in a session
 
+# wrapper around documentationLinkServer to support docs links
+addPRDocs <- function(id, docPath, anchor = NULL){
+    documentationLinkServer(id, "wilsonte-umich", "mdi-apps-framework", docPath, anchor)
+}
+
 # appServer function called after all modules are instantiated
 appServer <- function(){
 
 
 }
-

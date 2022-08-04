@@ -10,9 +10,13 @@ summaryTableUI <- function(id, title, width, collapsible = FALSE) {
     ns <- NS(id)
     
     # box with the table
-    fluidRow(box(width = width,
+    fluidRow(box(
+        width = width,
         DTOutput(ns("table")),
-        title = title,
+        title = tags$span(
+            tags$span(id = ns("title"), title),
+            tags$span(id = ns("titleSuffix"), "")
+        ),
         status = 'primary',
         solidHeader = TRUE,
         collapsible = collapsible

@@ -1,5 +1,3 @@
-/*  shiny.js defines client-side functions */
-
 /*  ------------------------------------------------------------------------
     dynamically resize content wrapper to allow it to carry the scrollbar (i.e. header stays fixed)
     ------------------------------------------------------------------------*/
@@ -12,6 +10,21 @@ $(document).ready(function() {
     $(".main-header .logo").on('click', function(){
         Shiny.setInputValue('resetPage', true, {priority: "event"}); 
     });
+    if(window.mdiElectron && window.mdiElectron.frameworkToElectron){ // capture external web links into desktop app
+        $(document).on("click", "a", function(event){
+            const linkTarget = $(event.target).attr('target');
+            if(linkTarget){ // all external links are expected to set a target
+                const url = $(event.target).attr('href');
+                if(!url.includes("/download/")){ // don't mask Save Bookmark
+                    event.preventDefault(); // TODO: this is preventing Save Bookmark from functioning
+                    window.mdiElectron.frameworkToElectron("externalLink", {
+                        url: url,
+                        target: linkTarget
+                    });
+                }
+            }
+        });
+    }
 });
 
 /*  ------------------------------------------------------------------------
@@ -86,19 +99,23 @@ Shiny.addCustomMessageHandler('updateTriggerArray', function(trigger) {
 });
 
 /*  ------------------------------------------------------------------------
-    help Shiny show a spinner on certain slow actions
+    help Shiny show a spinner and mask elements on certain slow actions
     ------------------------------------------------------------------------*/
 Shiny.addCustomMessageHandler('toggleSpinner', function(visibility) {
-    $(".progress-spinner-div").css('visibility',visibility);
+    // $(".progress-spinner-div").css('visibility',visibility);
+    $("#mainSpinner").css('visibility', visibility);
+});
+Shiny.addCustomMessageHandler('maskElement', function(options) {
+    $("#" + options.id).css('opacity', options.masked === true ? 0.5 : 1);
 });
 
 /*  ------------------------------------------------------------------------
     handle Ace Code Editor
     ------------------------------------------------------------------------*/
-let initializeAceCodeEditor = function(editorId, readOnly){
+let initializeAceCodeEditor = function(editorId, readOnly, mode = "r"){
     window[editorId] = ace.edit(editorId);    
     window[editorId].setTheme("ace/theme/crimson_editor");
-    window[editorId].session.setMode("ace/mode/r");
+    window[editorId].session.setMode("ace/mode/" + mode);
     window[editorId].setReadOnly(readOnly);
 }
 Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
@@ -107,6 +124,7 @@ Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
 Shiny.addCustomMessageHandler('initializeAceCodeReader', function(editorId) {
     initializeAceCodeEditor(editorId, true);
 });
+// getAceCodeContents and setAceCodeContents are for older, single-session editors
 Shiny.addCustomMessageHandler('getAceCodeContents', function(options) {
     let code = window[options.editorId].getValue();
     Shiny.setInputValue(options.editorId + "-contents", 
@@ -116,17 +134,72 @@ Shiny.addCustomMessageHandler('getAceCodeContents', function(options) {
 Shiny.addCustomMessageHandler('setAceCodeContents', function(options) {
     window[options.editorId].session.setValue(options.code);
 });
-
-/*  ------------------------------------------------------------------------
-    handle Summernote Editor
-Shiny.addCustomMessageHandler('getSummernoteCodeContents', function(editorId) {
-    let code = $("#" + editorId).summernote('code');
-    Shiny.setInputValue(editorId + "-contents", code, {priority: "event"});
+// the following are for more current usage of mutli-session editors
+let aceSessionModes = {
+    yml: "ace/mode/yaml",
+    R:   "ace/mode/r",
+    md:  "ace/mode/markdown"
+};
+let aceTabs = {};
+let initializeAceSession = function(options){
+    let ext = options.path.split('.').pop();
+    let mode = aceSessionModes[ext];
+    if(mode === undefined) mode = aceSessionModes.R;
+    if(aceTabs[options.path] === undefined || options.force === true){
+        let session = ace.createEditSession(options.contents, mode);
+        aceTabs[options.path] = {
+            disk: options.contents,
+            session: session
+        };
+        session.on('change', function(delta) {
+            Shiny.setInputValue(
+                options.editorId + "-changed", 
+                {
+                    path: options.path, 
+                    changed: session.getValue() !== aceTabs[options.path].disk
+                }, 
+                { priority: "event" }
+            );
+        });
+    }
+    window[options.editorId].setSession(aceTabs[options.path].session);
+}
+Shiny.addCustomMessageHandler('initializeAceSession', function(options) {
+    initializeAceSession(options)
 });
-Shiny.addCustomMessageHandler('setSummernoteCodeContents', function(options) {
-    $("#" + options.editorId).summernote('code', options.code);
+let resetSessionContents = function(editorId, path){
+    initializeAceSession({
+        editorId: editorId,
+        path: path,
+        contents: aceTabs[path].disk,
+        force: true
+    })
+    Shiny.setInputValue(
+        editorId + "-discard", 
+        aceTabs[path].disk, 
+        { priority: "event" }
+    );
+}
+let saveAceSessionContents = function(editorId, path, action){
+    let tab = aceTabs[path];
+    Shiny.setInputValue(
+        editorId + "-contents", 
+        {
+            path: path, 
+            contents: tab === undefined ? undefined : tab.session.getValue(),
+            action: action
+        }, 
+        { priority: "event" }
+    );
+}
+Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
+    delete aceTabs[options.closingPath];
+    if(options.newPath === null){
+        window[options.editorId].setSession(ace.createEditSession("", aceSessionModes.R));
+    } else {
+        window[options.editorId].setSession(aceTabs[options.newPath].session);
+    }
 });
-    ------------------------------------------------------------------------*/
 
 /*  ------------------------------------------------------------------------
     DT table action links
@@ -140,7 +213,17 @@ let handleActionClick = function(parentId, instanceId, confirmMessage){
 /*  ------------------------------------------------------------------------
     Pipeline Runner, functions to simplify the number of required input observers in R
     ------------------------------------------------------------------------*/
-let prInputOnChange = function(x){
+Shiny.addCustomMessageHandler('initializePRCodeEditor', function(editorId) {
+    initializeAceCodeEditor(editorId, false, "yaml");
+    window[editorId].session.on('change', function(delta) {
+        Shiny.setInputValue(
+            editorId + "-contents", 
+            {contents: window[editorId].getValue()}, 
+            {priority: "event"}
+        );
+    });
+});
+let prInputOnChange = function(x){ // when any PR text input changes
     let parts = x.id.split('__');
     Shiny.setInputValue(
         parts[0], 
@@ -148,7 +231,7 @@ let prInputOnChange = function(x){
         {priority: "event"}
     );
 }
-let prCheckboxOnChange = function(x){
+let prCheckboxOnChange = function(x){ // when any PR checkbox changes
     let parts = x.name.split('__');
     Shiny.setInputValue(
         parts[0], 
@@ -156,3 +239,97 @@ let prCheckboxOnChange = function(x){
         {priority: "event"}
     );
 }
+let prAddToList = function(x){ // react to the add/remove list action requests
+    let parts = x.split('__');
+    Shiny.setInputValue(
+        "configure-inputEditor-prAddToList", 
+        parts[1], 
+        {priority: "event"}
+    );
+}
+let prRemoveLastItem = function(x){ 
+    let parts = x.split('__');
+    Shiny.setInputValue(
+        "configure-inputEditor-prRemoveLastItem", 
+        parts[1], 
+        {priority: "event"}
+    );
+}
+Shiny.addCustomMessageHandler('prDuplicateLastInput', function(data) { // execute the add/remove list actions
+    let input = $('#' + data.id);
+    if(input.length === 0){ // checkboxes
+        input = $("input[name='" + data.id + "']");
+        let clone = input.clone().attr('name', data.newId);
+        clone.insertAfter(input.parent().parent()).wrap('<div class="checkbox"></div>').wrap('<label></label>');
+    } else { // text/number inputs
+        let attr = 'data-shinyjs-resettable-id';
+        input.clone().attr('id', data.newId).attr(attr, data.newId).insertAfter(input);
+    }
+});
+Shiny.addCustomMessageHandler('prRemoveLastInput', function(id) {
+    let input = $('#' + id);
+    if(input.length === 0){ // checkboxes
+        input = $("input[name='" + id + "']");
+        input.parent().parent().remove();
+    } else { // text/number inputs
+        input.remove();
+    } 
+});
+
+/*  ------------------------------------------------------------------------
+    command terminal emulator
+    ------------------------------------------------------------------------*/
+let commandTerminalHistory = {
+    commands: [""],
+    offset: 0,
+    current: ""
+}
+let traverseCommandHistory = function(prefix, increment){
+    let nCommands = commandTerminalHistory.commands.length;
+    if(nCommands <= 1) return;
+    let i = commandTerminalHistory.offset + increment;
+    if(i < 0 || i > nCommands - 1) return;
+    let input = $("#" + prefix + "command");
+    if(i === 0 && increment === -1) {
+        input.val(commandTerminalHistory.current);
+        commandTerminalHistory.offset = i;
+        return;
+    }
+    if(i === 1 && increment === 1) commandTerminalHistory.current = input.val();
+    input.val(commandTerminalHistory.commands[i - 1]);
+    commandTerminalHistory.offset = i;
+    Shiny.setInputValue(prefix + "command", input.val()); // otherwise input$command does not stay current
+}
+let addCommandToHistory = function(prefix, command){ // executed by call from R when command finishes execution
+    let input = $("#" + prefix + "command");
+    command = command === "" ? input.val() : command;
+    if(command === "") return;
+    if(command !== commandTerminalHistory.commands[0]) commandTerminalHistory.commands.unshift(command);
+    commandTerminalHistory.offset = 0;
+    commandTerminalHistory.current = "";
+    input.val("");
+}
+let activateCommandTerminalKeys = function(prefix){ // executed once when terminal dialog is opened
+    let input = $("#" + prefix + "command");
+    input.on("keyup", function(e) {
+        if(e.keyCode === 13) {
+            Shiny.setInputValue(prefix + "command", input.val()); // see comment above
+            Shiny.setInputValue(prefix + "commandEnterKey", Math.random(), {priority: "event"});
+        }
+        else if(e.keyCode === 38) traverseCommandHistory(prefix,  1);
+        else if(e.keyCode === 40) traverseCommandHistory(prefix, -1);
+    });
+}
+let scrollCommandTerminalResults = function(prefix){ // keep the results view part at the bottom
+    let elem = document.getElementById(prefix + 'results');
+    elem.scrollTop = elem.scrollHeight;
+    $("#" + prefix + "command").focus();
+}
+
+/*  ------------------------------------------------------------------------
+    inter-process communcation (IPC) from mdi-apps-framework to the optional mdi-apps-launcher wrapper
+    ------------------------------------------------------------------------*/
+Shiny.addCustomMessageHandler('frameworkToElectron', function(message) {
+    if(window.mdiElectron && window.mdiElectron.frameworkToElectron) 
+        window.mdiElectron.frameworkToElectron(message.type, message.data);
+});

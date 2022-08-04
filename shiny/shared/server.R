@@ -9,8 +9,20 @@
 serverFn <- function(input, output, session,
                      sessionKey, sessionFile,
                      cookie, restricted=FALSE){
+
+    # collect client data
     queryString <- parseQueryString(isolate(session$clientData$url_search))
-    if(length(queryString) > 0) updateQueryString("?", mode = "push") # clear the url
+    if(!serverEnv$IS_SERVER) isolate({
+        port <- session$clientData$url_port
+        if(!is.null(port) && port != "") setServerPort(as.integer(port))
+    })
+
+    # enforce single-user access when running remotely on a shared resource
+    if(!checkMdiRemoteKey(queryString)) return(NULL)
+    if(length(queryString) > 0) updateQueryString( # clear the url
+        paste0("?", getRemoteKeyQueryString()), 
+        mode = "push"
+    )
 
     # public servers demand user authentication; ui is redirecting
     if(serverEnv$REQUIRES_AUTHENTICATION &&  # allow all local page loads
@@ -23,6 +35,7 @@ serverFn <- function(input, output, session,
     sessionInput <- input
     sessionSession <- session
     source("server/initializeSession.R", local = TRUE)
+    if(!initializeSessionSuccess) return( show(CONSTANTS$apps$scriptSourceError) )
     show(if(MbRAM_beforeStart > serverEnv$MAX_MB_RAM_BEFORE_START)
          CONSTANTS$apps$serverBusy else CONSTANTS$apps$launchPage)        
     createSpinner() # create the loading spinner

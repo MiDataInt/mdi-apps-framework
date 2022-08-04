@@ -37,6 +37,8 @@ headerStatusData <- reactiveValues( # for UI display
                       else paste(Sys.getenv(c('USERNAME', 'USER')), collapse = ""),
     dataDir = R.utils::getAbsolutePath(serverEnv$DATA_DIR)
 )
+commandTerminalCache <- list()
+aceEditorCache <- list()
 
 # load support scripts required to run the framework
 # note that scripts are loaded at the session, not the global, level
@@ -46,26 +48,60 @@ sourceExternalScript <- function(suite, shinyPath){
     if(!file.exists(file)) file <- getPath("definitive")
     if(file.exists(file)) source(file)
 }
+onScriptSourceError <- function(script, local, error){ # catch script source errors
+    sapply(c( # load just what is need to handle the offending script in the code editor
+        "global/utilities/ui.R",
+        "global/utilities/logging.R",
+        "global/utilities/strings.R", 
+        "session/ui/modal_popup.R",
+        "session/ui/destroyModules.R",
+        "session/modules/widgets/framework/aceEditor/aceEditor_ui.R",
+        "session/modules/widgets/framework/aceEditor/aceEditor_server.R",
+        "session/modules/widgets/framework/aceEditor/aceEditor_utilities.R",
+        "session/modules/widgets/framework/reloadAppScripts/reloadAppScripts_server.R"
+    ), source, local = local)
+    showAceEditor(
+        session, 
+        showFile = file.path(script),
+        editable = serverEnv$IS_DEVELOPER,
+        sourceError = error,
+        sourceErrorType = sessionEnv$sourceLoadType
+    )
+}
 loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
-    if(!dir.exists(dir)) return(NULL)
+    if(is.null(dir) || !dir.exists(dir)) return(TRUE)
     scripts <- list.files(dir, '\\.R$', full.names = TRUE, recursive = recursive)
     if(is.null(local)) local <- sessionEnv
+    sourceFailure <- FALSE
     for(script in scripts) {
         if(!endsWith(script, '/global.R') && 
            !grepl('INLINE_ONLY', script, fixed = TRUE)) { # scripts intended to be sourced inline into other scripts
             # message(script)
-            source(script, local = local)
+            tryCatch({
+                source(script, local = local)
+            }, error = function(e){
+                print(e)
+                onScriptSourceError(script, local, e)
+                sourceFailure <<- TRUE
+            })
+            if(sourceFailure) return(FALSE)
         }
     }
+    return(TRUE)
 }
 loadAppScriptDirectory <- function(dir, local=NULL){
-    loadAllRScripts(dir, recursive = FALSE, local = local)
+    success <- loadAllRScripts(dir, recursive = FALSE, local = local)
+    if(!success) return(FALSE)
     for(subDir in c('modules', 'types', 'ui', 'utilities')) {
-        loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
+        success <- loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
+        if(!success) return(FALSE)
     }
+    TRUE
 }
-loadAllRScripts('global', recursive = TRUE)
-loadAppScriptDirectory('session')
+sessionEnv$sourceLoadType <- "framework"
+initializeSessionSuccess <- loadAllRScripts('global', recursive = TRUE)
+if(initializeSessionSuccess) initializeSessionSuccess <- loadAppScriptDirectory('session')
+sessionEnv$sourceLoadType <- ""
 
 # initialize git repository tracking
 gitStatusData <- reactiveValues(
@@ -75,6 +111,11 @@ gitStatusData <- reactiveValues(
 
 # activate our custom page reset action; reloads the page as is, to update all code
 observeEvent(input$resetPage, {
-    updateQueryString("?resetPage=1", mode = "push") # clear the url
+    remoteKey <- getRemoteKeyQueryString()
+    if(remoteKey != "") remoteKey <- paste0("&", remoteKey)
+    updateQueryString(
+        paste0("?resetPage=1", remoteKey), 
+        mode = "push"
+    )
     refresh()
 })

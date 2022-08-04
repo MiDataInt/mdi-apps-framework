@@ -2,7 +2,11 @@
 # target app loading; activated by file inputs on launch page
 #----------------------------------------------------------------------
 loadRequest <- reactiveVal(list())
-observeLoadRequest <- observeEvent(loadRequest(), {
+retryLoadRequest <- reactiveVal(0)
+observeLoadRequest <- observeEvent({
+    loadRequest()
+    retryLoadRequest()
+}, {
     req(loadRequest()$app)
     startSpinner(session, 'observeLoadRequest') 
 
@@ -32,15 +36,20 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     gitStatusData$suite$head <- getGitHead(gitStatusData$suite)
 
     # TODO: check working version, bookmark version, latest version, etc.
-    # offer user the option to swithc to matching legacy or latest version, after checking for breaking changes
+    # offer user the option to switch to matching legacy or latest version, after checking for breaking changes
     # if bookmark being loaded, check bookmark versions against latest (and working if different)
     # if date file being loaded (i.e, without prior version info), check working against latest
 
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
-    loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
-    loadAppScriptDirectory(app$sources$suiteSessionDir)
-    loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    sessionEnv$sourceLoadType <- "app"
+    loadSuccess <- loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
+    if(!loadSuccess) return(NULL)
+    loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)
+    if(!loadSuccess) return(NULL)
+    loadSuccess <- loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    if(!loadSuccess) return(NULL)
+    sessionEnv$sourceLoadType <- ""
 
     # validate and establish the module dependency chain
     failure <- initializeAppStepNamesByType()
@@ -109,7 +118,7 @@ observeLoadRequest <- observeEvent(loadRequest(), {
     
     # enable bookmarking; appStep modules react to bookmark
     bookmark <<- bookmarkingServer('saveBookmarkFile', list(), locks) # in the app sidebar
-    if(serverEnv$IS_SERVER) serverBookmark <<- bookmarkingServer('saveBookmarkToServer', list(shinyFiles = TRUE), locks)
+    if(!serverEnv$IS_LOCAL) serverBookmark <<- bookmarkingServer('saveBookmarkToServer', list(shinyFiles = TRUE), locks)
 
     # load servers for all required appStep modules, plus finally run appServer
     # because this is the slowest initialization step, defer many until after first UI load

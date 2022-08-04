@@ -21,3 +21,15 @@ types:
     
 # ... and of its dependencies
 sourceTypes: null
+
+#----------------------------------------------------------------------
+# settings
+#----------------------------------------------------------------------
+settings:
+    Job_Files:
+        Job_File_Edit_Mode:
+            type: radioButtons
+            choices:
+                - User Inputs
+                - Script Editor
+            value: User Inputs 

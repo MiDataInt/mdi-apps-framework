@@ -52,6 +52,14 @@ addDataListObserver(module, summaryTemplate, jobFilesTable, function(jobFile, id
             stringsAsFactors = FALSE
     )
 })
+observeEvent(jobFilesTable$selected(), {
+    selected <- jobFilesTable$selected()
+    html(
+        id = session$ns("table-titleSuffix"), 
+        asis = TRUE, 
+        html = if(is.na(selected)) "" else paste0(" - ", jobFilesTable$list[[selected]]$name)
+    )
+})
 
 #----------------------------------------------------------------------
 # set return values

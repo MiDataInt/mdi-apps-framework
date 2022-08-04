@@ -53,6 +53,9 @@ collapseVector <- function(v, n) { # sum every n adjacent elements of a vector
 # logical 'or' of is.null and is.na; not usually preferred but sometimes convenient
 is.nonexistent <- function(x) is.null(x) | is.na(x)
 
+# determine which elements of a vector are, or can be converted, to numeric values
+check.numeric <- function(x) !is.na(suppressWarnings(as.numeric(x)))
+
 #----------------------------------------------------------------------
 # shared resource tools
 #----------------------------------------------------------------------

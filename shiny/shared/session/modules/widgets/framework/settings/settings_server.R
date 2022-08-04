@@ -263,6 +263,9 @@ retval$get <- function(tab, id){
     if(is.null(x)) return(NULL)
     x$value
 }
+retval$set <- function(tab, id, value){
+    settings[[tab]][[id]]$value <- value
+}
 retval
 
 #----------------------------------------------------------------------

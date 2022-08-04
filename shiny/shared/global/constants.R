@@ -38,7 +38,8 @@ CONSTANTS <- list(
         loginPage      = 'login-page',
         launchPage     = 'launch-page',
         serverBusy     = 'server-busy',
-        pipelineRunner = 'pipelineRunner'
+        pipelineRunner = 'pipelineRunner',
+        scriptSourceError = 'script-source-error'
     ),
     
     # the standardized content file types found in project zips
@@ -69,9 +70,9 @@ CONSTANTS <- list(
     jobStatuses = list(
         created = list(value = -2, icon = NULL),
         running = list(value = -1, icon = as.character(icon("circle-notch", class = "fa-spin"))),
-        success = list(value =  0, icon = as.character(icon("check-circle"))),
-        warning = list(value =  1, icon = as.character(icon("times-circle"))), # insist on no warnings either
-        failure = list(value =  2, icon = as.character(icon("times-circle")))
+        success = list(value =  0, icon = as.character(icon("check-circle", verify_fa = FALSE))),
+        warning = list(value =  1, icon = as.character(icon("times-circle", verify_fa = FALSE))), # insist on no warnings either
+        failure = list(value =  2, icon = as.character(icon("times-circle", verify_fa = FALSE)))
     ),
     
     # exactly how an analysis job failed

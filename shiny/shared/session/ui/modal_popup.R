@@ -47,12 +47,14 @@ showHtmlModal <- function(file, type, title){
 
 # a small format modal popup for getting user input or confirmation
 dialogCallback <- function(parentInput) NULL
-dialogCallbackFired <- reactiveVal(TRUE)
 showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
                            size = "s", type = 'okCancel', footer = NULL, 
                            easyClose = TRUE, fade = NULL){
     dialogCallback <<- callback
     footer <- switch(type,
+        dismissOnly = tagList( # an "information only" dialog
+            bsButton("userDialogOk", "Dismiss", style = "primary")
+        ),
         okOnly = tagList( # an "information only" dialog
             modalButton("OK")
         ),
@@ -82,7 +84,6 @@ showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
         ""
     )
     stopSpinner(session)
-    dialogCallbackFired(FALSE) # see comment below
     showModal(modalDialog(
         title = tags$strong(title),
         ...,
@@ -93,15 +94,14 @@ showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
         fade = if(is.null(fade)) serverEnv$IS_LOCAL_BROWSER else fade
     ))
 }
-observeEvent(input$userDialogOk, {
-    req(!dialogCallbackFired()) # for unknown reasons, sometimes input$userDialogOk fires twice!
+observeEvent(input$userDialogOk, { # one global observer for session
+    removeInputFromSession(session, "userDialogOk") # since button name reused in every dialog
     tryCatch({
         dialogCallback(input)
         removeModal()
     }, error = function(e){
         runjs(paste0( '$("#modal-dialog-error").html("', e$message, '")' ))
     })
-    dialogCallbackFired(TRUE)
 })
 
 # a modal for pending items in a development environment
