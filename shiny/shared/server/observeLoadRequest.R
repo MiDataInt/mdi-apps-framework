@@ -3,15 +3,12 @@
 #----------------------------------------------------------------------
 loadRequest <- reactiveVal(list())
 retryLoadRequest <- reactiveVal(0)
-observeLoadRequest <- observeEvent({
-    loadRequest()
-    retryLoadRequest()
-}, {
-    req(loadRequest()$app)
-    startSpinner(session, 'observeLoadRequest') 
+appApprovalFile <- file.path(serverEnv$DATA_DIR, "mdi-app-approval.yml")
+executeLoadRequest <- function(loadRequest){ # act on an approved app load request
+    startSpinner(session, 'executeLoadRequest') 
 
     # authorize the requested app
-    NAME <- loadRequest()$app
+    NAME <- loadRequest$app
     DIRECTORY <- appDirs[[NAME]] # app working directory, could be definitive or developer    
     if(serverEnv$REQUIRES_AUTHENTICATION && !isAuthorizedApp(NAME)) {
         stopSpinner(session, 'observeLoadRequest: unauthorized')
@@ -73,11 +70,11 @@ observeLoadRequest <- observeEvent({
     nAppSteps <- length(app$config$appSteps)
     appStepNames <- names(app$config$appSteps)
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
-    isBookmarkFile <- loadRequest()$file$type == "bookmark"
+    isBookmarkFile <- loadRequest$file$type == "bookmark"
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
     splashScreenName <- 'appName' # the name of the app overview tab
     selectedStep <- if(showSplashScreen) splashScreenName else {
-        path <- loadRequest()$file$path
+        path <- loadRequest$file$path
         stepName <- if(isBookmarkFile) getTargetAppFromBookmarkFile(path, function(...) NULL)$step else NULL
         if(is.null(stepName)) appStepNames[1] else stepName
     }
@@ -162,21 +159,69 @@ observeLoadRequest <- observeEvent({
     )
 
     # push the initial file upload to the app via it's first step module
-    if(loadRequest()$file$type == CONSTANTS$sourceFileTypes$bookmark){
-        bookmark$file <- loadRequest()$file$path
-        nocache <- loadRequest()$file$nocache
+    if(loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
+        bookmark$file <- loadRequest$file$path
+        nocache <- loadRequest$file$nocache
         if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
         firstStep <- app[[ names(app$config$appSteps)[1] ]]        
-        firstStep$loadSourceFile(loadRequest()$file, suppressUnlink = loadRequest()$suppressUnlink)
+        firstStep$loadSourceFile(loadRequest$file, suppressUnlink = loadRequest$suppressUnlink)
     } 
 
     # clean up
-    stopSpinner(session, 'observeLoadRequest')
+    stopSpinner(session, 'executeLoadRequest')
     observeLoadRequest$destroy() # user has to reload page to reset to launch page once an app is loaded
     session$sendCustomMessage('setDocumentCookie', list(
         name  = app$NAME,
         data  = list(value = TRUE, isServerMode = serverEnv$IS_SERVER),
         nDays = 365
-    ))
+    ))    
+}
+observeLoadRequest <- observeEvent({ # handle a request to load an app
+    loadRequest()
+    retryLoadRequest()
+}, {
+    loadRequest <- loadRequest()
+    req(loadRequest$app)
+    app_ <- parseAppSuite(appDirs[[loadRequest$app]])
+    appKey <- paste(app_$suite, app_$name, sep = " / ")
+    appApprovals <- if(file.exists(appApprovalFile)) read_yaml(appApprovalFile) else list()
+    if(is.null(appApprovals[[appKey]]) && # get approval to load an app for the first local/remote use
+      !serverEnv$IS_SERVER                # public server apps are implicitly approved by the maintainer
+    ){
+        showUserDialog(                                         
+            "Approve App for Use", 
+            tags$p(paste(
+                "MDI apps can access the file system and execute commands on your computer.",
+                "It is essential that you trust the people who develop the apps you run."
+            )), 
+            tags$p("For more information about MDI security, see:"), 
+            tags$p(tags$a(
+                style = "margin-left: 2em;",
+                href = "https://midataint.github.io/docs/registry/00_index/", 
+                target = "Docs",
+                "MDI Tool Suite Registry"
+            )),
+            tags$p(tags$a(
+                style = "margin-left: 2em;",
+                href = "https://midataint.github.io/mdi-desktop-app/docs/security-notes.html", 
+                target = "Docs",
+                "MDI Desktop Security Notes"
+            )),
+            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server:"),
+            tags$p(
+                style = "margin-left: 2em; font-weight: bold;",
+                appKey
+            ), 
+            callback = function(...) {
+                appApprovals[[appKey]] <<- TRUE
+                write_yaml(appApprovals, appApprovalFile)
+                executeLoadRequest(loadRequest)
+            },
+            size = "m", 
+            type = 'okCancel'
+        )
+    } else { # skip prompt for previously approved apps
+        executeLoadRequest(loadRequest)
+    }
 })
