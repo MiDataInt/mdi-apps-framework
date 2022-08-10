@@ -12,10 +12,18 @@ if(!restricted){
 
     # user status, dataDir and logout in navbar / page header
     insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
-        ui = tags$i(
-            id = "mainSpinner",
-            class = "fas fa-spinner fa-spin header-large-icon", # shinyTree in aceEditor overrides line-height in .header-large-icon
-            style = "margin-left: 0.5em; font-size: 1.35em; color: #eee; visibility: hidden; line-height: 47px;"
+        ui = tagList(
+            tags$i(
+                id = "mainSpinner",
+                class = "fas fa-spinner fa-spin header-large-icon mdi-main-spinner", # shinyTree in aceEditor overrides line-height in .header-large-icon
+                style = "font-size: 1.35em;"
+            ),
+            tags$span(
+                id = "mainSpinner-message",
+                class = "mdi-main-spinner",
+                style = "font-size: 0.9em;",
+                "this is spinner text"
+            )
         )
     )
     if(serverEnv$IS_DEVELOPER){

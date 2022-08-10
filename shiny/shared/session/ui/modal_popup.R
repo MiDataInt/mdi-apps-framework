@@ -47,10 +47,12 @@ showHtmlModal <- function(file, type, title){
 
 # a small format modal popup for getting user input or confirmation
 dialogCallback <- function(parentInput) NULL
+removeModalOnCallback <- TRUE
 showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
                            size = "s", type = 'okCancel', footer = NULL, 
-                           easyClose = TRUE, fade = NULL){
+                           easyClose = TRUE, fade = NULL, removeModal = TRUE){
     dialogCallback <<- callback
+    removeModalOnCallback <<- removeModal
     footer <- switch(type,
         dismissOnly = tagList( # an "information only" dialog
             bsButton("userDialogOk", "Dismiss", style = "primary")
@@ -98,7 +100,7 @@ observeEvent(input$userDialogOk, { # one global observer for session
     removeInputFromSession(session, "userDialogOk") # since button name reused in every dialog
     tryCatch({
         dialogCallback(input)
-        removeModal()
+        if(removeModalOnCallback) removeModal()
     }, error = function(e){
         runjs(paste0( '$("#modal-dialog-error").html("', e$message, '")' ))
     })
