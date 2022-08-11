@@ -95,6 +95,12 @@ body, html {
     color: #a6921e;
     cursor: pointer;
 }
+.mdi-main-spinner {
+    margin-left: 0.5em; 
+    color: #ddd; 
+    visibility: hidden; 
+    line-height: 47px;
+}
 i#mainSpinner:hover, i.header-async-monitor.fa-spinner:hover { /* avoid weird background spin effect */
     color: #eee !important;
     background-color: transparent !important;

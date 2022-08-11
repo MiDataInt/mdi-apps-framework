@@ -31,7 +31,7 @@ list or any of its named elements - doing so will break the framework.
 # GOOD
 CONSTANTS$myValue <- 123
 
-# VERY BAD
+# VERY BAD !!
 CONSTANTS <- list()
 CONSTANTS$fileSuffixes <- list()
 ```

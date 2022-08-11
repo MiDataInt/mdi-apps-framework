@@ -3,32 +3,22 @@
 #----------------------------------------------------------------------
 loadRequest <- reactiveVal(list())
 retryLoadRequest <- reactiveVal(0)
-observeLoadRequest <- observeEvent({
-    loadRequest()
-    retryLoadRequest()
-}, {
-    req(loadRequest()$app)
-    startSpinner(session, 'observeLoadRequest') 
+appApprovalFile <- file.path(serverEnv$DATA_DIR, "mdi-app-approval.yml")
+getAppApprovalKey <- function(app){
+    app <- parseAppSuite(appDirs[[app]])
+    paste(app$suite, app$name, sep = " / ")
+}
 
-    # authorize the requested app
-    NAME <- loadRequest()$app
-    DIRECTORY <- appDirs[[NAME]] # app working directory, could be definitive or developer    
-    if(serverEnv$REQUIRES_AUTHENTICATION && !isAuthorizedApp(NAME)) {
-        stopSpinner(session, 'observeLoadRequest: unauthorized')
-        showUserDialog(
-            "Unauthorized App", 
-            tags$p(paste("You are not authorized to use the", NAME, "app.")), 
-            type = 'okOnly'
-        )
-        return()
-    }
+# act on an authorized and approved app load request
+executeLoadRequest <- function(loadRequest){
+    app$NAME <<- loadRequest$app
+    app$DIRECTORY <<- appDirs[[app$NAME]] # app working directory, could be definitive or developer 
 
-    # initialize the requested app
-    app$NAME <<- NAME
-    app$DIRECTORY <<- DIRECTORY
+    # initialize the requested app   
+    updateSpinnerMessage(session, "reading config") 
     app$sources <<- parseAppDirectory(app$DIRECTORY)
-    app$config <<- read_yaml(file.path(DIRECTORY, 'config.yml'))
-    gitStatusData$app$name <- NAME
+    app$config <<- read_yaml(file.path(app$DIRECTORY, 'config.yml'))
+    gitStatusData$app$name <- app$NAME
     gitStatusData$app$version <- if(is.null(app$config$version)) "na" else app$config$version
     gitStatusData$suite$dir <- R.utils::getAbsolutePath( file.path(app$DIRECTORY, '..', '..', '..') )
     gitStatusData$suite$name <- basename(gitStatusData$suite$dir)
@@ -42,21 +32,23 @@ observeLoadRequest <- observeEvent({
 
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
+    updateSpinnerMessage(session, "loading scripts")
     sessionEnv$sourceLoadType <- "app"
     loadSuccess <- loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
     if(!loadSuccess) return(NULL)
     loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)
     if(!loadSuccess) return(NULL)
-    loadSuccess <- loadAppScriptDirectory(DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    loadSuccess <- loadAppScriptDirectory(app$DIRECTORY) # add all scripts defined within the app itself; highest precedence
     if(!loadSuccess) return(NULL)
     sessionEnv$sourceLoadType <- ""
 
     # validate and establish the module dependency chain
+    updateSpinnerMessage(session, "building dependency chain")
     failure <- initializeAppStepNamesByType()
     if(!is.null(failure)){
         message()
         message(rep('!', 80))
-        message(paste(NAME, 'app config error:', failure))
+        message(paste(app$NAME, 'app config error:', failure))
         message(rep('!', 80))
         message()
         return( stopSpinner(session) )
@@ -73,11 +65,11 @@ observeLoadRequest <- observeEvent({
     nAppSteps <- length(app$config$appSteps)
     appStepNames <- names(app$config$appSteps)
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
-    isBookmarkFile <- loadRequest()$file$type == "bookmark"
+    isBookmarkFile <- loadRequest$file$type == "bookmark"
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
     splashScreenName <- 'appName' # the name of the app overview tab
     selectedStep <- if(showSplashScreen) splashScreenName else {
-        path <- loadRequest()$file$path
+        path <- loadRequest$file$path
         stepName <- if(isBookmarkFile) getTargetAppFromBookmarkFile(path, function(...) NULL)$step else NULL
         if(is.null(stepName)) appStepNames[1] else stepName
     }
@@ -91,6 +83,7 @@ observeLoadRequest <- observeEvent({
     initializeAppDataPaths()      
 
     # initialize the app-specific sidebar menu
+    updateSpinnerMessage(session, "building UI")
     removeUI(".sidebar-menu li, #saveBookmarkFile-saveBookmarkFile, .sidebar-status",
              multiple = TRUE, immediate = TRUE)
     insertUI(".sidebar-menu", where = "beforeEnd", immediate = TRUE,
@@ -114,6 +107,7 @@ observeLoadRequest <- observeEvent({
     )
     
     # initialize the record lock lists
+    updateSpinnerMessage(session, "initializing bookmarks and locks")
     locks <<- intializeStepLocks()
     
     # enable bookmarking; appStep modules react to bookmark
@@ -122,6 +116,7 @@ observeLoadRequest <- observeEvent({
 
     # load servers for all required appStep modules, plus finally run appServer
     # because this is the slowest initialization step, defer many until after first UI load
+    updateSpinnerMessage(session, "loading step servers")
     if(!exists('appServer')) appServer <- function() NULL # for apps with no specific server code
     runModuleServers <- function(startI, endI){
         lapply(startI:endI, function(i){
@@ -162,21 +157,147 @@ observeLoadRequest <- observeEvent({
     )
 
     # push the initial file upload to the app via it's first step module
-    if(loadRequest()$file$type == CONSTANTS$sourceFileTypes$bookmark){
-        bookmark$file <- loadRequest()$file$path
-        nocache <- loadRequest()$file$nocache
+    updateSpinnerMessage(session, "loading data")
+    if(loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
+        bookmark$file <- loadRequest$file$path
+        nocache <- loadRequest$file$nocache
         if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
         firstStep <- app[[ names(app$config$appSteps)[1] ]]        
-        firstStep$loadSourceFile(loadRequest()$file, suppressUnlink = loadRequest()$suppressUnlink)
+        firstStep$loadSourceFile(loadRequest$file, suppressUnlink = loadRequest$suppressUnlink)
     } 
 
     # clean up
-    stopSpinner(session, 'observeLoadRequest')
+    stopSpinner(session, 'executeLoadRequest')
     observeLoadRequest$destroy() # user has to reload page to reset to launch page once an app is loaded
     session$sendCustomMessage('setDocumentCookie', list(
         name  = app$NAME,
         data  = list(value = TRUE, isServerMode = serverEnv$IS_SERVER),
         nDays = 365
-    ))
+    ))    
+}
+
+# audit the requested app, i.e., check for content requiring additional approval, etc.
+auditLoadRequest <- function(loadRequest){ 
+    if(serverEnv$IS_SERVER) return(executeLoadRequest(loadRequest))
+
+    # run the code audit
+    updateSpinnerMessage(session, "auditing app code")
+    appDir <- appDirs[[loadRequest$app]]
+    sharedDir <- R.utils::getAbsolutePath( file.path(appDir, '..', '..', 'shared') )
+    scripts <- c(
+        list.files(appDir,    '\\.R$', full.names = TRUE, recursive = TRUE),
+        list.files(sharedDir, '\\.R$', full.names = TRUE, recursive = TRUE)
+    )
+    flags <- list( # use list for future consideration of other flag types
+        system = FALSE
+    )
+    for(script in scripts) {
+        x <- readChar(script, file.info(script)$size)
+        if(!flags$system) flags$system <- grepl('[-{}:;\\s](system|system2|shell)\\s*\\(', x, perl = TRUE)
+    }
+
+    # prompt for user approval if flags found
+    appApprovals <- read_yaml(appApprovalFile) 
+    appKey <- getAppApprovalKey(loadRequest$app)    
+    if(
+        flags$system && (is.null(appApprovals[[appKey]]$system) || !appApprovals[[appKey]]$system)
+    ){
+        showUserDialog(                                          
+            "Approve App for Use", 
+            tags$p("The following flags were raised on an audit of the app's code."), 
+            tags$ul(
+                if(flags$system) tags$li(
+                    "function calls that would execute commands on your MDI server operating system"
+                ) else ""
+            ),
+            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server and wish to proceed:"),
+            tags$p(
+                style = "margin-left: 2em; font-weight: bold;",
+                appKey
+            ), 
+            callback = function(...) {
+                if(flags$system) appApprovals[[appKey]]$system <<- TRUE
+                write_yaml(appApprovals, appApprovalFile)
+                removeModal()
+                executeLoadRequest(loadRequest)
+            },
+            size = "m", 
+            type = 'okCancel',
+            removeModal = FALSE # necessary for proper handling of sequential modals
+        )
+    } else { # skip prompt for previously approved apps
+        removeModal()
+        executeLoadRequest(loadRequest)
+    }
+}
+
+# initialized a request to load an app
+observeLoadRequest <- observeEvent({ 
+    loadRequest()
+    retryLoadRequest()
+}, {
+    loadRequest <- loadRequest() 
+    req(loadRequest$app) 
+
+    # authorize the requested app
+    startSpinner(session, 'observeLoadRequest', message = "authorizing")    
+    if(serverEnv$REQUIRES_AUTHENTICATION && !isAuthorizedApp(loadRequest$app)) {
+        stopSpinner(session, 'observeLoadRequest: unauthorized')
+        showUserDialog(
+            "Unauthorized App", 
+            tags$p(paste("You are not authorized to use the", loadRequest$app, "app.")), 
+            type = 'okOnly'
+        )
+        return()
+    }
+
+    # get user approval to load an app for the first local/remote use  
+    # public server apps are implicitly approved by the maintainer
+    if(serverEnv$IS_SERVER) return(auditLoadRequest(loadRequest))
+    updateSpinnerMessage(session, "checking approval")
+    appApprovals <- if(file.exists(appApprovalFile)) read_yaml(appApprovalFile) else list()    
+    appKey <- getAppApprovalKey(loadRequest$app)
+    if(
+        is.null(appApprovals[[appKey]]) || 
+        is.null(appApprovals[[appKey]]$app) ||
+        !appApprovals[[appKey]]$app
+    ){
+        showUserDialog(                                     
+            "Approve App for Use", 
+            tags$p(paste(
+                "MDI apps can access the file system and execute commands on your computer.",
+                "It is essential that you trust the people who develop the apps you run."
+            )), 
+            tags$p("For more information about MDI security, see:"), 
+            tags$p(tags$a(
+                style = "margin-left: 2em;",
+                href = "https://midataint.github.io/docs/registry/00_index/", 
+                target = "Docs",
+                "MDI Tool Suite Registry"
+            )),
+            tags$p(tags$a(
+                style = "margin-left: 2em;",
+                href = "https://midataint.github.io/mdi-desktop-app/docs/security-notes.html", 
+                target = "Docs",
+                "MDI Desktop Security Notes"
+            )),
+            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server and wish to proceed:"),
+            tags$p(
+                style = "margin-left: 2em; font-weight: bold;",
+                appKey
+            ), 
+            callback = function(...) {
+                if(is.null(appApprovals[[appKey]])) appApprovals[[appKey]] <<- list()
+                appApprovals[[appKey]]$app <<- TRUE
+                write_yaml(appApprovals, appApprovalFile)
+                auditLoadRequest(loadRequest)
+            },
+            size = "m", 
+            type = 'okCancel',
+            removeModal = FALSE # audit function handles modal closing
+        )
+    } else { # skip prompt for previously approved apps
+        auditLoadRequest(loadRequest)
+    }
 })

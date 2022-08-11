@@ -1,16 +1,24 @@
+$(document).ready(function() {
 /*  ------------------------------------------------------------------------
     dynamically resize content wrapper to allow it to carry the scrollbar (i.e. header stays fixed)
-    ------------------------------------------------------------------------*/
-$(document).ready(function() {
+    ------------------------------------------------------------------------*/    
     let setCWHeight = function(){
         $(".content-wrapper").height($(window).height() - 200);
     };
     setCWHeight();
     $(window).resize(setCWHeight);
+
+/*  ------------------------------------------------------------------------
+    activate page reset
+    ------------------------------------------------------------------------*/ 
     $(".main-header .logo").on('click', function(){
         Shiny.setInputValue('resetPage', true, {priority: "event"}); 
     });
-    if(window.mdiElectron && window.mdiElectron.frameworkToElectron){ // capture external web links into desktop app
+
+/*  ------------------------------------------------------------------------
+    capture external web links into desktop app
+    ------------------------------------------------------------------------*/ 
+    if(window.mdiElectron && window.mdiElectron.frameworkToElectron){
         $(document).on("click", "a", function(event){
             const linkTarget = $(event.target).attr('target');
             if(linkTarget){ // all external links are expected to set a target
@@ -101,9 +109,9 @@ Shiny.addCustomMessageHandler('updateTriggerArray', function(trigger) {
 /*  ------------------------------------------------------------------------
     help Shiny show a spinner and mask elements on certain slow actions
     ------------------------------------------------------------------------*/
-Shiny.addCustomMessageHandler('toggleSpinner', function(visibility) {
-    // $(".progress-spinner-div").css('visibility',visibility);
-    $("#mainSpinner").css('visibility', visibility);
+Shiny.addCustomMessageHandler('toggleSpinner', function(options) {
+    $("#mainSpinner-message").html(options.message || "");    
+    $(".mdi-main-spinner").css('visibility', options.visibility);
 });
 Shiny.addCustomMessageHandler('maskElement', function(options) {
     $("#" + options.id).css('opacity', options.masked === true ? 0.5 : 1);

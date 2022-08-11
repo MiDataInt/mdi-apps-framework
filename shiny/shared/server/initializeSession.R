@@ -40,7 +40,7 @@ headerStatusData <- reactiveValues( # for UI display
 commandTerminalCache <- list()
 aceEditorCache <- list()
 
-# load support scripts required to run the framework
+# load support scripts required to run the framework and apps
 # note that scripts are loaded at the session, not the global, level
 sourceExternalScript <- function(suite, shinyPath){
     getPath <- function(fork) file.path(serverEnv$SUITES_DIR, fork, suite, "shiny", shinyPath)
