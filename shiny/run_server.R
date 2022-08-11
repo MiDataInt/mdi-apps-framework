@@ -93,6 +93,7 @@ setwd(serverEnv$SHARED_DIR)
 # declare version-specific R library(s) from which all packages are loaded
 getLibPath <- function(lib) if(!is.null(lib) && lib != "") lib else NULL
 .libPaths(c(
+    serverEnv$LIBRARY_DIR_SHORT,
     serverEnv$LIBRARY_DIR,
     getLibPath(serverEnv$STATIC_R_LIBRARY),
     getLibPath(serverEnv$MDI_SYSTEM_R_LIBRARY)
