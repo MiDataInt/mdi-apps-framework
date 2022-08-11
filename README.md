@@ -1,20 +1,13 @@
-# Michigan Data Interface
+# MDI Apps Framework
 
 The [Michigan Data Interface](https://midataint.github.io/) (MDI) 
 is a framework for developing, installing and running 
-HPC data analysis pipelines and interactive visualization 
-applications within a standardized design interface.
+Stage 1 HPC **pipelines** and Stage 2 interactive web applications 
+(i.e., **apps**) in a standardized design interface.
 
-The MDI is separated into 
-[two stages of code execution](https://midataint.github.io/docs/analysis-flow/) 
-called Stage 1 HPC **pipelines** and Stage 2 web applications (i.e., **apps**).
-Collectively, pipelines and apps are known as **tools**.
-
-## Repository contents
-
-This is the repository for the **MDI apps
-framework**. It contains R Shiny code that
-creates the modular graphical user interface (GUI) via
+This is the repository for the **MDI apps framework**. 
+It contains R Shiny code that
+creates the modular graphical user interface via
 a web server and runs individual data analysis apps. 
 The framework thus provides a common access point to many data apps.
 
@@ -29,5 +22,6 @@ created from our suite repository template:
 This repository is not used directly. Instead, it is cloned
 and managed by the MDI installer and manager utilities found here:
 
+- MDI Desktop app: <https://github.com/MiDataInt/mdi-desktop-app>
 - MDI installation script: <https://github.com/MiDataInt/mdi>
 - MDI manager R package: <https://github.com/MiDataInt/mdi-manager>

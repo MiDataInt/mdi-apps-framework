@@ -7,9 +7,7 @@ nav_order: 50
 
 ## {{page.title}}
 
-A concept of the MDI apps framework is to allow the framework
-and app code to be viewed and updated in an app
-while it is running. 
+A concept of the MDI apps framework is to allow app code to be viewed and updated in the app while it is running.
 
 ### Re-sourcing app scripts without page reload
 

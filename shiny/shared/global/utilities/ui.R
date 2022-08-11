@@ -36,8 +36,7 @@ startSpinner <- function(session, caller = NULL, message = NULL){
         message = message
     ))
 }
-updateSpinnerMessage <- function(message){
-    reportProgress(message)
+updateSpinnerMessage <- function(session, message){
     session$sendCustomMessage('toggleSpinner', list(
         visibility = 'visible',
         message = message

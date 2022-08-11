@@ -15,7 +15,7 @@ executeLoadRequest <- function(loadRequest){
     app$DIRECTORY <<- appDirs[[app$NAME]] # app working directory, could be definitive or developer 
 
     # initialize the requested app   
-    updateSpinnerMessage("reading config") 
+    updateSpinnerMessage(session, "reading config") 
     app$sources <<- parseAppDirectory(app$DIRECTORY)
     app$config <<- read_yaml(file.path(app$DIRECTORY, 'config.yml'))
     gitStatusData$app$name <- app$NAME
@@ -32,7 +32,7 @@ executeLoadRequest <- function(loadRequest){
 
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
-    updateSpinnerMessage("loading scripts")
+    updateSpinnerMessage(session, "loading scripts")
     sessionEnv$sourceLoadType <- "app"
     loadSuccess <- loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
     if(!loadSuccess) return(NULL)
@@ -43,7 +43,7 @@ executeLoadRequest <- function(loadRequest){
     sessionEnv$sourceLoadType <- ""
 
     # validate and establish the module dependency chain
-    updateSpinnerMessage("building dependency chain")
+    updateSpinnerMessage(session, "building dependency chain")
     failure <- initializeAppStepNamesByType()
     if(!is.null(failure)){
         message()
@@ -83,7 +83,7 @@ executeLoadRequest <- function(loadRequest){
     initializeAppDataPaths()      
 
     # initialize the app-specific sidebar menu
-    updateSpinnerMessage("building UI")
+    updateSpinnerMessage(session, "building UI")
     removeUI(".sidebar-menu li, #saveBookmarkFile-saveBookmarkFile, .sidebar-status",
              multiple = TRUE, immediate = TRUE)
     insertUI(".sidebar-menu", where = "beforeEnd", immediate = TRUE,
@@ -107,7 +107,7 @@ executeLoadRequest <- function(loadRequest){
     )
     
     # initialize the record lock lists
-    updateSpinnerMessage("initializing bookmarks and locks")
+    updateSpinnerMessage(session, "initializing bookmarks and locks")
     locks <<- intializeStepLocks()
     
     # enable bookmarking; appStep modules react to bookmark
@@ -116,7 +116,7 @@ executeLoadRequest <- function(loadRequest){
 
     # load servers for all required appStep modules, plus finally run appServer
     # because this is the slowest initialization step, defer many until after first UI load
-    updateSpinnerMessage("loading step servers")
+    updateSpinnerMessage(session, "loading step servers")
     if(!exists('appServer')) appServer <- function() NULL # for apps with no specific server code
     runModuleServers <- function(startI, endI){
         lapply(startI:endI, function(i){
@@ -157,7 +157,7 @@ executeLoadRequest <- function(loadRequest){
     )
 
     # push the initial file upload to the app via it's first step module
-    updateSpinnerMessage("loading data")
+    updateSpinnerMessage(session, "loading data")
     if(loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
         bookmark$file <- loadRequest$file$path
         nocache <- loadRequest$file$nocache
@@ -182,7 +182,7 @@ auditLoadRequest <- function(loadRequest){
     if(serverEnv$IS_SERVER) return(executeLoadRequest(loadRequest))
 
     # run the code audit
-    updateSpinnerMessage("auditing app code")
+    updateSpinnerMessage(session, "auditing app code")
     appDir <- appDirs[[loadRequest$app]]
     sharedDir <- R.utils::getAbsolutePath( file.path(appDir, '..', '..', 'shared') )
     scripts <- c(
@@ -255,7 +255,7 @@ observeLoadRequest <- observeEvent({
     # get user approval to load an app for the first local/remote use  
     # public server apps are implicitly approved by the maintainer
     if(serverEnv$IS_SERVER) return(auditLoadRequest(loadRequest))
-    updateSpinnerMessage("checking approval")
+    updateSpinnerMessage(session, "checking approval")
     appApprovals <- if(file.exists(appApprovalFile)) read_yaml(appApprovalFile) else list()    
     appKey <- getAppApprovalKey(loadRequest$app)
     if(
