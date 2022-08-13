@@ -14,8 +14,8 @@ if(!restricted){
     insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
         ui = tagList(
             tags$i(
-                id = "mainSpinner",
-                class = "fas fa-spinner fa-spin header-large-icon mdi-main-spinner", # shinyTree in aceEditor overrides line-height in .header-large-icon
+                id = "mainSpinner", # shinyTree in aceEditor overrides line-height in .header-large-icon
+                class = "fas fa-spinner fa-spin header-large-icon mdi-main-spinner", 
                 style = "font-size: 1.35em;"
             ),
             tags$span(

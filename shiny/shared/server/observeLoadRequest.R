@@ -38,7 +38,7 @@ executeLoadRequest <- function(loadRequest){
     if(!loadSuccess) return(NULL)
     loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)
     if(!loadSuccess) return(NULL)
-    loadSuccess <- loadAppScriptDirectory(app$DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    loadSuccess <- loadAppScriptDirectory(app$DIRECTORY) # add all scripts defined within the app itself; highest precedence # nolint
     if(!loadSuccess) return(NULL)
     sessionEnv$sourceLoadType <- ""
 
@@ -65,7 +65,8 @@ executeLoadRequest <- function(loadRequest){
     nAppSteps <- length(app$config$appSteps)
     appStepNames <- names(app$config$appSteps)
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
-    isBookmarkFile <- loadRequest$file$type == "bookmark"
+    isColdStart <- !is.null(loadRequest$coldStart) && loadRequest$coldStart
+    isBookmarkFile <- !isColdStart && loadRequest$file$type == "bookmark"
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
     splashScreenName <- 'appName' # the name of the app overview tab
     selectedStep <- if(showSplashScreen) splashScreenName else {
@@ -158,12 +159,12 @@ executeLoadRequest <- function(loadRequest){
 
     # push the initial file upload to the app via it's first step module
     updateSpinnerMessage(session, "loading data")
-    if(loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
+    if(!isColdStart && loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
         bookmark$file <- loadRequest$file$path
         nocache <- loadRequest$file$nocache
         if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
-        firstStep <- app[[ names(app$config$appSteps)[1] ]]        
+        firstStep <- app[[ names(app$config$appSteps)[1] ]] # cold-startable apps must handle empty loadRequest$file  
         firstStep$loadSourceFile(loadRequest$file, suppressUnlink = loadRequest$suppressUnlink)
     } 
 

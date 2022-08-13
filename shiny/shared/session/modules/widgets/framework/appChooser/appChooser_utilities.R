@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# utilities for constructing a modal panel to select an app directly
+# utilities for constructing a modal panel to cold start an app
 #----------------------------------------------------------------------
 showAppChooser <- function(
     session
@@ -7,27 +7,18 @@ showAppChooser <- function(
     id <- "appChooserDialog"
     nsId <- session$ns(id)
     ns <- NS(nsId)
-    appChooser <- appChooserServer(
-        id
-    )    
+    appChooser <- appChooserServer(id)    
     onExit <- function(...){
         removeMatchingInputValues(session, id)
         destroyModuleObservers(appChooser)   
     }
     showUserDialog(
         "App Chooser", 
-        appChooserUI(
-            nsId
-        ),
+        appChooserUI(nsId),
         size = "l", 
-        type = 'okCancel', 
-        easyClose = TRUE,
-        fade = TRUE,
-        callback = onExit # TODO: should execute callback on Cancel also
-        # or more likely all links in the chooser close, only have a Dismiss button
+        type = 'dismissOnly', 
+        easyClose = FALSE,
+        fade = FALSE,
+        callback = onExit
     )
 }
-
-#----------------------------------------------------------------------
-# app chooser support functions
-#----------------------------------------------------------------------
