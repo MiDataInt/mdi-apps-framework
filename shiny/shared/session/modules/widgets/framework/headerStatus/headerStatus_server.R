@@ -13,7 +13,7 @@ headerStatusServer <- function(id) {
 userDisplayName <- reactive({
     name <- headerStatusData$userDisplayName
     domain <- serverEnv$MDI_REMOTE_DOMAIN
-    if(is.null(domain)) name else paste(name, domain, sep="@")    
+    if(is.null(domain)) name else paste(name, domain, sep = "@")    
 })
 output$userDisplayName <- renderText({ 
     userDisplayName()
@@ -22,6 +22,23 @@ output$dataDir <- renderText({
     req(headerStatusData$userDisplayName)
     headerStatusData$dataDir 
 })    
+
+# allow all users to view the site's code, and developers to edit
+observeEvent(input$aceEditor, {
+    showAceEditor(
+        session,
+        baseDirs = c(app$DIRECTORY, serverEnv$SHARED_DIR),
+        editable = serverEnv$IS_DEVELOPER
+    )  
+})
+
+# allow local or remote user to execute arbitrary commands in an R consol
+# obviously must never be exposed on a public server
+if(!serverEnv$IS_SERVER) observeEvent(input$rConsole, {
+    req(!serverEnv$IS_SERVER)
+    req(headerStatusData$userDisplayName)
+    showRConsole(session)  
+})
 
 # allow local or remote user to execute arbitrary commands on the system
 # obviously must never be exposed on a public server
@@ -34,23 +51,14 @@ if(!serverEnv$IS_SERVER) observeEvent(input$commandTerminal, {
     )  
 })
 
-# allow all users to view the site's code, and developers to edit
-observeEvent(input$aceEditor, {
-    showAceEditor(
-        session,
-        baseDirs = c(app$DIRECTORY, serverEnv$SHARED_DIR),
-        editable = serverEnv$IS_DEVELOPER
-    )  
-})
-
 # allow local or remote user to unlock the MDI installation, i.e., all frameworks and suites
 observeEvent(input$unlockAllRepos, {
     req(headerStatusData$userDisplayName)
     showUserDialog(
         "Unlock MDI Installation", 
-        tags$p(paste("Please click OK to confirm that you wish to remove all framework and suite lock files from your local or remote MDI installation.")),
+        tags$p(paste("Please click OK to confirm that you wish to remove all framework and suite lock files from your local or remote MDI installation.")), # nolint
         tags$p(serverEnv$MDI_DIR, style = "margin-left: 2em;"),
-        tags$p("This action is usually only required if you experienced a fatal error during execution of an MDI command, e.g., in Pipeline Runner."),
+        tags$p("This action is usually only required if you experienced a fatal error during execution of an MDI command, e.g., in Pipeline Runner."), # nolint
         callback = function(...) {
             sapply(c(
                 file.path(serverEnv$MDI_DIR, "suites", "*.lock"),

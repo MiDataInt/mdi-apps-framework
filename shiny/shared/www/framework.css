@@ -99,7 +99,7 @@ body, html {
     margin-left: 0.5em; 
     color: #ddd; 
     visibility: hidden; 
-    line-height: 47px;
+    line-height: 47px !important;
 }
 i#mainSpinner:hover, i.header-async-monitor.fa-spinner:hover { /* avoid weird background spin effect */
     color: #eee !important;
@@ -393,11 +393,17 @@ table.dataTable tbody tr.selected {
 .modal-xl { /* settable but not defined by shiny */
     width: 1200px;
 }
-.command-terminal-lg, .ace-editor-lg {
+.command-terminal-lg, .ace-editor-lg, .r-console-lg {
     height: 500px;
 }
-.command-terminal-xl, .ace-editor-xl {
+.command-terminal-xl, .ace-editor-xl, .r-console-xl {
     height: 650px;
+}
+.r-console-editor-lg {
+    height: 426px;
+}
+.r-console-editor-xl {
+    height: 576px;
 }
 .ace-editor-tree-lg {
     height: 529px;

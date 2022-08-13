@@ -30,7 +30,7 @@ usage is to create a link within your module's UI function:
 
 ```r
 # myModule_ui.R
-actionLink(ns('aceEditor'), label = NULL, icon = icon("code"))
+aceEditorLink(id = ns('aceEditor'), class = "my-class")
 ```
 
 that shows the Ace code editor via your module's server

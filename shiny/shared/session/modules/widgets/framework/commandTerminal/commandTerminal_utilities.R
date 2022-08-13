@@ -1,6 +1,9 @@
 #----------------------------------------------------------------------
 # utilities for populating a command terminal emulator dialog
 #----------------------------------------------------------------------
+commandTerminalLink <- function(id, class = NULL){
+    actionLink(id, NULL, icon = icon("terminal"), class = class)
+}
 
 #----------------------------------------------------------------------
 # launch a stateful terminal emulator

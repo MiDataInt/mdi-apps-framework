@@ -1,6 +1,9 @@
 #----------------------------------------------------------------------
 # utilities for populating a dialog with a stateful Ace editor
 #----------------------------------------------------------------------
+aceEditorLink <- function(id, class = NULL){
+    actionLink(id, NULL, icon = icon("code"), class = class)
+}
 
 #----------------------------------------------------------------------
 # launch a stateful code viewer/editor
