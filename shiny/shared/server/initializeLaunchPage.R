@@ -34,6 +34,8 @@ if(!restricted){
                 reloadAppScriptsUI(id)
             }
         )
+    }    
+    if(checkConfigEditPermission()){
         insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
                 id <- 'addMdiToolsLink'
@@ -41,8 +43,6 @@ if(!restricted){
                 addMdiToolsLinkUI(id)
             }
         )
-    }    
-    if(checkConfigEditPermission()){
         insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
             ui = {
                 id <- 'configEditorLink'

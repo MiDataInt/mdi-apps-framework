@@ -19,7 +19,7 @@ observers <- list() # for module self-destruction
 launchId <- "launchApp"
 
 #----------------------------------------------------------------------
-# the file selector tree
+# the table of known apps
 #----------------------------------------------------------------------
 appDirCols <- list(
     fork = "Fork", 
