@@ -34,6 +34,12 @@ if(!restricted){
                 reloadAppScriptsUI(id)
             }
         )
+        insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   
+            ui = {
+                observeEvent(input$gitManagerLink, showGitManager(session))
+                gitManagerLink("gitManagerLink")
+            }
+        )
     }    
     if(checkConfigEditPermission()){
         insertUI(".navbar-static-top .sidebar-toggle", where = "afterEnd", immediate = TRUE,   

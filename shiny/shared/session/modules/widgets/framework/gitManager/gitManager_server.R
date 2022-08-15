@@ -1,9 +1,6 @@
 
 #----------------------------------------------------------------------
-# reactive components that provide tools to manage a developer's local
-# clone of the magc-portal-apps git repository
-#----------------------------------------------------------------------
-# must never be enabled in server mode, as it allows code modification 
+# reactive components that apply git functions to the running app
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -11,52 +8,47 @@
 #----------------------------------------------------------------------
 gitManagerServer <- function(id, parentId, options) {
     moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNs <- NS(parentId)
-        module <- 'gitManager' # for reportProgress tracing
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
-# remote actions (user most already be authorized for these actions on their system)
+# initialize the module
+#----------------------------------------------------------------------
+module <- "gitManager"
+repo <- gitStatusData$suite$dir
+if(is.null(repo)) return()
+observers <- list() # for module self-destruction
+spinnerSelector <- "#gitManagerSpinner"
+
+#----------------------------------------------------------------------
+# remote actions (user must be authorized for these actions via gitCredentials)
 #----------------------------------------------------------------------
 
 # update the local clone from the remote repository
-observeEvent(input$pull, {
-    confirmGitRemoteAction(
-        'pull',
-        'Pull',
-        pullRepositoryBranch,
-        'The pull action will update your local clone from the remote repository.'
-    )
+observers$pull <- observeEvent(input$pull, {
+    gitExpr( quote( git2r::pull(repo) ) )
 })
 
 # update the remote repository from the local clone
-# action always sends the current branch plus main and develop (which may have been updated from UMAGC)
-observeEvent(input$push, {
-    confirmGitRemoteAction(
-        'push',
-        'Push',
-        pushRepositoryBranches,
-        'The push action will update your remote repository from your local clone.'
-    )
+observers$push <- observeEvent(input$push, {
+    gitExpr( quote( git2r::push(repo) ) )
 })
 
 #----------------------------------------------------------------------
 # local git actions
 #----------------------------------------------------------------------
 
-# git config (to show --local config)
-observeEvent(input$config, {
-    gitOutput( showGitRepoConfig() )
-})
+# # git config (to show --local config)
+# observers$config <- observeEvent(input$config, {
+#     gitExpr( quote( git2r::config(repo) ) )
+# })
 
 # git branch (to list all branches)
-observeEvent(input$branch, {
-    gitOutput( listGitBranches() )
+observers$branch <- observeEvent(input$branch, {
+    gitExpr( quote( git2r::branches(repo) ) )
 })
 
 # checkout a different branch
-observeEvent(input$checkout, {
+observers$checkout <- observeEvent(input$checkout, {
 
     # provide the most useful feedback to user if checkout is impossible
     if(pendingChangesRefusal(
@@ -65,7 +57,7 @@ observeEvent(input$checkout, {
     )) return(NULL)
 
     # initialize dialog
-    branchNames <- listGitBranchNames(localOnly=FALSE)
+    branchNames <- listGitBranchNames(localOnly = FALSE)
     remoteBranches <- grepl('remotes/', branchNames)    
     localBranchNames  <- branchNames[!remoteBranches]
     remoteBranchNames <- branchNames[ remoteBranches]
@@ -82,8 +74,8 @@ observeEvent(input$checkout, {
         tags$p("Any new branch will be created using the current branch as parent."),
         selectInput(localBranchId,  'Local Branches',  c(nullOption, localBranchNames)),
         selectInput(remoteBranchId, 'Remote Branches', c(nullOption, remoteBranchNames)),
-        textInput(mainBranchTag,'Version Tag (e.g. v1.0.2 - include the v!)',''),
-        textInput(newBranchId,'New Branch Name',''),
+        textInput(mainBranchTag, 'Version Tag (e.g. v1.0.2 - include the v!)', ''),
+        textInput(newBranchId, 'New Branch Name', ''),
         callback = function(parentInput){
             branchId <- if(parentInput[[localBranchId]]  != nullOption) localBranchId
                    else if(parentInput[[remoteBranchId]] != nullOption) remoteBranchId
@@ -93,7 +85,7 @@ observeEvent(input$checkout, {
             if(!is.null(branchId)) {
                 branch <- trimws(parentInput[[branchId]])
                 reportProgress(paste("switching to git branch:", branch))
-                gitOutput( checkoutGitBranch(branch, create = branchId==newBranchId) )
+                gitExpr( checkoutGitBranch(branch, create = branchId == newBranchId) )
                 isolate(sessionEnv$invalidateGitBranch( sessionEnv$invalidateGitBranch() + 1 ))
             } else {
                 stop('please select or type a branch name')
@@ -103,12 +95,20 @@ observeEvent(input$checkout, {
 })
 
 # show the status on the current branch
-observeEvent(input$status, {
-    gitOutput( getGitBranchStatus() )
+observers$status <- observeEvent(input$status, {
+    gitExpr( quote( git2r::status(repo) ) )
 })
+getStatus <- function(){
+    dprint(git2r::status(repo))
+# List of 3
+#  $ staged   : Named list()
+#  $ unstaged : Named list()
+#  $ untracked: Named list()
+#  - attr(*, "class")= chr "git_status    
+}
 
 # stash (i.e. set aside, save) current code changes
-observeEvent(input$stash, {
+observers$stash <- observeEvent(input$stash, {
     getStashCommitMessage(
         'Stash',
         'Enter Stash Message',
@@ -120,7 +120,7 @@ observeEvent(input$stash, {
 
 # add (i.e. stage) and commit all current code changes
 # finer, more granular control requires use of an external git interface
-observeEvent(input$commit, {
+observers$commit <- observeEvent(input$commit, {
     getStashCommitMessage(
         'Commit',
         'Enter Commit Message',
@@ -156,7 +156,7 @@ getStashCommitMessage <- function(type, title, subtitle, gitFn){
             message <- trimws(parentInput[[messageId]])
             if(message == '') stop('missing message (required)')
             else if(nchar(message) < 8) stop('message must be at least 8 characters')
-            else gitOutput( gitFn(message) )
+            else gitExpr( gitFn(message) )
         }
     )    
 }
@@ -174,40 +174,44 @@ confirmGitRemoteAction <- function(type, Type, gitFn, message){
         tags$p(message),
         tags$p("Proceed?"),   
         callback = function(parentInput){
-            gitOutput( gitFn() )
+            gitExpr( gitFn() )
         }
     )         
 }
 
 #----------------------------------------------------------------------
-# show git output in UI for executed commands
+# show git2r output (not the function result) in UI
 #----------------------------------------------------------------------
-gitOutput <- reactiveVal(NULL)
-output$gitOutput <- renderUI({
-    expr <- gitOutput()
+gitExpr <- reactiveVal(NULL)
+output$output <- renderUI({
+    expr <- gitExpr()    
     req(expr)
-    startSpinner(session, 'output$gitOutput')
-    git <- eval(expr)
-    if(!git$success) {
-        reportProgress('output$gitOutput failed:')
-        print(git$results)
-    }
-    stopSpinner(session)     
+    show(selector = spinnerSelector) 
+    output <- tryCatch(
+        capture.output(eval(expr)),
+        warning = function(w) w, 
+        error = function(e) e
+    ) 
+    hide(selector = spinnerSelector)  
     tags$pre(
-        style="max-height: 800px; overflow: auto;",
-        paste(collapse="\n", git$results)
+        style = "max-height: 800px; overflow: auto;",
+        paste(collapse = "\n", output)
     )
-
 })
 
 #----------------------------------------------------------------------
 # set return value
 #----------------------------------------------------------------------
-NULL
+list(
+    observers = observers, # for use by destroyModuleObservers
+    onDestroy = function() {
+        list(  # return the module's cached state object
+        )               
+    }
+)
 
 #----------------------------------------------------------------------
 # END MODULE SERVER
 #----------------------------------------------------------------------
 })}
 #----------------------------------------------------------------------
-

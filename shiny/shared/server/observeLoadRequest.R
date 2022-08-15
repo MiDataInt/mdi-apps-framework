@@ -8,6 +8,22 @@ getAppApprovalKey <- function(app){
     app <- parseAppSuite(appDirs[[app]])
     paste(app$suite, app$name, sep = " / ")
 }
+confirmAppApproval <- function(appKey, callback, ...){
+    showUserDialog(                                     
+        "Approve App for Use", 
+        ...,
+        tags$p("Click 'OK' to confirm that you understand and accept the risks ", 
+                "of using the following app on your computer or server and wish to proceed:"),
+        tags$p(
+            style = "margin-left: 2em; font-weight: bold;",
+            appKey
+        ), 
+        callback = callback,
+        size = "m", 
+        type = 'okCancel',
+        removeModal = FALSE # audit function handles modal closing
+    )
+}
 
 # act on an authorized and approved app load request
 executeLoadRequest <- function(loadRequest){
@@ -54,12 +70,6 @@ executeLoadRequest <- function(loadRequest){
         return( stopSpinner(session) )
     }
     initializeDescendants()
-
-    # # enable developer interface in private modes only
-    # if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
-    #     loadAppScriptDirectory('developer')
-    #     addDeveloperMenuItem()
-    # }
 
     # determine the best way to initialize the UI for this user and incoming file
     nAppSteps <- length(app$config$appSteps)
@@ -204,28 +214,20 @@ auditLoadRequest <- function(loadRequest){
     if(
         flags$system && (is.null(appApprovals[[appKey]]$system) || !appApprovals[[appKey]]$system)
     ){
-        showUserDialog(                                          
-            "Approve App for Use", 
-            tags$p("The following flags were raised on an audit of the app's code."), 
-            tags$ul(
-                if(flags$system) tags$li(
-                    "function calls that would execute commands on your MDI server operating system"
-                ) else ""
-            ),
-            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server and wish to proceed:"),
-            tags$p(
-                style = "margin-left: 2em; font-weight: bold;",
-                appKey
-            ), 
+        confirmAppApproval(
+            appKey = appKey, 
             callback = function(...) {
                 if(flags$system) appApprovals[[appKey]]$system <<- TRUE
                 write_yaml(appApprovals, appApprovalFile)
                 removeModal()
                 executeLoadRequest(loadRequest)
-            },
-            size = "m", 
-            type = 'okCancel',
-            removeModal = FALSE # necessary for proper handling of sequential modals
+            }, 
+            tags$p("The following flags were raised on an audit of the app's code."), 
+            tags$ul(
+                if(flags$system) tags$li(
+                    "function calls that would execute commands on your MDI server operating system"
+                ) else ""
+            )
         )
     } else { # skip prompt for previously approved apps
         removeModal()
@@ -264,8 +266,14 @@ observeLoadRequest <- observeEvent({
         is.null(appApprovals[[appKey]]$app) ||
         !appApprovals[[appKey]]$app
     ){
-        showUserDialog(                                     
-            "Approve App for Use", 
+        confirmAppApproval(
+            appKey = appKey, 
+            callback = function(...) {
+                if(is.null(appApprovals[[appKey]])) appApprovals[[appKey]] <<- list()
+                appApprovals[[appKey]]$app <<- TRUE
+                write_yaml(appApprovals, appApprovalFile)
+                auditLoadRequest(loadRequest)
+            }, 
             tags$p(paste(
                 "MDI apps can access the file system and execute commands on your computer.",
                 "It is essential that you trust the people who develop the apps you run."
@@ -282,21 +290,7 @@ observeLoadRequest <- observeEvent({
                 href = "https://midataint.github.io/mdi-desktop-app/docs/security-notes.html", 
                 target = "Docs",
                 "MDI Desktop Security Notes"
-            )),
-            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server and wish to proceed:"),
-            tags$p(
-                style = "margin-left: 2em; font-weight: bold;",
-                appKey
-            ), 
-            callback = function(...) {
-                if(is.null(appApprovals[[appKey]])) appApprovals[[appKey]] <<- list()
-                appApprovals[[appKey]]$app <<- TRUE
-                write_yaml(appApprovals, appApprovalFile)
-                auditLoadRequest(loadRequest)
-            },
-            size = "m", 
-            type = 'okCancel',
-            removeModal = FALSE # audit function handles modal closing
+            ))
         )
     } else { # skip prompt for previously approved apps
         auditLoadRequest(loadRequest)

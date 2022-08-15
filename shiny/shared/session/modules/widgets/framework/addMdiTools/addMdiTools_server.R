@@ -136,7 +136,7 @@ addTool <- function(type, toolsPath, configFile){
     html("addToolError", "")
     removeModal()
     startSpinner(session, message = paste("creating new", type))
-    templateDir <- file.path(serverEnv$SHARED_DIR, 'developer', 'templates', type)
+    templateDir <- file.path(serverEnv$SHARED_DIR, 'templates', type)
     toolDir <- file.path(toolsDir, toolName)
     R.utils::copyDirectory(from = templateDir, to = toolDir)
 

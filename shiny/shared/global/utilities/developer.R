@@ -8,10 +8,10 @@ startRCodeTimer <- function() {
     RCodeTimer <<- proc.time()
     RCodeTimer
 }
-stopRCodeTimer  <- function(start=NULL) {
+stopRCodeTimer  <- function(start = NULL) {
     end <- proc.time()
     if(is.null(start)) start <- RCodeTimer
-    print(end - start)
+    dprint(end - start)
 }
 
 # find a variable's environment; use in developer tools to validate a variable's scope
