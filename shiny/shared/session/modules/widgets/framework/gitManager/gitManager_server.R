@@ -15,6 +15,7 @@ gitManagerServer <- function(id, parentId, options) {
 module <- "gitManager"
 observers <- list() # for module self-destruction
 spinnerSelector <- "#gitManagerSpinner"
+blur <- function(id) paste0("document.getElementById('", session$ns(id), "').blur();")
 origin <- "origin"
 buffer <- NULL # for the status table
 repo <- reactiveVal(NULL) # either framework or suite
@@ -177,6 +178,7 @@ observers$repoSelected <- observeEvent(repoObserver(), {
 
 # respond to the status button click
 observers$statusButton <- observeEvent(input$status, {
+    blur('status')
     setRepoStatus(TRUE)
 }, ignoreInit = TRUE)
 
@@ -186,11 +188,13 @@ observers$statusButton <- observeEvent(input$status, {
 
 # update the local clone from the remote repository
 observers$pull <- observeEvent(input$pull, {
+    blur('pull')
     gitExpr( quote({ git2r::pull(repo()$dir) }) )
 }, ignoreInit = TRUE)
 
 # update the remote repository from the local clone
 observers$push <- observeEvent(input$push, {
+    blur('push')
     gitExpr( quote({ git2r::push(repo()$dir) }) )
 }, ignoreInit = TRUE)
 
@@ -236,6 +240,7 @@ doMessageAction <- function(action, type, prompt, expr){
 
 # stash (i.e. set aside, save) current code changes
 observers$stash <- observeEvent(input$stash, {
+    blur('stash')
     doMessageAction(
         "stash", 
         "warn", 
@@ -249,6 +254,7 @@ observers$stash <- observeEvent(input$stash, {
 # add (i.e. stage) and commit all current code changes
 # finer, more granular control requires use of an external git interface
 observers$commit <- observeEvent(input$commit, {
+    blur('commit')
     doMessageAction(
         "commit", 
         "confirm", 
@@ -266,6 +272,7 @@ observers$commit <- observeEvent(input$commit, {
 
 # checkout a different branch
 observers$checkout <- observeEvent(input$checkout, {
+    blur('checkout')
 
     # parse and checkout the repo as requested
     create <- trimws(input$create)    
