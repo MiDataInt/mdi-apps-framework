@@ -195,7 +195,10 @@ observers$pull <- observeEvent(input$pull, {
 # update the remote repository from the local clone
 observers$push <- observeEvent(input$push, {
     blur('push')
-    gitExpr( quote({ git2r::push(repo()$dir, credentials = git2r::cred_token()) }) )
+    gitExpr( quote({ 
+        git2r::push(repo()$dir, credentials = git2r::cred_token()) 
+        setRepoStatus(TRUE) # push itself is silent
+    }) )
 }, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
