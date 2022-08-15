@@ -176,7 +176,7 @@ observers$repoSelected <- observeEvent(repoObserver(), {
     if(isRepoSelected) setRepoStatus() else status(list(type = "app"))
 }, ignoreInit = TRUE)
 observers$statusButton <- observeEvent(input$status, {
-    setRepoStatus()
+    setRepoStatus(FALSE)
 }, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
