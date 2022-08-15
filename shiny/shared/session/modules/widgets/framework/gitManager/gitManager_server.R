@@ -183,19 +183,19 @@ observers$statusButton <- observeEvent(input$status, {
 }, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
-# remote push/pull actions (user must be authorized for these actions via gitCredentials)
+# remote push/pull actions (user must be authorized via gitCredentials and thus GITHUB_PAT)
 #----------------------------------------------------------------------
 
 # update the local clone from the remote repository
 observers$pull <- observeEvent(input$pull, {
     blur('pull')
-    gitExpr( quote({ git2r::pull(repo()$dir) }) )
+    gitExpr( quote({ git2r::pull(repo()$dir, credentials = git2r::cred_token()) }) )
 }, ignoreInit = TRUE)
 
 # update the remote repository from the local clone
 observers$push <- observeEvent(input$push, {
     blur('push')
-    gitExpr( quote({ git2r::push(repo()$dir) }) )
+    gitExpr( quote({ git2r::push(repo()$dir, credentials = git2r::cred_token()) }) )
 }, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
