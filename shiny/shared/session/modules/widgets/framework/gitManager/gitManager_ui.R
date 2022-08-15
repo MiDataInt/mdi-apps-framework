@@ -21,6 +21,11 @@ gitManagerUI <- function(id) {
             style = "display: none; margin-bottom: 15px;",
             column(
                 width = 2,
+                bsButton(ns("status"),    "Status",         
+                         block = TRUE, style = "primary", disabled = FALSE)
+            ),
+            column(
+                width = 2,
                 bsButton(ns("pull"),    "Pull",         
                          block = TRUE, style = "default", disabled = TRUE)
             ),

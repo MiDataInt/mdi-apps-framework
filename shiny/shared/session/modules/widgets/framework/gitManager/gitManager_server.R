@@ -175,6 +175,9 @@ observers$repoSelected <- observeEvent(repoObserver(), {
     pendingAction(NULL)
     if(isRepoSelected) setRepoStatus() else status(list(type = "app"))
 }, ignoreInit = TRUE)
+observers$statusButton <- observeEvent(input$status, {
+    setRepoStatus()
+}, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
 # remote push/pull actions (user must be authorized for these actions via gitCredentials)
@@ -245,10 +248,9 @@ observers$stash <- observeEvent(input$stash, {
         "warn", 
         "Enter a message and click 'Stash All' again to confirm and stash all changes.", 
         quote({
-            print(input$message)
-            # x <- git2r::stash(repo()$dir, input$message, untracked = TRUE)
+            x <- git2r::stash(repo()$dir, input$message, untracked = TRUE)
             setRepoStatus(TRUE)
-            # x
+            x
         })
     )
 }, ignoreInit = TRUE)
@@ -261,9 +263,8 @@ observers$commit <- observeEvent(input$commit, {
         "confirm", 
         "Enter a message and click 'Commit All' again to confirm and commit all changes.", 
         quote({
-            print(input$message)
-            # git2r::add(repo()$dir, path = ".")
-            # x <- git2r::commit(repo()$dir, input$message)
+            git2r::add(repo()$dir, path = ".")
+            x <- git2r::commit(repo()$dir, input$message)
             setRepoStatus(TRUE)
             x
         })
