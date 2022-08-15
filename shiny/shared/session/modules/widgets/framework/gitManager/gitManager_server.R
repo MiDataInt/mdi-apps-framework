@@ -13,6 +13,7 @@ gitManagerServer <- function(id, parentId, options) {
 # initialize the module
 #----------------------------------------------------------------------
 module <- "gitManager"
+suppressDeveloper <- !serverEnv$IS_DEVELOPER
 observers <- list() # for module self-destruction
 spinnerSelector <- "#gitManagerSpinner"
 blur <- function(id) runjs( paste0("document.getElementById('", session$ns(id), "').blur();") )
@@ -135,6 +136,7 @@ setRepoStatus <- function(showStatus = TRUE){
 # show the repo status in the UI
 invalidateStatus <- reactiveVal(0)
 observers$statusUpdate <- observeEvent(invalidateStatus(), {
+    if(suppressDeveloper) return()
     status <- status()
     gitExpr(switch(
         status$type,

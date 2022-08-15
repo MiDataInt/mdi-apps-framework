@@ -3,6 +3,7 @@
 #----------------------------------------------------------------------
 gitManagerUI <- function(id) {
     ns <- NS(id)
+    suppressDeveloper <- !serverEnv$IS_DEVELOPER
     tagList(
 
         # table of up to three items: framework, suite, app
@@ -15,7 +16,7 @@ gitManagerUI <- function(id) {
         ),
 
         # git action buttons (except for checkout, see below)
-        fluidRow(
+        if(suppressDeveloper) "" else fluidRow(
             id = ns("actions"),
             class = "isRepoSelected",
             style = "display: none; margin-bottom: 15px;",
@@ -57,17 +58,17 @@ gitManagerUI <- function(id) {
                          block = TRUE, style = "default", disabled = TRUE)
             ),
             column(
-                width = 6,
+                width = 4,
                 selectInput(ns("references"), label = NULL, choices = list(), width = "100%")
             ),
-            column(
+            if(suppressDeveloper) "" else column(
                 width = 4,
                 textInput(ns("create"), label = NULL, placeholder = "enter a new branch name")
             )
         ),
 
         # confirmation and messages for stash and commit actions
-        fluidRow(
+        if(suppressDeveloper) "" else fluidRow(
             column(
                 width = 12,
                 style = "color: rgb(0, 150, 0);",
