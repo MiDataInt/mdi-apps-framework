@@ -125,7 +125,7 @@ setRepoStatus <- function(showStatus = TRUE){
     updateSelectInput(session, "references", choices = c(
         x$localBranches, # a list of all relevant checkout targets
         x$remoteBranches,        
-        repo()$versions
+        names(repo()$versions)
     ), selected = getGitHeadDisplay(repo()$head))
     hide(selector = spinnerSelector) 
     status(x)
@@ -278,15 +278,16 @@ observers$checkout <- observeEvent(input$checkout, {
     blur('checkout')
 
     # parse and checkout the repo as requested
-    create <- trimws(input$create)    
+    create <- if(is.null(input$create)) "" else trimws(input$create)    
     if(create == ""){
-        target <- input$references
+        target <- if(is.null(input$references)) "" else trimws(input$references)
         isCreate <- FALSE
     } else {
         target <- create
         isCreate <- TRUE
     }
-    if(target == getGitHeadDisplay(status()$head)) return()
+    req(target)
+    if(target == getGitHeadDisplay(repo()$head)) return()
     git2r::checkout(repo()$dir, target, create = isCreate)
 
     # restart the server with checkout suppression in mdi::run()
