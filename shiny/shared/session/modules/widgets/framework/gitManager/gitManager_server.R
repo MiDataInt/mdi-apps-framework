@@ -15,7 +15,7 @@ gitManagerServer <- function(id, parentId, options) {
 module <- "gitManager"
 observers <- list() # for module self-destruction
 spinnerSelector <- "#gitManagerSpinner"
-blur <- function(id) paste0("document.getElementById('", session$ns(id), "').blur();")
+blur <- function(id) runjs( paste0("document.getElementById('", session$ns(id), "').blur();") )
 origin <- "origin"
 buffer <- NULL # for the status table
 repo <- reactiveVal(NULL) # either framework or suite
