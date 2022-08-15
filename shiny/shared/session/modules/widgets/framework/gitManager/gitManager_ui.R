@@ -9,7 +9,7 @@ gitManagerUI <- function(id) {
         fluidRow(
             style = "margin-bottom: 15px;",
             column(
-                width = 8,
+                width = 10,
                 DTOutput(ns("statusTable"))
             )
         ),

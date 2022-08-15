@@ -63,8 +63,7 @@ output$statusTable <- renderDT(
 
 # update the extended status of a clicked repository
 repoObserver <- rowSelectionObserver("statusTable", input)
-suppressStatusShow <- FALSE
-setRepoStatus <- function(suppressShow = FALSE){
+setRepoStatus <- function(showStatus = TRUE){
     show(selector = spinnerSelector) 
     dir <- repo()$dir
 
@@ -128,16 +127,13 @@ setRepoStatus <- function(suppressShow = FALSE){
         repo()$versions
     ), selected = getGitHeadDisplay(repo()$head))
     hide(selector = spinnerSelector) 
-    suppressStatusShow <<- suppressShow
     status(x)
+    if(showStatus) invalidateStatus( invalidateStatus() + 1 )
 }
 
 # show the repo status in the UI
-observers$statusUpdate <- observeEvent(status(), {
-    if(suppressStatusShow){
-        suppressStatusShow <<- FALSE
-        return()
-    }
+invalidateStatus <- reactiveVal(0)
+observers$statusUpdate <- observeEvent(invalidateStatus(), {
     status <- status()
     gitExpr(switch(
         status$type,
@@ -173,10 +169,15 @@ observers$repoSelected <- observeEvent(repoObserver(), {
     # reset the repo status and UI
     hide("messagePanel")
     pendingAction(NULL)
-    if(isRepoSelected) setRepoStatus() else status(list(type = "app"))
+    if(isRepoSelected) setRepoStatus(TRUE) else {
+        status(list(type = "app"))
+        invalidateStatus( invalidateStatus() + 1 )
+    }
 }, ignoreInit = TRUE)
+
+# respond to the status button click
 observers$statusButton <- observeEvent(input$status, {
-    setRepoStatus(FALSE)
+    setRepoStatus(TRUE)
 }, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
@@ -185,20 +186,12 @@ observers$statusButton <- observeEvent(input$status, {
 
 # update the local clone from the remote repository
 observers$pull <- observeEvent(input$pull, {
-    gitExpr( quote({
-        x <- git2r::pull(repo()$dir) 
-        setRepoStatus(TRUE)
-        x
-    }) )
+    gitExpr( quote({ git2r::pull(repo()$dir) }) )
 }, ignoreInit = TRUE)
 
 # update the remote repository from the local clone
 observers$push <- observeEvent(input$push, {
-    gitExpr( quote({
-        x <- git2r::push(repo()$dir) 
-        setRepoStatus(TRUE)
-        x
-    }) )
+    gitExpr( quote({ git2r::push(repo()$dir) }) )
 }, ignoreInit = TRUE)
 
 #----------------------------------------------------------------------
@@ -248,9 +241,7 @@ observers$stash <- observeEvent(input$stash, {
         "warn", 
         "Enter a message and click 'Stash All' again to confirm and stash all changes.", 
         quote({
-            x <- git2r::stash(repo()$dir, input$message, untracked = TRUE)
-            setRepoStatus(TRUE)
-            x
+            git2r::stash(repo()$dir, input$message, untracked = TRUE)
         })
     )
 }, ignoreInit = TRUE)
@@ -263,10 +254,8 @@ observers$commit <- observeEvent(input$commit, {
         "confirm", 
         "Enter a message and click 'Commit All' again to confirm and commit all changes.", 
         quote({
-            git2r::add(repo()$dir, path = ".")
-            x <- git2r::commit(repo()$dir, input$message)
-            setRepoStatus(TRUE)
-            x
+            git2r::add(repo()$dir, ".")
+            git2r::commit(repo()$dir, input$message)
         })
     )
 }, ignoreInit = TRUE)
