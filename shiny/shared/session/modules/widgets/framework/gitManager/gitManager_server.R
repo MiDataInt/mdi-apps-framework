@@ -250,6 +250,7 @@ observers$stash <- observeEvent(input$stash, {
         "Enter a message and click 'Stash All' again to confirm and stash all changes.", 
         quote({
             git2r::stash(repo()$dir, input$message, untracked = TRUE)
+            setRepoStatus(TRUE) # stash itself is silent
         })
     )
 }, ignoreInit = TRUE)
