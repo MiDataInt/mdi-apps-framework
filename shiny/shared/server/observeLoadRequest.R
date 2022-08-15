@@ -157,15 +157,6 @@ executeLoadRequest <- function(loadRequest){
     
     # enable a universal action to close any modal dialog/popup
     addRemoveModalObserver(input)    
-    
-    # enable git repository status in sidebar
-    insertUI(".main-sidebar", where = "beforeEnd", immediate = TRUE,   
-        ui = {
-            id <- 'gitStatus'
-            sibebarGitStatusServer(id)            
-            sibebarGitStatusUI(id)
-        }
-    )
 
     # push the initial file upload to the app via it's first step module
     updateSpinnerMessage(session, "loading data")

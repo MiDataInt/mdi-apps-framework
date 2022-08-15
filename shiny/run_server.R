@@ -9,9 +9,9 @@
 # to summarize:
 #   soft ui+server refresh  = triggered by page (re)load, (re)runs ui() and server() functions
 #   hard ui+server refresh  = triggered by page (re)load, re-sources ui.r+server.R if changed, but not global.R
-#   soft server restart     = triggered by stopApp(), re-sources everything except run_server.R <<<<< IMPACTS OTHER USERS <<<<<
+#   soft server restart     = triggered by stopApp(), re-sources everything except run_server.R <<<<< IMPACTS OTHER USERS <<<<< # nolint
 #   hard server restart     = triggered by MDI_FORCE_RESTART+stopApp(), re-sources everything in apps framework
-#   re-installation restart = triggered by MDI_FORCE_RESTART+MDI_FORCE_REINSTALLATION+stopApp(), also updates repos+packages
+#   re-installation restart = triggered by MDI_FORCE_RESTART+MDI_FORCE_REINSTALLATION+stopApp(), also updates repos+packages # nolint
 #----------------------------------------------------------------------
 # the web server runs in .../mdi-apps-framework/shiny/shared
 #----------------------------------------------------------------------
@@ -48,7 +48,7 @@ checkMdiRemoteKey <- function(queryString){ # enforce single-user access when ru
 }
 getRemoteKeyQueryString <- function(){ # help assemble page reload URLs with remote keys
     if(is.null(serverEnv$MDI_REMOTE_KEY)) ""
-    else paste0("mdiRemoteKey=",serverEnv$MDI_REMOTE_KEY)
+    else paste0("mdiRemoteKey=", serverEnv$MDI_REMOTE_KEY)
 }
 
 # set the interface the server listens to; only select cases listen beyond localhost
@@ -83,11 +83,11 @@ setServerDir <- function(name, parentDir, ..., check = TRUE, create = FALSE){
     if(check  && !dir.exists(serverEnv[[name]])) stop(paste('missing directory:', serverEnv[[name]]))
     if(create && !dir.exists(serverEnv[[name]])) dir.create(serverEnv[[name]])
 }
-setServerDir('SHINY_DIR',  serverEnv$APPS_FRAMEWORK_DIR, 'shiny')
-setServerDir('SHARED_DIR', serverEnv$SHINY_DIR, 'shared')
-setServerDir('STORR_DIR',  serverEnv$DATA_DIR, 'storr',   check = FALSE, create = TRUE)
-setServerDir('CACHE_DIR',  serverEnv$DATA_DIR, 'cache',   check = FALSE, create = TRUE)
-setServerDir('UPLOADS_DIR',serverEnv$DATA_DIR, 'uploads', check = FALSE, create = TRUE)
+setServerDir('SHINY_DIR',   serverEnv$APPS_FRAMEWORK_DIR, 'shiny')
+setServerDir('SHARED_DIR',  serverEnv$SHINY_DIR, 'shared')
+setServerDir('STORR_DIR',   serverEnv$DATA_DIR, 'storr',   check = FALSE, create = TRUE)
+setServerDir('CACHE_DIR',   serverEnv$DATA_DIR, 'cache',   check = FALSE, create = TRUE)
+setServerDir('UPLOADS_DIR', serverEnv$DATA_DIR, 'uploads', check = FALSE, create = TRUE)
 setwd(serverEnv$SHARED_DIR)
 
 # declare version-specific R library(s) from which all packages are loaded
@@ -110,7 +110,8 @@ if(serverEnv$DEBUG) message(paste('serverId', serverId))
 isParentProcess <- TRUE
 
 #----------------------------------------------------------------------
-# server auto-restarts when stopApp is called at session end, or upon config change
+# server auto-restart loop when stopApp is called at session end, or upon config change
+#----------------------------------------------------------------------
 source(file.path('global', 'packages', 'packages.R'))
 unloadMdiManagerPackages()
 loadFrameworkPackages(runServerInitPackages, isInit = TRUE)
@@ -211,9 +212,11 @@ runApp(
 # check if framework has requested a hard server restart/reinstallation
 # if not, loop will perform a soft restart by recalling runApp(), but not mdi::run()
 if(Sys.getenv('MDI_FORCE_RESTART') != ""){
-    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""    
+    install <- Sys.getenv('MDI_FORCE_REINSTALLATION') != ""
+    suppressCheckout <- Sys.getenv('MDI_SUPPRESS_CHECKOUT') != ""
     Sys.setenv(MDI_FORCE_RESTART = "")
     Sys.setenv(MDI_FORCE_REINSTALLATION = "")
+    Sys.setenv(MDI_SUPPRESS_CHECKOUT = "")
     mdi::run( # reinstalls and relaunches shiny server entirely anew (NB: can't use parallel::mcfork on Windows)
         mdiDir  = serverEnv$MDI_DIR,
         dataDir = serverEnv$DATA_DIR,
@@ -227,7 +230,8 @@ if(Sys.getenv('MDI_FORCE_RESTART') != ""){
                else as.integer(serverEnv$SERVER_PORT),
         browser = as.logical(serverEnv$LAUNCH_BROWSER),
         debug = as.logical(serverEnv$DEBUG),
-        developer = as.logical(serverEnv$IS_DEVELOPER)       
+        developer = as.logical(serverEnv$IS_DEVELOPER),
+        checkout = if(suppressCheckout) FALSE else NULL # MDI_SUPPRESS_CHECKOUT set by gitManager Checkout
     )
     stop("no")
 }

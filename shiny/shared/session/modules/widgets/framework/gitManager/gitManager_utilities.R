@@ -17,7 +17,6 @@ gitManagerLink <- function(id){
 showGitManager <- function(
     session
 ){
-    if(is.null(gitStatusData$suite$dir)) return()
     id <- "gitManagerDialog"
     nsId <- session$ns(id)
     ns <- NS(nsId)
