@@ -1,20 +1,22 @@
 ---
 #----------------------------------------------------------------------
-# app name as shown at the top of the dashboard menu
-# description is used when needing to query user for the desired target app
+# app metadata
 #----------------------------------------------------------------------
-name: "Pipeline Runner"
-description: "Set parameters and execute a Stage 1 data analysis pipeline"
-version: 0.0.1
-documentationUrl: https://wilsonte-umich.github.io/mdi-apps-framework/docs/server-deployment/pipeline-runner.html
-suppressColdStart: true
+name: __TOOL_NAME__
+description: "__TOOL_DESCRIPTION__"
+version: v0.0.0
+# suiteVersions:
+#     suiteName: v0.0.0
 
 #----------------------------------------------------------------------
 # project data file type(s) associated with this app
-#   the keys in uploadTypes are matched to key uploadType in incoming package.yml
-#   required files lead to rejection of a project file if missing
+# the keys in uploadTypes are matched to key uploadType in incoming package.yml
 #----------------------------------------------------------------------
-uploadTypes: null
+uploadTypes:
+    exampleUploadType: 
+        contentFileTypes: # anything not listed will not be available to the app
+            exampleFileType:  
+                required: true
 
 #----------------------------------------------------------------------
 # labels and definitions for all sequential analysis steps shown in sidebar
@@ -25,11 +27,21 @@ uploadTypes: null
 # shortDescription = as shown on the Overview page (required if not provided as module default)
 # options = passed to both <module>UI and <module>Server functions
 #    longLabel = the title for the appStep tabbed page
-#    alwaysVisible = declares that step is NOT sequential and thus always visible
+#    alwaysVisible = declares that step is NOT sequential and thus always available
 #    other options are module specific; see module definitions
 #----------------------------------------------------------------------
 appSteps:
-    configure:
-        module: configureJob
-    run: 
-        module: runJob
+    upload: # nearly always the 1st step of every app
+        module: sourceFileUpload
+    assign: # usually the 2nd step of every app
+        module: assignSamples        
+        options:
+            categories:
+                group: # category1
+                    singular: Group
+                    plural: Groups
+                    nLevels: 1:10
+                condition: # category2
+                    singular: Condition
+                    plural: Conditions
+                    nLevels: 1:10

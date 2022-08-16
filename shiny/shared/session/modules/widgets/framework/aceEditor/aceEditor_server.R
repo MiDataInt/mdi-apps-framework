@@ -121,15 +121,15 @@ output$tabs <- renderUI({
                 tags$span(
                     class = paste("aceEditor-tab-switch", changedClass, errorClass), 
                     basename(tabs[i, path]),
-                    onclick = paste0("Shiny.setInputValue('", nsSwitchId, "', '", tabs[i, path], "', { priority: 'event' })")
+                    onclick = paste0("Shiny.setInputValue('", nsSwitchId, "', '", tabs[i, path], "', { priority: 'event' })") # nolint
                 ), 
                 if(tabs[i, changed]) tags$i( # show EITHER a file close X or a file save icon
                     class = "aceEditor-tab-save fa fa-hdd-o", 
-                    onclick = paste0("saveAceSessionContents('", editorId, "', '", tabs[i, path], "', 'save', { priority: 'event' })")
+                    onclick = paste0("saveAceSessionContents('", editorId, "', '", tabs[i, path], "', 'save', { priority: 'event' })") # nolint
                 ) else "",
                 if(!isSingleFile && !tabs[i, changed]) tags$i(
                     class = "aceEditor-tab-close fa fa-times", 
-                    onclick = paste0("Shiny.setInputValue('", nsCloseId, "', '", tabs[i, path], "', { priority: 'event' })")
+                    onclick = paste0("Shiny.setInputValue('", nsCloseId, "', '", tabs[i, path], "', { priority: 'event' })") # nolint
                 ) else ""
             )
         }),

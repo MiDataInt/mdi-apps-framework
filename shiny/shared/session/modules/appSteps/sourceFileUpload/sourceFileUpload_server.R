@@ -86,6 +86,7 @@ samples <- summaryTableServer(
 # load an incoming data source file (either via launch page or app step 1)
 #----------------------------------------------------------------------
 loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
+    if(is.null(incomingFile) || length(incomingFile$name) == 0) return(NULL)
     reportProgress('loadSourceFile', module)
     reportProgress(incomingFile$path, module)
     startSpinner(session, 'loadSourceFile')

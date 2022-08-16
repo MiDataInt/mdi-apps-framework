@@ -22,9 +22,11 @@ headerStatusUI <- function(id) {
             # command line and unlock buttons, if working in local or remote modes
             if(!serverEnv$IS_SERVER) tagList(
                 HTML("&nbsp;&nbsp;"),
-                actionLink(ns('commandTerminal'), label = NULL, icon = icon("terminal"), class = "header-status-icon"), # nolint 
+                aceEditorLink(ns('aceEditor'), class = "header-status-icon"),
                 HTML("&nbsp;&nbsp;"),
-                actionLink(ns('aceEditor'), label = NULL, icon = icon("code"), class = "header-status-icon"), # nolint      
+                rConsoleLink(ns('rConsole'), class = "header-status-icon"),
+                HTML("&nbsp;&nbsp;"),
+                commandTerminalLink(ns('commandTerminal'), class = "header-status-icon")
             ) else "",
 
             # logout button, if REQUIRES_AUTHENTICATION
@@ -48,7 +50,7 @@ headerStatusUI <- function(id) {
                     )                
                 } else "",
                 HTML("&nbsp;&nbsp;"),
-                actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon")                
+                actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon") # nolint            
             )}
         ),         
         tags$div(

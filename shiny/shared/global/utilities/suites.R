@@ -112,12 +112,27 @@ getAppUploadTypes <- function(appDirs){
 }
 
 # convert an app directory into various useful bits and paths
-parseAppDirectory <- function(appDir){
+parseAppDirectory <- function(appDir, extended = FALSE){
     dirApp <- rev( strsplit(appDir, '/')[[1]] )
     suiteDir <- paste(rev(dirApp[4:length(dirApp)]), collapse = '/')
     suiteSharedDir  <- file.path(suiteDir, 'shiny', 'shared')
     suiteGlobalDir  <- file.path(suiteSharedDir, 'global')
     suiteSessionDir <- file.path(suiteSharedDir, 'session')
+    extended <- if(extended){
+        tryCatch({
+            config <- read_yaml(file.path(appDir, "config.yml"))
+            list(
+                description = if(is.null(config$description)) "not available" else config$description, 
+                coldStartable = if(is.null(config$suppressColdStart)) TRUE else !config$suppressColdStart
+            )            
+        }, error = function(e) list(
+            description = "config load error", 
+            coldStartable = FALSE
+        ))
+    } else list(
+        description = "", 
+        coldStartable = NA
+    )
     list(
         name  = dirApp[1],
         suite = dirApp[4],
@@ -130,6 +145,8 @@ parseAppDirectory <- function(appDir){
         suiteSessionDir = suiteSessionDir,
         suiteSharedClassesDir = file.path(suiteGlobalDir, 'classes'),
         suiteSharedModulesDir = file.path(suiteSessionDir, 'modules'),
-        suiteSharedTypesDir   = file.path(suiteSessionDir, 'types')
+        suiteSharedTypesDir   = file.path(suiteSessionDir, 'types'),
+        description = extended$description,
+        coldStartable = extended$coldStartable
     )
 }

@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# reactive components for constructing a modal panel to select an app directly
+# reactive components for constructing a modal panel to cold start an app
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -15,15 +15,56 @@ appChooserServer <- function(
 # initialize the module
 #----------------------------------------------------------------------
 module <- "appChooser"
-spinnerSelector <- "#appChooserSpinner"
 observers <- list() # for module self-destruction
+launchId <- "launchApp"
 
 #----------------------------------------------------------------------
-# the file selector tree
+# the table of known apps
 #----------------------------------------------------------------------
-# observer$xyz <- observeEvent(xya, {
+appDirCols <- list(
+    fork = "Fork", 
+    suite = "Tool Suite", 
+    name = "App Name", 
+    description = "Description"
+)
+tableCols <- c("Action", unlist(appDirCols))
+buffer <- NULL
+output$table <- renderDT({
+        dt <- do.call(rbind, lapply(names(appDirs), function(appName){
+            x <- parseAppDirectory(appDirs[[appName]], extended = TRUE)
+            if(x$coldStartable) as.data.table(x[names(appDirCols)]) else NULL
+        }))
+        if(is.null(dt)) stop("No available apps.")
+        dt <- dt[][order(fork, suite, name), ]
+        buffer <<- dt
+        names(dt) <- unlist(appDirCols)
+        dt$Action <- tableActionLinks(session$ns(launchId), nrow(dt), "Launch ")
+        dt[, ..tableCols]       
+    },
+    options = list(
+        searchDelay = 0
+    ),
+    class = "display table-compact-4",
+    escape = FALSE, 
+    selection = "none", 
+    editable = FALSE,
+    rownames = FALSE,
+    server = FALSE
+)
 
-# })
+#----------------------------------------------------------------------
+# respond to a launch button click
+#----------------------------------------------------------------------
+observers$launch <- observeEvent(input[[launchId]], {
+    row <- getTableActionLinkRow(input, launchId)
+    loadRequest(list(
+        app = buffer[row, name], 
+        coldStart = TRUE,
+        file = list(name = character(), path = character(),
+                    type = character(), nocache = logical()),
+        suppressUnlink = TRUE
+    ))
+})
 
 #----------------------------------------------------------------------
 # return value

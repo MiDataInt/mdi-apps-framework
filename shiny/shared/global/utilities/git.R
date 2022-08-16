@@ -13,12 +13,12 @@ getGitHead <- function(repo){ # repo = gitStatusData$suite|framework, with dir a
             list(
                 type = 'version',
                 version = names(repo$versions)[repo$versions == head$sha],
-                sha = head$sha # always return the commit is, i.e., sha
+                sha = head$sha # always return the commit id, i.e., sha
             )
         } else {
             list(
                 type = 'commit',
-                commit = substr(head$sha, 1, 8), # abbreviated for display purposes
+                commit = getShortGitCommit(head$sha), # abbreviated for display purposes
                 sha = head$sha
             )
         }
@@ -30,20 +30,10 @@ getGitHead <- function(repo){ # repo = gitStatusData$suite|framework, with dir a
         )        
     }
 }
-
-# checkout (i.e. change to) a specific branch
-# do not check or set repo locks here, caller must manage locks as needed
-checkoutGitBranch <- function(dir, branch = 'main', create = FALSE, silent = FALSE) {
-    if(!silent) message(paste('setting', dir, 'head to', branch))
-    git2r::checkout(
-        object = dir,
-        branch = branch, # git2r calls it 'branch', but can be anything that can be checked out
-        force = FALSE,
-        create = create
-    )
-    x <- list() # record the current branch of all repos in environment for rapid checking later
-    x[[dir]] <- branch       
-    do.call(Sys.setenv, x)
+getShortGitCommit <- function(sha) substr(sha, 1, 8)
+getGitHeadDisplay <- function(head) {
+    if(is.null(head)) return("")
+    head[[head$type]]
 }
 
 # set and clear MDI locks on git repositories
@@ -66,7 +56,7 @@ waitForRepoLock <- function(lockFile = NULL, repoDir = NULL){
     cumLockWaitSec <- 0
     while(file.exists(lockFile) && cumLockWaitSec <= maxLockWaitSec){ # wait for others to release their lock
         cumLockWaitSec <- cumLockWaitSec + 1
-        Sys.sleep(1);
+        Sys.sleep(1)
     }
     if(file.exists(lockFile)){
         message(paste0(

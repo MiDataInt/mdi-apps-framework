@@ -8,6 +8,22 @@ getAppApprovalKey <- function(app){
     app <- parseAppSuite(appDirs[[app]])
     paste(app$suite, app$name, sep = " / ")
 }
+confirmAppApproval <- function(appKey, callback, ...){
+    showUserDialog(                                     
+        "Approve App for Use", 
+        ...,
+        tags$p("Click 'OK' to confirm that you understand and accept the risks ", 
+                "of using the following app on your computer or server and wish to proceed:"),
+        tags$p(
+            style = "margin-left: 2em; font-weight: bold;",
+            appKey
+        ), 
+        callback = callback,
+        size = "m", 
+        type = 'okCancel',
+        removeModal = FALSE # audit function handles modal closing
+    )
+}
 
 # act on an authorized and approved app load request
 executeLoadRequest <- function(loadRequest){
@@ -38,7 +54,7 @@ executeLoadRequest <- function(loadRequest){
     if(!loadSuccess) return(NULL)
     loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)
     if(!loadSuccess) return(NULL)
-    loadSuccess <- loadAppScriptDirectory(app$DIRECTORY) # add all scripts defined within the app itself; highest precedence
+    loadSuccess <- loadAppScriptDirectory(app$DIRECTORY) # add all scripts defined within the app itself; highest precedence # nolint
     if(!loadSuccess) return(NULL)
     sessionEnv$sourceLoadType <- ""
 
@@ -55,17 +71,12 @@ executeLoadRequest <- function(loadRequest){
     }
     initializeDescendants()
 
-    # # enable developer interface in private modes only
-    # if(!serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER) {
-    #     loadAppScriptDirectory('developer')
-    #     addDeveloperMenuItem()
-    # }
-
     # determine the best way to initialize the UI for this user and incoming file
     nAppSteps <- length(app$config$appSteps)
     appStepNames <- names(app$config$appSteps)
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
-    isBookmarkFile <- loadRequest$file$type == "bookmark"
+    isColdStart <- !is.null(loadRequest$coldStart) && loadRequest$coldStart
+    isBookmarkFile <- !isColdStart && loadRequest$file$type == "bookmark"
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
     splashScreenName <- 'appName' # the name of the app overview tab
     selectedStep <- if(showSplashScreen) splashScreenName else {
@@ -146,24 +157,15 @@ executeLoadRequest <- function(loadRequest){
     
     # enable a universal action to close any modal dialog/popup
     addRemoveModalObserver(input)    
-    
-    # enable git repository status in sidebar
-    insertUI(".main-sidebar", where = "beforeEnd", immediate = TRUE,   
-        ui = {
-            id <- 'gitStatus'
-            sibebarGitStatusServer(id)            
-            sibebarGitStatusUI(id)
-        }
-    )
 
     # push the initial file upload to the app via it's first step module
     updateSpinnerMessage(session, "loading data")
-    if(loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
+    if(!isColdStart && loadRequest$file$type == CONSTANTS$sourceFileTypes$bookmark){
         bookmark$file <- loadRequest$file$path
         nocache <- loadRequest$file$nocache
         if(is.null(nocache) || !nocache) bookmarkHistory$set(file=bookmark$file) # so loaded bookmarks appear in cache list # nolint
     } else {
-        firstStep <- app[[ names(app$config$appSteps)[1] ]]        
+        firstStep <- app[[ names(app$config$appSteps)[1] ]] # cold-startable apps must handle empty loadRequest$file  
         firstStep$loadSourceFile(loadRequest$file, suppressUnlink = loadRequest$suppressUnlink)
     } 
 
@@ -203,28 +205,20 @@ auditLoadRequest <- function(loadRequest){
     if(
         flags$system && (is.null(appApprovals[[appKey]]$system) || !appApprovals[[appKey]]$system)
     ){
-        showUserDialog(                                          
-            "Approve App for Use", 
-            tags$p("The following flags were raised on an audit of the app's code."), 
-            tags$ul(
-                if(flags$system) tags$li(
-                    "function calls that would execute commands on your MDI server operating system"
-                ) else ""
-            ),
-            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server and wish to proceed:"),
-            tags$p(
-                style = "margin-left: 2em; font-weight: bold;",
-                appKey
-            ), 
+        confirmAppApproval(
+            appKey = appKey, 
             callback = function(...) {
                 if(flags$system) appApprovals[[appKey]]$system <<- TRUE
                 write_yaml(appApprovals, appApprovalFile)
                 removeModal()
                 executeLoadRequest(loadRequest)
-            },
-            size = "m", 
-            type = 'okCancel',
-            removeModal = FALSE # necessary for proper handling of sequential modals
+            }, 
+            tags$p("The following flags were raised on an audit of the app's code."), 
+            tags$ul(
+                if(flags$system) tags$li(
+                    "function calls that would execute commands on your MDI server operating system"
+                ) else ""
+            )
         )
     } else { # skip prompt for previously approved apps
         removeModal()
@@ -263,8 +257,14 @@ observeLoadRequest <- observeEvent({
         is.null(appApprovals[[appKey]]$app) ||
         !appApprovals[[appKey]]$app
     ){
-        showUserDialog(                                     
-            "Approve App for Use", 
+        confirmAppApproval(
+            appKey = appKey, 
+            callback = function(...) {
+                if(is.null(appApprovals[[appKey]])) appApprovals[[appKey]] <<- list()
+                appApprovals[[appKey]]$app <<- TRUE
+                write_yaml(appApprovals, appApprovalFile)
+                auditLoadRequest(loadRequest)
+            }, 
             tags$p(paste(
                 "MDI apps can access the file system and execute commands on your computer.",
                 "It is essential that you trust the people who develop the apps you run."
@@ -281,21 +281,7 @@ observeLoadRequest <- observeEvent({
                 href = "https://midataint.github.io/mdi-desktop-app/docs/security-notes.html", 
                 target = "Docs",
                 "MDI Desktop Security Notes"
-            )),
-            tags$p("Click 'OK' to confirm that you understand and accept the risks of using the following app on your computer or server and wish to proceed:"),
-            tags$p(
-                style = "margin-left: 2em; font-weight: bold;",
-                appKey
-            ), 
-            callback = function(...) {
-                if(is.null(appApprovals[[appKey]])) appApprovals[[appKey]] <<- list()
-                appApprovals[[appKey]]$app <<- TRUE
-                write_yaml(appApprovals, appApprovalFile)
-                auditLoadRequest(loadRequest)
-            },
-            size = "m", 
-            type = 'okCancel',
-            removeModal = FALSE # audit function handles modal closing
+            ))
         )
     } else { # skip prompt for previously approved apps
         auditLoadRequest(loadRequest)

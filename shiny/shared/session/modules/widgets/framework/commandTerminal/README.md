@@ -22,6 +22,10 @@ Although the terminal emulator is mostly targeted to developers,
 it is available to all users in local and remote modes.
 It is disabled on public servers for obvious reasons.
 
+> Do not confuse the R Console with the Command Terminal.
+The former executes commands in R, the latter executes commands
+on the host operating system.
+
 ### Create a terminal emulator UI link
 
 Terminal emulators can be launched from any server function as needed, but the typical
@@ -29,7 +33,7 @@ usage is to create a link within your module's UI function:
 
 ```r
 # myModule_ui.R
-if(!serverEnv$IS_SERVER) actionLink(ns('terminal'), label = NULL, icon = icon("terminal")) 
+if(!serverEnv$IS_SERVER) commandTerminalLink(id = ns('terminal'), class = "my-class")
 else ""
 ```
 
@@ -61,7 +65,7 @@ As a dialog element, the terminal emulator does not follow the typical
 UI+Server pattern, instead, it is launched via the `showCommandTerminal()` function:
 
 ```r
-# aceEditor_utilities.R
+# commandTerminal_utilities.R
 showCommandTerminal <- function(
     session, 
     host = NULL, 

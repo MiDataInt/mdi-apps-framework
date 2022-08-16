@@ -8,7 +8,7 @@ startRCodeTimer <- function() {
     RCodeTimer <<- proc.time()
     RCodeTimer
 }
-stopRCodeTimer  <- function(start=NULL) {
+stopRCodeTimer  <- function(start = NULL) {
     end <- proc.time()
     if(is.null(start)) start <- RCodeTimer
     print(end - start)

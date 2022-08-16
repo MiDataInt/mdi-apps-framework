@@ -63,11 +63,15 @@ output$table <- renderDT(
         dt[, Action := tableActionLinks(parentNs(actionId), nrow(dt), action)]
         dt[, .SD, .SDcols = displayCols]
     },
+    options = list(
+        searchDelay = 0
+    ),
     class = "display table-compact-4",
     escape = FALSE, 
     selection = 'none', 
     editable = FALSE, 
-    rownames = FALSE 
+    rownames = FALSE,
+    server = FALSE
 )
 
 #----------------------------------------------------------------------

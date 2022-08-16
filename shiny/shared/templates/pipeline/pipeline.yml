@@ -1,0 +1,86 @@
+---
+#--------------------------------------------------------------------
+# REQUIRED: pipeline metadata
+#--------------------------------------------------------------------
+pipeline:
+    name: __TOOL_NAME__
+    description: "__TOOL_DESCRIPTION__"
+    version: v0.0.0
+# suiteVersions: # OPTIONAL
+#     suiteName: v0.0.0 # use this version of a suite invoked as 'suite//module', etc. [latest]    
+
+#--------------------------------------------------------------------
+# REQUIRED: pipeline-specific actions, called as 'mdi <pipelineName> <action> [options]', etc.
+# by convention, if there is only a single action it is called 'do'
+#--------------------------------------------------------------------
+actions: 
+    # OPTIONAL: family lists in _global are prepended to every action
+    # allows common options or creating one conda environment for all actions 
+    # _global:   
+    #     environment: exampleEnv # environment name; if omitted, uses an automated, sharable name
+    #     condaFamilies:
+    #         - base
+    #         - exampleFamily
+    #     optionFamilies:
+    #         - exampleFamily
+    do:
+        order: 1
+        thread: do
+        # environment: exampleEnv
+        condaFamilies:
+            - base
+        #     - exampleFamily 
+        # optionFamilies:
+        #     - exampleFamily
+        resources:
+            required:
+                total-ram: 2G
+            recommended: 
+                n-cpu: 1
+                ram-per-cpu: 2G
+        job-manager:
+            recommended:
+                time-limit: 1:00:00
+        description: "__TOOL_DESCRIPTION__"      
+
+#--------------------------------------------------------------------
+# OPTIONAL: pipeline-specific conda dependencies; overrides any shared environment configs
+#--------------------------------------------------------------------
+# condaFamilies:
+#     exampleFamily: # defines the 'exampleFamily' environment component
+#         dependencies: # load specific programs or versions
+#             - exampleProgram=1.2.3
+
+#--------------------------------------------------------------------
+# OPTIONAL: options available to action commands, organized into families for clarity     
+#--------------------------------------------------------------------
+# optionFamilies:     
+#     exampleFamily:
+#         options:
+#             example-option:
+#                 order: 1
+#                 short: a
+#                 type: integer
+#                 required: false
+#                 default: 99
+#                 description: "this is an optional integer configuration option"
+    
+#--------------------------------------------------------------------
+# OPTIONAL: create an output package for loading into Stage2 App(s)
+#--------------------------------------------------------------------
+# package:
+#     do: # the pipeline action after which a data package should assembled
+#         uploadType: exampleUploadType # a signal to the Stage 2 framework regarding the package contents
+#         files:
+#             exampleFileType:  # a contentFileType of any name you choose; 'manifestFile' has special meaning
+#                 type: example # additional information as to the file type
+#                 file: $DATA_FILE_PREFIX.example.txt       
+
+#--------------------------------------------------------------------
+# OPTIONAL: enable version-controlled Singularity containers for this pipeline
+#--------------------------------------------------------------------
+# container:
+#     supported: false    # set to true if you maintain a container registry for this pipeline [false]
+#     registry:  ghcr.io  # domain name of your OCI-compatible, oras-accessible, container registry [ghcr.io]
+#     owner:     xxxxxxxx # REQUIRED: the name of the owner, e.g., user or organization, at 'registry'
+#     installer: apt-get  # the installer program used by the container OS, typically apt-get or yum [apt-get]

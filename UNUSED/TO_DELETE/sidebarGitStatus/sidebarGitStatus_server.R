@@ -27,53 +27,27 @@ repositoryStatus <- function(repo){
 
 #----------------------------------------------------------------------
 # fill the status information
-# ------------------------------------------------------
-sibebarInfoBoxServer("app", function(...){
-    # sessionEnv$invalidateGitBranch() # trigger to update the UI    
+#----------------------------------------------------------------------
+sibebarInfoBoxServer("app", function(...){   
     app <- gitStatusData$app
     if(is.null(app)) return()
     if(is.null(app$name)) return()
     tags$p( paste0(app$name, ': ', app$version) )
 })
 sibebarInfoBoxServer("suite", function(...){
-    # sessionEnv$invalidateGitBranch() # trigger to update the UI
     repositoryStatus(gitStatusData$suite)
 })
 sibebarInfoBoxServer('framework', function(...){
     repositoryStatus(gitFrameworkStatus)
 })
 
-# #----------------------------------------------------------------------
-# # update code elements used by framework
-# # allows developers to see the results many of their changes
-# # repeats the key steps of server.R in initializing a user session
-# # if any confusion arises, alternative is simply to reload the web page
-# #----------------------------------------------------------------------
-# observeEvent(input$updateCode, {
-#     startSpinner(session, 'sidebarStatus input$updateCode')
-    
-#     # resource all scripts (presumably including developer edits)
-#     loadAllRScripts('global', recursive = TRUE)
-#     loadAppScriptDirectory('session')
-#     loadAppScriptDirectory(app$DIRECTORY)
-    
-#     # additional initialization steps
-#     initializeDescendants()
-#     initializeAppDataPaths()
-#     locks <<- intializeStepLocks()
-#     bookmark <<- bookmarkingServer('saveBookmarkFile', locks)
-#     addRemoveModalObserver(input)
-    
-#     # re-activate module servers
-#     sibebarStatusServer('frameworkStatus')
-    
-#     # NOT currently re-running step module servers, could/should it?
-#     # at present any function inside module servers require a full page reload to take effect
-#     # a reasons to be concerned is: would re-running servers add ADDITIONAL observers?
+#----------------------------------------------------------------------
+# open the versionManager dialog
+#----------------------------------------------------------------------
+onclick("sidebarStatus", {
+    showVersionManager(session)
+})
 
-#     stopSpinner(session)
-# })
-    
 #----------------------------------------------------------------------
 # set return value
 #----------------------------------------------------------------------
