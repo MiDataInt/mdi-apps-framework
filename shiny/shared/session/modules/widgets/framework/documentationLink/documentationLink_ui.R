@@ -11,7 +11,7 @@ documentationLinkUI <- function(id, isHeader = TRUE, isAppHeader = FALSE) {
         icon = icon("book"),
         class = if(isHeader) "header-large-icon" else ""
     ) else span( 
-        style = if(isHeader) "font-size: 0.7em; margin-left: 10px;" else "",
+        class = if(isHeader) "header-link" else "",
         actionLink(
             ns('show'), 
             NULL, 

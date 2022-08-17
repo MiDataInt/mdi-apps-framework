@@ -1,7 +1,8 @@
 #----------------------------------------------------------------------
 # utilities for populating an R Console dialog
 #----------------------------------------------------------------------
-rConsoleLink <- function(id, class = NULL){
+rConsoleLink <- function(id, class = NULL, isHeader = TRUE){
+    if(is.null(class) && isHeader) class <- "header-link"
     actionLink(id, NULL, icon = icon("r-project"), class = class)
 }
 

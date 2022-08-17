@@ -11,7 +11,11 @@ sourceFileUploadServer <- function(id, options, bookmark, locks) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'sourceFileUpload' # for reportProgress tracing
 #----------------------------------------------------------------------
-codeDialogServer("code", appStep = module)
+observeEvent(input$code, showAceEditor(
+    session, 
+    baseDirs = file.path(serverEnv$SHARED_DIR, "session/modules/appSteps/sourceFileUpload"),
+    editable = serverEnv$IS_DEVELOPER
+))
 
 #----------------------------------------------------------------------
 # define session-level and module-level variables
