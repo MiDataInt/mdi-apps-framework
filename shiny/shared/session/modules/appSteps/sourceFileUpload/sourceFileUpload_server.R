@@ -11,11 +11,11 @@ sourceFileUploadServer <- function(id, options, bookmark, locks) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
         module <- 'sourceFileUpload' # for reportProgress tracing
 #----------------------------------------------------------------------
-observeEvent(input$code, showAceEditor(
-    session, 
-    baseDirs = file.path(serverEnv$SHARED_DIR, "session/modules/appSteps/sourceFileUpload"),
-    editable = serverEnv$IS_DEVELOPER
-))
+activateMdiHeaderLinks(
+    id,
+    session,
+    url = getDocumentationUrl("shiny/shared/session/modules/appSteps/sourceFileUpload/README", framework = TRUE)
+)
 
 #----------------------------------------------------------------------
 # define session-level and module-level variables
