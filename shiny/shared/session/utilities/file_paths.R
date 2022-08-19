@@ -1,5 +1,5 @@
 #----------------------------------------------------------------------
-# resolve standardized data file paths
+# resolve standardized data and code file paths
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -78,6 +78,29 @@ getJobRdsFile  <- function(schemaId, create=FALSE){
 #----------------------------------------------------------------------
 purgeOutputFiles <- function(schemaId){
     unlink(getAnalysisDir(schemaId), recursive = TRUE, force = FALSE) 
+}
+
+#----------------------------------------------------------------------
+# code and documentation paths
+#----------------------------------------------------------------------
+
+# the module directory for an app step
+getAppStepDir <- function(module, framework = FALSE){
+    if(framework) file.path(serverEnv$SHARED_DIR, "session/modules/appSteps", module)
+    else file.path(app$DIRECTORY, "modules/appSteps", module)
+}
+getWidgetDir <- function(module, framework = FALSE){
+    if(framework) file.path(serverEnv$SHARED_DIR, "session/modules/widgets", module)
+    else file.path(app$DIRECTORY, "modules/widgets", module)
+}
+
+# help parse a documentation url from a shorter relative path
+getDocumentationUrl <- function(path, domain = NULL, framework = FALSE){
+    file.path(
+        "https:/",
+        if(framework) "midataint.github.io/mdi-apps-framework" else domain,
+        path
+    )
 }
 
 #getPackageFileByParentType <- function(manifest, parentType, type, fileN=TRUE){

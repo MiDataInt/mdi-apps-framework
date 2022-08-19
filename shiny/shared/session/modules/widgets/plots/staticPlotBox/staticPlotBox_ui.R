@@ -8,7 +8,11 @@ staticPlotBoxUI <- function(
     width = 6,
     collapsible = TRUE,
     collapsed = FALSE,
-    title = NULL
+    title = NULL,
+    documentation = serverEnv$IS_DEVELOPER,
+    code = serverEnv$IS_DEVELOPER,
+    console = serverEnv$IS_DEVELOPER,
+    terminal = FALSE
 ){
 
     # initialize namespace
@@ -21,15 +25,17 @@ staticPlotBoxUI <- function(
         collapsed = collapsed,
         title = tagList(
             title,
-            span(
-                style = "font-size: 0.8em; margin-left: 10px;", 
-                actionLink(ns("reload"), label = icon("sync", verify_fa = FALSE))
-            ),
-            span(
-                style = "font-size: 0.8em; margin-left: 10px;", 
-                downloadLink(ns("download"), label = icon("download"))
-            ),
-            settingsUI(ns('settings'))
+            mdiHeaderLinks(
+                id = id,
+                type = "box",
+                documentation = documentation, 
+                reload = TRUE,
+                code = code,
+                console = console,                    
+                terminal = terminal, 
+                download = TRUE,
+                settings = TRUE
+            )
         ),
         plotOutput(ns('plot'), inline = TRUE)
     )

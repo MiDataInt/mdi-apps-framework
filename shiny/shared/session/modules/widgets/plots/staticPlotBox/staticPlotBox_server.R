@@ -7,27 +7,39 @@
 #----------------------------------------------------------------------
 staticPlotBoxServer <- function(
     id,
-    create = function() NULL, # a function of reactive that creates the plot
+    #----------------------------
+    create = function() NULL, # a function or reactive that creates the plot
     maxHeight = "400px",
-    points  = FALSE, # set these to TRUE to expose relevant plot options
+    points  = FALSE, # set to TRUE to expose relevant plot options
     lines   = FALSE,
     legend  = FALSE,
     margins = FALSE,
     title   = FALSE,
-    immediate = FALSE, # if set to TRUE the plot updates as options are changed
-    template = NULL,   # an additional settings template as a list()
-    size = NULL        # popop menu size, passed to settingsServer
-){ moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        module <- 'staticPlotBox' # for reportProgress tracing
+    #---------------------------- passed to activateMdiHeaderLinks
+    url = getDocumentationUrl(
+        "shiny/shared/session/modules/widgets/plots/staticPlotBox/README", 
+        framework = TRUE
+    ),
+    baseDirs = NULL, # in addition to plots/staticPlotBox
+    envir = parent.frame(),
+    dir = NULL,
+    #----------------------------
+    template = NULL, # an additional settings template as a list()  
+    ... # additional arguments passed to settingsServer
+){ moduleServer(id, function(input, output, session) {   
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # initialize module
 #----------------------------------------------------------------------
-plotId <- ns('plot')
+module <- 'staticPlotBox' # for reportProgress tracing
+plotId <- session$ns('plot')
 pngFileName <- paste(plotId, "png", sep = ".")
 pngFile <- file.path(sessionDirectory, pngFileName)
+
+#----------------------------------------------------------------------
+# parse requested plot options
+#----------------------------------------------------------------------
 settingsFile <- file.path(serverEnv$SHARED_DIR, 'session', 'modules', 'widgets', 'plots', 'staticPlotBox', 'settings.yml') # nolint
 callerTemplate <- template
 template <- read_yaml(settingsFile)
@@ -52,14 +64,33 @@ if(!margins){
 if(!legend) template$Plot_Frame$Legend_Placement <- NULL
 if(!title) template$Plot_Frame$Title <- NULL
 if(!is.null(callerTemplate)) template <- c(template, callerTemplate)
-settings <- settingsServer( # display settings not stored in the UI, exposed by gear icon click
-    id = 'settings',
-    parentId = id,
+
+#----------------------------------------------------------------------
+# activate all requested/required header links
+#----------------------------------------------------------------------
+settings <- activateMdiHeaderLinks(
+    id,
+    session,
+    #----------------------------
+    url = url, # documentation
+    reload = function() invalidatePlot( sample(1e8, 1) ), # reload
+    baseDirs = c( # code editor
+        baseDirs,
+        getWidgetDir("plots/staticPlotBox", framework = TRUE)
+    ),
+    envir = envir, # R console
+    dir = dir, # terminal emulator
+    download = downloadHandler( # plot download
+        filename = pngFileName,
+        content = function(tmpFile) file.copy(pngFile, tmpFile),
+        contentType = "image/png"
+    ),
+    #----------------------------
+    settings = TRUE, # plot settings
     templates = list(template),
     fade = FALSE,
     title = "Plot Parameters",
-    immediate = immediate,
-    size = size
+    ...
 )
 
 #----------------------------------------------------------------------
@@ -70,7 +101,7 @@ output$plot <- renderImage({
     invalidatePlot()
     ps <- settings$Plot_Frame()
     
-    # intialize plot
+    # initialize plot
     png(
         pngFile, 
         width     = ps$Width_Inches$value, 
@@ -139,20 +170,6 @@ addLegend <- function(pch = NULL, pt.cex = NULL, lty = NULL, lwd = NULL, ...){
         ...
     )
 }
-
-#----------------------------------------------------------------------
-# support icon-based plot invalidation
-#----------------------------------------------------------------------
-observeEvent(input$reload, { invalidatePlot( sample(1e8, 1) ) })
-
-#----------------------------------------------------------------------
-# support icon-based file download
-#----------------------------------------------------------------------
-output$download <- downloadHandler(
-    filename = pngFileName,
-    content = function(tmpFile) file.copy(pngFile, tmpFile),
-    contentType = "image/png"
-)
 
 #----------------------------------------------------------------------
 # set return values as reactives that will be assigned to app$data[[stepName]]
