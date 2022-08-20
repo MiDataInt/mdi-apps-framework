@@ -23,7 +23,9 @@ sourceFileUploadUI <- function(id, options) {
         options$longLabel,
         leaderText, 
         id = id,
-        documentation = TRUE,
+        documentation = serverEnv$IS_DEVELOPER,
+        code = serverEnv$IS_DEVELOPER,
+        console = serverEnv$IS_DEVELOPER,
     
         # enable merging additional sample sources into this one
         tags$div(

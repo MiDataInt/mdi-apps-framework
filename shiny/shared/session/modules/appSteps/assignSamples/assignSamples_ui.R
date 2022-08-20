@@ -70,8 +70,12 @@ assignSamplesUI <- function(id, options) {
     # return the UI contents
     controlColWidth <- if(isLevelsSelector[2]) 4 else 6
     standardSequentialTabItem(
-        HTML(paste( options$longLabel, aceEditorLink(ns('code')))), 
+        options$longLabel, 
         leaderText,
+        id = id,
+        documentation = serverEnv$IS_DEVELOPER,
+        code = serverEnv$IS_DEVELOPER,
+        console = serverEnv$IS_DEVELOPER,
 
         # sample grid controls and save/reset/fill actions
         fluidRow( if(isLevelsSelector[1]){

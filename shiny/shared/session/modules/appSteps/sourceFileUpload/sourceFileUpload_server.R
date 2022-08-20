@@ -7,13 +7,15 @@
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
 sourceFileUploadServer <- function(id, options, bookmark, locks) { 
-    moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        module <- 'sourceFileUpload' # for reportProgress tracing
+    moduleServer(id, function(input, output, session) {    
 #----------------------------------------------------------------------
-activateMdiHeaderLinks(
+module <- 'sourceFileUpload' # for reportProgress tracing
+if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
     session,
-    url = getDocumentationUrl("shiny/shared/session/modules/appSteps/sourceFileUpload/README", framework = TRUE)
+    url = getDocumentationUrl("shiny/shared/session/modules/appSteps/sourceFileUpload/README", 
+                              framework = TRUE),
+    baseDirs = getAppStepDir(module, framework = TRUE),
+    envir = environment()
 )
 
 #----------------------------------------------------------------------
@@ -264,7 +266,7 @@ observe({
             N_Samples   = source$nSamples,
             Avg_Yield   = if(hasSamples) round(mean(source$unique$Yield),   0) else "NA",
             Avq_Quality = if(hasSamples) round(mean(source$unique$Quality), 1) else "NA",
-            QC_Report   = tableCellActionLinks(ns(qcReportParentId), i, qcReport),
+            QC_Report   = tableCellActionLinks(session$ns(qcReportParentId), i, qcReport),
                 stringsAsFactors = FALSE
         ))
 

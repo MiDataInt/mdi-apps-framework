@@ -46,7 +46,7 @@ activateMdiHeaderLinks <- function(
         showAceEditor(
             session, 
             baseDirs = baseDirs,
-            editable = serverEnv$IS_DEVELOPER
+            editable = !serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER
         )
     )
     if(!serverEnv$IS_SERVER && !is.null(envir)) observeEvent(session$input$console,

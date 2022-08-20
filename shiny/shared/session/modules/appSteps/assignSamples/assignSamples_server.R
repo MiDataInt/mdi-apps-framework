@@ -12,14 +12,15 @@
 #----------------------------------------------------------------------
 assignSamplesServer <- function(id, options, bookmark, locks) {
     moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        module <- 'assignSamples' # for reportProgress tracing
 #----------------------------------------------------------------------
-observeEvent(input$code, showAceEditor(
-    session, 
-    baseDirs = file.path(serverEnv$SHARED_DIR, "session/modules/appSteps/assignSamples"),
-    editable = serverEnv$IS_DEVELOPER
-))
+module <- 'assignSamples' # for reportProgress tracing
+if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
+    session,
+    url = getDocumentationUrl("shiny/shared/session/modules/appSteps/assignSamples/README", 
+                              framework = TRUE),
+    baseDirs = getAppStepDir(module, framework = TRUE),
+    envir = environment()
+)
 
 #----------------------------------------------------------------------
 # define session-level and module-level variables
@@ -69,7 +70,7 @@ changeLocks <- function(sampleSetId, lockFn){
 
 # each set has one target per category1+category2 ...
 getSortableGridId <- function(parentId, categoryN1, categoryN2, useNS = TRUE) {
-    if(useNS) parentId <- ns(parentId)
+    if(useNS) parentId <- session$ns(parentId)
     paste(parentId, categoryN1, categoryN2, sep = "_")
 }
 
@@ -82,7 +83,7 @@ sampleRankList <- function(parentId, width, categoryN1, categoryN2, initVals){
         rankListId,
         css_id = rankListId,
         options = sortable_options(
-            group = ns(parentId),
+            group = session$ns(parentId),
             multiDrag = TRUE 
         ), # all rank_lists are in the same group to allow moving between them
         class = "default-sortable"
@@ -98,7 +99,7 @@ sampleRowColName <- function(width, categoryN, index, value){
     class <- getSampleCategoryClass(categoryN)
     column(width = width,
         tags$div(class = class, textInput(
-            ns(paste(class, index, sep = "-")),
+            session$ns(paste(class, index, sep = "-")),
             if(categoryN == 1) paste0(options$categories[[categoryN]]$singular, " #", index, " Name") else NULL,
             value
         ))
@@ -217,8 +218,8 @@ output$sampleGrid <- renderUI({
             )
         }),
         if(!is.na(selected)) tagList(
-            span(style = "margin-left: 10px;", actionLink(ns('addGridColumn'), 'Add Column')),            
-            span(style = "margin-left: 10px;", actionLink(ns('addGridRow'), 'Add Row'))
+            span(style = "margin-left: 10px;", actionLink(session$ns('addGridColumn'), 'Add Column')),            
+            span(style = "margin-left: 10px;", actionLink(session$ns('addGridRow'), 'Add Row'))
          ) else ""
     ))
 })
