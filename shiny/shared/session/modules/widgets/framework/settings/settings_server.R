@@ -70,6 +70,7 @@ isTabbed <- FALSE
 workingSize <- size
 inputWidth <- "s"
 initializeTemplate <- function(t){
+    if(length(t) == 0) return()
     template <<- t
     nTabs <<- length(t) # template forces these, not any override coming from a potentially stale bookmark
     isTabbed <<- nTabs > 1
@@ -84,7 +85,9 @@ initializeTemplate <- function(t){
         condition = nTabs > 0
     )
 }
-initializeTemplate(template)
+hasValidSettings <- length(template) > 0
+if(hasValidSettings) initializeTemplate(template)
+else reportProgress(paste("CONFIG ERROR:", parentId, id, "had no valid settings templates"))
 
 # settings values
 settings <- reactiveValues()
@@ -112,6 +115,7 @@ initializeSettings(template)
 #----------------------------------------------------------------------
 resetAllSettingsId <- paste(parentId, id, "resetAllSettings", sep = "-")
 observeEvent(input[[gearId]], {
+    req(hasValidSettings)
     req(nTabs > 0)
     showUserDialog(
         title,

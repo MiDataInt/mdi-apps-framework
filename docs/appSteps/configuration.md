@@ -77,7 +77,7 @@ The following template shows how to declare an appStep UI function
 by:
 - extending the Shiny module function declaration with additional 
 arguments
-- wrapping the appStep UI contents with the required `standardSequentialTabItem()` function,
+- wrapping the appStep UI contents in the required `standardSequentialTabItem()` function,
 which constructs the appStep page structure
 
 ```r
@@ -97,15 +97,10 @@ where the required arguments in addition to the standard module instance id are:
 
 - **options** = the assembled step options as defined in module.yml and config.yml
 
-A common value for `title` exploits a combination of `longLabel`
-and `settingsUI` to expose step-level settings with a gear icon:
-
-```r
-# <appStep>/<appStep>_ui.R
-standardSequentialTabItem(
-    title = HTML(paste( options$longLabel, settingsUI(ns('settings')) ))
-)
-```
+See
+[Header Links]({{ "/docs/appSteps/header-links" | relative_url }})
+for information on how to add icon-based header links
+to your appStep header, after the title.
 
 ### appStep-specific structure of a module server function
 

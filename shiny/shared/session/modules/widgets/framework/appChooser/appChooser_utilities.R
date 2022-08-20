@@ -4,7 +4,7 @@
 showAppChooser <- function(
     session
 ){
-    id <- "appChooserDialog"
+    id <- "appChooserDialog" # appChooser is a single-instance link
     nsId <- session$ns(id)
     ns <- NS(nsId)
     appChooser <- appChooserServer(id)    

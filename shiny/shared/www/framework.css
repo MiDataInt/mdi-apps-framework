@@ -221,7 +221,7 @@ h3:first-of-type {
 /*  ------------------------------------------------------------------------
     custom widgets for the body
     ------------------------------------------------------------------------*/
-.header-link, .page-header-link {
+.header-link, .appStep-header-link {
    font-size: 0.7em; 
    margin-left: 10px; 
 }

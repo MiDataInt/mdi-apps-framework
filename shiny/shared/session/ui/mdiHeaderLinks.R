@@ -5,7 +5,7 @@
 # wrapper around header link UI functions
 mdiHeaderLinks <- function(
     id = NULL,  # id of the app step module if any of the link items are to be shown
-    type = c("page", "box"), # the kind of header into which icons are being place
+    type = c("box", "appStep", "none"), # the kind of header into which icons are being place
     documentation = FALSE, # include a documentation link for this app step
     reload = FALSE, # include a link to reload/refresh/sync the module
     code = FALSE,      # include a link to open a context-specific code viewer/editor    
@@ -30,16 +30,15 @@ mdiHeaderLinks <- function(
 
 # wrapper around header link server functions
 activateMdiHeaderLinks <- function(
-    id,  # id of the app step module if any of the link items are to be shown
     session,
+    ...,              # additional arguments passed to settingsServer    
     url = NULL, # the documentation url
     reload = NULL, # callback function with no arguments to handle the reload action
     baseDirs = NULL, # include a link to open a context-specific code viewer/editor
     envir = NULL,  # include a link to open a context-specific R console
     dir = NULL, # include a link to open a context-specific terminal emulator
     download = NULL, # download handler for the download link, created with shiny::downloadHandler()
-    settings = FALSE, # include a link to open a settings panel,
-    ...              # additional arguments passed to settingsServer
+    settings = NULL # the value passed as parentId to settingsServer()
 ){
     if(!is.null(url)) documentationLinkServer('documentation', url = url)
     if(!is.null(reload)) observeEvent(session$input$reload, reload())
@@ -51,7 +50,7 @@ activateMdiHeaderLinks <- function(
         )
     )
     if(!serverEnv$IS_SERVER && !is.null(envir)) observeEvent(session$input$console,
-        showRConsole(session, envir, id)  
+        showRConsole(session, envir)  
     )
     if(!serverEnv$IS_SERVER && !is.null(dir)) observeEvent(session$input$terminal, 
         showCommandTerminal(
@@ -61,6 +60,41 @@ activateMdiHeaderLinks <- function(
         )
     )
     if(!is.null(download)) session$output$download <- download
-    settings <- if(settings) settingsServer('settings', id, ...)
+    settings <- if(!is.null(settings)) settingsServer('settings', settings, ...)
     settings # the return value
+}
+
+# a wrapper around shinydashboard::box() that calls mdiHeaderLinks()
+#   it is only meaningful to call mdiBox() once from within a box widget module
+#   it will not work as expected if called multiple times or in an appStep module 
+#   as it does not create a new namespace
+mdiBox <- function(
+    id, 
+    title,
+    ..., # arguments and UI elements passed to shinydashboard::box()    
+    documentation = FALSE, # same as mdiHeaderLinks()
+    reload = FALSE,
+    code = FALSE,
+    console = FALSE,    
+    terminal = FALSE,
+    download = FALSE,
+    settings = FALSE
+){
+    box(
+        title = tagList(
+            title,
+            mdiHeaderLinks(
+                id = id,
+                type = "box",
+                documentation = documentation, 
+                reload = reload,
+                code = code,
+                console = console,                    
+                terminal = terminal, 
+                download = download,
+                settings = settings
+            )
+        ),
+        ...
+    )
 }

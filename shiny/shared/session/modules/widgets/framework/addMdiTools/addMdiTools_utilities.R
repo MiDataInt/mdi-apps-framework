@@ -4,7 +4,7 @@
 showAddMdiTools <- function(
     session
 ){
-    id <- "addMdiTools"
+    id <- "addMdiToolsDialog" # addMdiTools is a single-instance link
     nsId <- session$ns(id)
     ns <- NS(nsId)
     addMdiTools <- addMdiToolsServer(id)    

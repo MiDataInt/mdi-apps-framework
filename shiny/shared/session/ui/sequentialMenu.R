@@ -97,12 +97,12 @@ standardSequentialTabItem <- function(
         # step page title, with standard step-level support actions
         tags$h3(pageTitle, mdiHeaderLinks(
             id, 
-            type = "page",
+            type = "appStep",
             documentation = documentation, 
             reload = reload,
+            code = code,
+            console = console,
             terminal = terminal, 
-            console = console, 
-            code = code, 
             download = download,
             settings = settings
         )),

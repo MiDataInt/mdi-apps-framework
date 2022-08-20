@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------
 
 # module ui function
-interactiveScatterplotUI <- function(id, height='300px') {
+interactiveScatterplotUI <- function(id, height = '300px') {
 
     # initialize namespace
     ns <- NS(id)

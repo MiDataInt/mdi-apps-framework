@@ -23,8 +23,8 @@ staticPlotBoxServer <- function(
     baseDirs = NULL, # in addition to plots/staticPlotBox
     envir = parent.frame(),
     dir = NULL,
-    #----------------------------
-    template = NULL, # an additional settings template as a list()  
+    settings = NULL, # an additional settings template as a list()
+    template = settings, # for legacy support
     ... # additional arguments passed to settingsServer
 ){ moduleServer(id, function(input, output, session) {   
 #----------------------------------------------------------------------
@@ -69,15 +69,14 @@ if(!is.null(callerTemplate)) template <- c(template, callerTemplate)
 # activate all requested/required header links
 #----------------------------------------------------------------------
 settings <- activateMdiHeaderLinks(
-    id,
     session,
     #----------------------------
     url = url, # documentation
     reload = function() invalidatePlot( sample(1e8, 1) ), # reload
-    baseDirs = c( # code editor
+    baseDirs = unique(c( # code editor
         baseDirs,
         getWidgetDir("plots/staticPlotBox", framework = TRUE)
-    ),
+    )),
     envir = envir, # R console
     dir = dir, # terminal emulator
     download = downloadHandler( # plot download
@@ -86,7 +85,7 @@ settings <- activateMdiHeaderLinks(
         contentType = "image/png"
     ),
     #----------------------------
-    settings = TRUE, # plot settings
+    settings = module, # plot settings
     templates = list(template),
     fade = FALSE,
     title = "Plot Parameters",

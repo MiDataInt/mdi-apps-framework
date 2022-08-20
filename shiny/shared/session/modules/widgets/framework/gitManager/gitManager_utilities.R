@@ -17,7 +17,7 @@ gitManagerLink <- function(id){
 showGitManager <- function(
     session
 ){
-    id <- "gitManagerDialog"
+    id <- "gitManagerDialog" # gitManager is a single-instance link
     nsId <- session$ns(id)
     ns <- NS(nsId)
     gms <- gitManagerServer(id)    

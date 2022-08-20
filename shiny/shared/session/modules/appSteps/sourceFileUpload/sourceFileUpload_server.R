@@ -12,7 +12,6 @@ sourceFileUploadServer <- function(id, options, bookmark, locks) {
         module <- 'sourceFileUpload' # for reportProgress tracing
 #----------------------------------------------------------------------
 activateMdiHeaderLinks(
-    id,
     session,
     url = getDocumentationUrl("shiny/shared/session/modules/appSteps/sourceFileUpload/README", framework = TRUE)
 )
