@@ -43,19 +43,20 @@ The `staticPlotBoxUI` function takes the following arguments in addition to 'id'
 # staticPlotBox_ui.R
 staticPlotBoxUI <- function(
     id, 
-    width = 6,
-    collapsible = TRUE,
-    collapsed = FALSE,
-    title = NULL
+    title,
+    ...,   
+    documentation = serverEnv$IS_DEVELOPER,
+    code = serverEnv$IS_DEVELOPER,
+    console = serverEnv$IS_DEVELOPER,
+    terminal = FALSE 
 )
 ```
 
-where all options are passed to shinydashboard `box()`:
+where:
 
-- **width** = the box width in bootstrap grid units
-- **collapsible** = whether to allow hiding/closing the box
-- **collapsed** = whether the box starts closed or open
-- **title** = the title for the box
+- **title** = the title of the plot box
+- **...** = additional arguments passed to shinydashboard::box() 
+- all other arguments are passed to [mdiHeaderLinks()]({{ "/docs/appSteps/header-links" | relative_url }})
 
 ### staticPlotBoxServer options
 
@@ -65,16 +66,25 @@ The `staticPlotBoxServer` function takes the following arguments in addition to 
 # staticPlotBox_server.R
 staticPlotBoxServer <- function(
     id,
+    #----------------------------
     create = function() NULL,
     maxHeight = "400px",
-    points  = FALSE, 
+    points  = FALSE,
     lines   = FALSE,
     legend  = FALSE,
     margins = FALSE,
     title   = FALSE,
-    immediate = FALSE,
-    template = NULL,
-    size = NULL
+    #----------------------------
+    url = getDocumentationUrl(
+        "shiny/shared/session/modules/widgets/plots/staticPlotBox/README", 
+        framework = TRUE
+    ),
+    baseDirs = NULL,
+    envir = parent.frame(),
+    dir = NULL,
+    settings = NULL,
+    template = settings, # for legacy support
+    ...
 )
 ```
 
@@ -87,9 +97,8 @@ where:
 - **legend** = if TRUE, expose settings appropriate to plots that have legends
 - **margins** = if TRUE, expose settings that allow users to adjust plot margins (i.e., mar)
 - **title** = if TRUE, expose settings that allow users to set the plot title
-- **immediate** = if TRUE, the plot updates as settings are changed
-- **template** = an additional `settingsServer` template as a list()
-- **size** = settings popup menu size, s/m/l
+- **url** to **settings** = arguments passed to [activateMdiHeaderLinks()]({{ "/docs/appSteps/header-links" | relative_url }})
+- **...** = additional arguments passed to settingsServer 
 
 ### staticPlotBoxServer return values
 

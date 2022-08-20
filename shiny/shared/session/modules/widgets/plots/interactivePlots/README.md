@@ -62,6 +62,67 @@ The main interactive plot widgets are:
 - **interactiveBarplot** = vertical or horizontal bar plots, with optional stacking
 - **interactiveScatterplot** = X-Y plots of one or more series of data points
 
+### Using the interactivePlotBox wrapper functions
+
+The main interactivePlot widgets just create the plot itself. You
+can wrap the plot in a box using the interactivePlotBox functions,
+which call `interactiveScatterplot`, etc.
+
+```r
+# interactivePlotBox_ui.R
+interactivePlotBoxUI <- function(
+    id, 
+    type = c("scatter", "bar", "density"),
+    ..., # arguments passed to the relevant interactive plot UI function
+    #--------------------
+    title = NULL, # arguments passed to shinydashboard::box()
+    footer = NULL, 
+    status = NULL,
+    solidHeader = FALSE, 
+    background = NULL, 
+    width = 6, 
+    height = NULL,
+    collapsible = FALSE, 
+    collapsed = FALSE,
+    #---------------------------------------- 
+    documentation = serverEnv$IS_DEVELOPER, # arguments passed to mdiHeaderLinks() via mdi::box()
+    reload = FALSE,
+    code = serverEnv$IS_DEVELOPER,
+    console = serverEnv$IS_DEVELOPER,    
+    terminal = FALSE,
+    settings = FALSE
+)
+```
+
+```r
+# interactivePlotBox_server.R
+interactivePlotBoxServer <- function(
+    id, 
+    type = c("scatter", "bar", "density"),
+    ..., # arguments passed to the relevant interactive plot server function
+    #---------------------------- 
+    url = getDocumentationUrl( # arguments passed to activateMdiHeaderLinks()
+        "shiny/shared/session/modules/widgets/plots/interactivePlots/README", 
+        framework = TRUE
+    ),
+    reload = NULL,
+    baseDirs = NULL,
+    envir = parent.frame(),
+    dir = NULL,
+    settings = NULL,
+    template = settings, # for legacy support
+    #---------------------------- 
+    cacheKey = NULL, # arguments passed to settingsServer()
+    immediate = FALSE, 
+    resettable = TRUE 
+)
+```
+
+where:
+
+- **type** = the type of interactivePlot you require
+- other arguments are passed to the functions indicated in the code blocks above
+
 ### Basic plots - start simple and build 
 
 Even though they make multi-part interactive plots easier to assemble,
