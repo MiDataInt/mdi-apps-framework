@@ -137,7 +137,7 @@ renderExpr <- quote({
     
     # collect the required data - BEFORE startSpinner, since plotData calls may use req()
     # if plotData is slow, caller is expected to run the spinner for that portion
-    d <- plotData() # expected to yield a df/dt, or a names list of them
+    d <- plotData() # expected to yield a df/dt, or a named list of them
     req(d)
     if (!is.null(cacheReactive)) startSpinner(session, id)
     isMultiPlot <- !is.data.frame(d)
@@ -207,7 +207,7 @@ output$plotly <- if(is.null(cacheReactive)) renderPlotly(renderExpr, quoted = TR
 
 # one plot of one incoming data set
 getBasePlot <- function(name, d, overplot, isMultiPlot, shareX = NULL, shareY = NULL){
-    d <- d[!is.na(x) & !is.na(y)]
+    d <- d[!is.na(d$x) & !is.na(d$y), ]
     if(is.null(overplot)) overplot <- d[FALSE, ]
     
     # one plot of one incoming data set

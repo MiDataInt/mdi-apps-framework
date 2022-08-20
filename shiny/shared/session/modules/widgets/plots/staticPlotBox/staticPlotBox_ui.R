@@ -5,32 +5,25 @@
 # module ui function
 staticPlotBoxUI <- function(
     id, 
-    width = 6,
-    collapsible = TRUE,
-    collapsed = FALSE,
-    title = NULL
+    title,
+    ..., # additional arguments passed to shinydashboard::box()    
+    documentation = serverEnv$IS_DEVELOPER,
+    code = serverEnv$IS_DEVELOPER,
+    console = serverEnv$IS_DEVELOPER,
+    terminal = FALSE
 ){
-
-    # initialize namespace
     ns <- NS(id)
-
-    # return the UI contents
-    box(
-        width = width,
-        collapsible = collapsible,
-        collapsed = collapsed,
-        title = tagList(
-            title,
-            span(
-                style = "font-size: 0.8em; margin-left: 10px;", 
-                actionLink(ns("reload"), label = icon("sync", verify_fa = FALSE))
-            ),
-            span(
-                style = "font-size: 0.8em; margin-left: 10px;", 
-                downloadLink(ns("download"), label = icon("download"))
-            ),
-            settingsUI(ns('settings'))
-        ),
+    mdiBox(
+        id, 
+        title,
+        documentation = documentation, 
+        reload = TRUE,
+        code = code,
+        console = console,                    
+        terminal = terminal, 
+        download = TRUE,
+        settings = TRUE,
+        ...,
         plotOutput(ns('plot'), inline = TRUE)
-    )
+    )     
 }

@@ -1,7 +1,8 @@
 #----------------------------------------------------------------------
 # utilities for populating a dialog with a stateful Ace editor
 #----------------------------------------------------------------------
-aceEditorLink <- function(id, class = NULL){
+aceEditorLink <- function(id, class = NULL, isHeader = TRUE){
+    if(is.null(class) && isHeader) class <- "header-link"
     actionLink(id, NULL, icon = icon("code"), class = class)
 }
 

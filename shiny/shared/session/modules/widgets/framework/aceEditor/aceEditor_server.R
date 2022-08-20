@@ -70,9 +70,11 @@ observers$tree <- observeEvent(input$tree, {
     req(x %in% files[[input$baseDir]]) # this line suppresses directories in the tree
     setActiveTab(file.path(input$baseDir, x))
 })
-# show the full path of the selected file in the editor pane
+# show the relative path of the selected file in the editor pane
 output$file <- renderText({ # must remove leading "./" for rtl ellipsis to work correctly 
-    substring(tabs()[active == TRUE, path], 2) 
+    path <- tabs()[active == TRUE, path]
+    gsub(paste0(serverEnv$MDI_DIR, '/'), '', path)
+    # substring(, 2) 
 })
 
 #----------------------------------------------------------------------

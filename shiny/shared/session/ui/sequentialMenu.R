@@ -80,10 +80,34 @@ sequentialTabItem <- function(stepI){
 }
 
 # define the typical, common, recommended tab item UI layout ( called from step$ui() )
-standardSequentialTabItem <- function(pageTitle, leaderText, ...){
-    tagList(
-        tags$h3(pageTitle), # step page title
-        tags$div(class = "text-block", leaderText), # top level instructions and hints list 
+standardSequentialTabItem <- function(
+    pageTitle,  # top, boldface text identify the step purpose
+    leaderText, # additional descriptive text following pageTitle
+    ...,        # the UI elements for the page
+    id = NULL,  # id of the app step module if any of the link items are to be shown
+    documentation = FALSE, # include a documentation link for this app step
+    reload = FALSE,   # include a link to reload/refresh/sync the app step
+    terminal = FALSE, # include a link to open a context-specific terminal emulator
+    console = FALSE,  # include a link to open a context-specific R console
+    code = FALSE,     # include a link to open a context-specific code viewer/editor
+    download = FALSE, # include a link to download the app step contents
+    settings = FALSE  # include a link to open a settings panel
+){
+    tagList( 
+        # step page title, with standard step-level support actions
+        tags$h3(pageTitle, mdiHeaderLinks(
+            id, 
+            type = "appStep",
+            documentation = documentation, 
+            reload = reload,
+            code = code,
+            console = console,
+            terminal = terminal, 
+            download = download,
+            settings = settings
+        )),
+        # top level instructions and hints list 
+        tags$div(class = "text-block", leaderText), 
         ... # specific ui content for this module/step
     )   
 }

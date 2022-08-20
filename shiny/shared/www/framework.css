@@ -221,6 +221,14 @@ h3:first-of-type {
 /*  ------------------------------------------------------------------------
     custom widgets for the body
     ------------------------------------------------------------------------*/
+.header-link, .appStep-header-link {
+   font-size: 0.7em; 
+   margin-left: 10px; 
+}
+.box-header-link {
+    font-size: 0.8em; 
+    margin-left: 10px; 
+ }
 .view-code-trigger, a {
     color: #0174BB;
 }

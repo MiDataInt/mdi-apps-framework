@@ -24,14 +24,18 @@ settings:
         # etc.
 ```
 
-then activating the setting icon link in _ui.R_:
+then activating the settings icon link in _ui.R_ using the 
+`standardSequentialTabItem()` wrapper around the `mdiHeaderLinks` interface:
 
 ```r
 # <appStep>/<appStep>_ui.R
 <appStep>UI <- function(id, options) {
     ns <- NS(id)    
     standardSequentialTabItem(
-        HTML(paste( options$longLabel, settingsUI(ns('settings')) ))
+        options$longLabel, 
+        options$leaderText, 
+        id = id,
+        settings = TRUE
         # etc.
     )
 }
@@ -44,17 +48,17 @@ its value to be stored in bookmarks and potentially used by other steps:
 # <appStep>/<appStep>_server.R
 <appStep>Server <- function(id, options, bookmark, locks) {
     moduleServer(id, function(input, output, session) {
-    settings <- settingsServer( 
-        id = 'settings',
-        parentId = id
-         # see additional options below
-    )
-    # ...
-    list(
-        settings = settings$all_
-    )
-
-})}
+        settings <- activateMdiHeaderLinks(
+            session,
+            settings = '<appStep>'
+            # plus any other arguments passed to settingsServer()
+        )
+        # ...
+        list(
+            settings = settings$all_
+        )
+    })
+}
 ```
 
 ### Widget-level settings

@@ -1,7 +1,8 @@
 #----------------------------------------------------------------------
 # utilities for populating a command terminal emulator dialog
 #----------------------------------------------------------------------
-commandTerminalLink <- function(id, class = NULL){
+commandTerminalLink <- function(id, class = NULL, isHeader = TRUE){
+    if(is.null(class) && isHeader) class <- "header-link"
     actionLink(id, NULL, icon = icon("terminal"), class = class)
 }
 
