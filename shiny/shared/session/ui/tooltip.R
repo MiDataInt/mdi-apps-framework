@@ -9,22 +9,28 @@
 #   .tooltip-inner{}
 #----------------------------------------------------------------------
 
+#----------------------------------------------------------------------
 # standardize tooltip appearance and behavior
+#----------------------------------------------------------------------
 mdiTooltipOptions <- list(
-    delay = 200,
-    animation = TRUE
+    animation = TRUE,    
+    delay = list(show = 700, hide = 100),
+    placement = "top",
+    html = TRUE, # support <br> added by paginateTooltip
+    viewport = list(selector = "body", padding = 0)
 )
-toolTipLineWidth <- 35
 
+#----------------------------------------------------------------------
 # ensure tooltip text has ~ equal characters in every text line
-paginateTooltip <- function(title){
-    if(nchar(title) < toolTipLineWidth) return(title)
+#----------------------------------------------------------------------
+paginateTooltip <- function(title, lineWidth = 35){
+    if(nchar(title) < lineWidth) return(title)
     words  <- strsplit(title, " ")[[1]]
     nWords <- length(words)
     nChars <- nchar(title)
     lines <- ""
     nLines <- 1
-    while(nChars / nLines > toolTipLineWidth) nLines <- nLines + 1
+    while(nChars / nLines > lineWidth) nLines <- nLines + 1
     lineLength <- nChars / nLines
     i <- 1
     j <- 1
@@ -39,43 +45,51 @@ paginateTooltip <- function(title){
     paste(lines, collapse = "<br>")
 }
 
-# a single tooltip
-mdiTooltip <- function(session, id, title, placement = "top", ui = FALSE, useNamespace = TRUE){
-    title <- paginateTooltip(title)
-    if(useNamespace) id <- session$ns(id)
+#----------------------------------------------------------------------
+# the main MDI tooltip functions, via javascript calls to bootstrap tooltip()
+#----------------------------------------------------------------------
 
-    # caller is adding a tooltip via UI as part of a renderUI expression
-    if(ui) bsTooltip(id, title, placement, options = mdiTooltipOptions)
-
-    # caller is adding a tooltip from within a server function (but not via renderUI)
-    else addTooltip(session, id, title, placement, options = mdiTooltipOptions)
+# add a single tooltip, ... passed as options to bootstrap tooltip()
+addMdiTooltip <- function(session, id, ..., asis = FALSE, lineWidth = 35){
+    options <- setDefaultOptions(list(...), mdiTooltipOptions)
+    if(is.null(options$title)) return()
+    options$title <- paginateTooltip(options$title, lineWidth)
+    session$sendCustomMessage("addMdiTooltip", list(
+        id = if(asis) id else session$ns(id),
+        options = options
+    ))
 }
-
-# multiple tooltips, e.g., called by a module server function
-# takes a list of tooltips, each as character(id, title, [placement])
-mdiTooltips <- function(session, tooltips, ui = FALSE){
+# add multiple tooltips, each as character(id, title, [lineWidth])
+addMdiTooltips <- function(session, tooltips, ..., asis = FALSE, lineWidth = 35){
     for(tooltip in tooltips){
-        placement <- if(is.na(tooltip[3])) "top" else tooltip[3]
-        mdiTooltip(session, tooltip[1], tooltip[2], placement, ui)
+        addMdiTooltip(
+            session, id = tooltip[1], title = tooltip[2], ..., asis = asis, 
+            lineWidth = if(is.na(tooltip[3])) lineWidth else as.integer(tooltip[3])
+        )
     }
 }
 
-# a single tooltip placed from a UI function
-mdiTooltipUI <- function(id, title, placement = "top"){
-    # title <- paginateTooltip(title)
-    bsTooltip(id, title, placement, options = mdiTooltipOptions)
-}
-
 # a function to add a ? help tooltip after an input label
-addInputHelp <- function(session, id, title){
+addInputHelp <- function(session, id, title, lineWidth = 35){
     labelId <- paste(id, 'label', sep = "-")
     helpId  <- paste(id, 'help',  sep = "-")
     insertUI(
         paste0('#', session$ns(labelId)),
         where = "beforeEnd",
-        tags$span(id = session$ns(helpId), class = "mdi-help-icon", icon("question")),
+        tags$span(id = session$ns(helpId), class = "mdi-help-icon", icon("question", verify_fa = FALSE)),
         immediate = TRUE,
         session = session
     )
-    mdiTooltip(session, labelId, title)
+    addMdiTooltip(session, id = labelId, title = title, placement = "top", lineWidth = lineWidth)
+}
+
+#----------------------------------------------------------------------
+# use shinyBS to add tooltips as part of a renderUI expression
+#----------------------------------------------------------------------
+mdiTooltip <- function(session, id, title, placement = "top", asis = FALSE, lineWidth = 35){
+    if(!asis) id <- session$ns(id)
+    title <- paginateTooltip(title, lineWidth)
+    options <- mdiTooltipOptions
+    options$placement <- NULL
+    bsTooltip(id, title, placement, options = options)
 }

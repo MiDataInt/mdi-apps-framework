@@ -41,27 +41,53 @@ activateMdiHeaderLinks <- function(
     settings = NULL # the value passed as parentId to settingsServer()
 ){
     if(!is.null(url)) documentationLinkServer('documentation', url = url)
-    if(!is.null(reload)) observeEvent(session$input$reload, reload())
-    if(!is.null(baseDirs)) observeEvent(session$input$code, 
-        showAceEditor(
-            session, 
-            baseDirs = baseDirs,
-            editable = !serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER
+    if(!is.null(reload)) {
+        observeEvent(session$input$reload, reload())
+        addMdiTooltip(session, "reload", title = "Reload the contents")
+    }
+    if(!is.null(baseDirs)) {
+        observeEvent(
+            session$input$code, 
+            showAceEditor(
+                session, 
+                baseDirs = baseDirs,
+                editable = !serverEnv$IS_SERVER && serverEnv$IS_DEVELOPER
+            )
         )
-    )
-    if(!serverEnv$IS_SERVER && !is.null(envir)) observeEvent(session$input$console,
-        showRConsole(session, envir)  
-    )
-    if(!serverEnv$IS_SERVER && !is.null(dir)) observeEvent(session$input$terminal, 
-        showCommandTerminal(
+        addMdiTooltip(
             session, 
-            dir = dir,
-            forceDir = TRUE
+            "code", 
+            title = paste(if(serverEnv$IS_DEVELOPER) "Edit" else "View", "content scripts")
+        )        
+    }
+    if(!serverEnv$IS_SERVER && !is.null(envir)) {
+        observeEvent(session$input$console,
+            showRConsole(session, envir)  
         )
-    )
-    if(!is.null(download)) session$output$download <- download
-    settings <- if(!is.null(settings)) settingsServer('settings', settings, ...)
-    settings # the return value
+        addMdiTooltip(session, "console", title = "Open an R console")
+    }
+    if(!serverEnv$IS_SERVER && !is.null(dir)) {
+        observeEvent(
+            session$input$terminal, 
+            showCommandTerminal(
+                session, 
+                dir = dir,
+                forceDir = TRUE
+            )
+        )
+        addMdiTooltip(session, "terminal", title = "Open a command terminal emulator")
+    }
+    if(!is.null(download)) {
+        session$output$download <- download
+        addMdiTooltip(session, "download", title = "Download the contents")
+    }
+    if(!is.null(settings)){
+        settings <- settingsServer('settings', settings, ...)
+        addMdiTooltip(session, "settings-gearIcon", title = "Change the settings")
+        settings # the return value
+    } else {
+        NULL
+    }
 }
 
 # a wrapper around shinydashboard::box() that calls mdiHeaderLinks()

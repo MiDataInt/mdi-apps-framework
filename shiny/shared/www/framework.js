@@ -118,6 +118,13 @@ Shiny.addCustomMessageHandler('maskElement', function(options) {
 });
 
 /*  ------------------------------------------------------------------------
+    help Shiny show a spinner and mask elements on certain slow actions
+    ------------------------------------------------------------------------*/
+Shiny.addCustomMessageHandler('addMdiTooltip', function(data) {
+    $("#" + data.id).tooltip(data.options);
+});
+
+/*  ------------------------------------------------------------------------
     handle Ace Code Editor
     ------------------------------------------------------------------------*/
 let initializeAceCodeEditor = function(editorId, readOnly, mode = "r"){
