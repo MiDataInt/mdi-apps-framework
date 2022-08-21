@@ -15,10 +15,10 @@ if(serverEnv$SUPPRESS_PIPELINE_RUNNER) return(NULL)
 #----------------------------------------------------------------------
 # add tooltips and documentation
 #----------------------------------------------------------------------
-mdiTooltips(
+addMdiTooltips(
     session, 
     list(
-        c("setName", "Give this configuration set a short, useful name.")
+        c("setName", "Give this configuration set a short, useful name")
     )
 )
 addPRDocs('docs', "docs/server-deployment/pipeline-runner", "create-and-edit-job-configuration-files")

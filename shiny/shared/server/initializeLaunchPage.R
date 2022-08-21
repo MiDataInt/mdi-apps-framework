@@ -119,4 +119,23 @@ if(!restricted){
             suppressUnlink = NA
         ))
     })
+
+    # add tooltips to framework action icons
+    addMdiTooltips(
+        session, 
+        tooltips = list(
+            c("reloadAppScripts-reload", "Reload all app scripts"),
+            c("addMdiToolsLink-open",    "Add and create MDI tools"),
+            c("configEditorLink-open",   "Edit this server's MDI configuration files"),
+            c("gitManagerLink",          "View and change tool repository versions"),
+            c("stage2-apps-docs-show",   "Open the apps framework documentation pages"),
+            c("headerStatus-aceEditor",  paste(if(serverEnv$IS_DEVELOPER) "Edit" else "View", "framework scripts")),
+            c("headerStatus-rConsole",   "Open an R console"),
+            c("headerStatus-commandTerminal", "Open a command terminal emulator"),
+            c("headerStatus-changeDataDir",   "Change the working data directory"),
+            c("headerStatus-unlockAllRepos",  "Unlock all tool repositories")
+        ),
+        placement = "bottom",
+        asis = TRUE
+    )
 }

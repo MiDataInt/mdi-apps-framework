@@ -9,8 +9,7 @@ nav_order: 20
 
 Sometimes it is beneficial to put context-dependent help
 on specific UI items using the common **tooltip** mechanism.
-The MDI apps framework provides wrappers around the 
-[shinyBS package](https://cran.r-project.org/web/packages/shinyBS/index.html) 
+The MDI apps framework provides functions
 for adding standardized tooltips to UI elements by id.
 
 {% include figure.html file="user-feedback/tooltip.png" border=true %}
@@ -18,37 +17,38 @@ for adding standardized tooltips to UI elements by id.
 ### Adding tooltips from server functions
 
 The following code block shows the call structures that can be used
-anywhere within a module server script:
+to add a tooltip to an existing UI element from within a module server script:
 
 ```r
-# <moduleName>_server.R
-mdiTooltip( # a single tooltip
+addMdiTooltip( # a single tooltip
     session, 
     id, 
-    title, 
-    placement = "top", 
-    ui = FALSE
+    ..., 
+    asis = FALSE,
+    lineWidth = 35
 )
-mdiTooltips( # multiple tooltips added at once
+addMdiTooltips( # multiple tooltips added at once
     session, 
     tooltips, 
-    ui = FALSE
+    ..., 
+    asis = FALSE,
+    lineWidth = 35
 )
 ```
 
 where: 
 - **session** = the session object of the calling module
 - **id** = the id of the UI element that the tooltip is attached to
-- **title** = the tooltip text
-- **placement** = where to put the text relative to the element
-- **ui** = caller is adding a tooltip from within a renderUI expression
-- **tooltips** = a list of tooltips, each as character(id, title, [placement])
+- **tooltips** = a list of tooltips, each as character(id, title, [lineWidth])
+- **...** = tooltip options from <https://getbootstrap.com/docs/4.0/components/tooltips/>
+- **asis** = use `id` directly, not as `session$ns(id)`
+- **lineWidth** = nominal number of characters per tooltip line
 
 for example:
 
 ```r
 # <moduleName>_server.R
-mdiTooltip( # a single tooltip
+addMdiTooltip(
     session, 
     id = 'elementId', 
     title = 'Important information about the element', 
@@ -56,41 +56,58 @@ mdiTooltip( # a single tooltip
 )
 ```
 
-### Adding tooltips from UI functions
+Importantly, `addMdiTooltip()` will fail silently if the target 
+element has not yet appeared in the web page - the element must already
+exist for the browser to add a tooltip to it. For example, you must call 
+`addMdiTooltip()` after `insertUI(immediate = TRUE)`. 
 
-The following code block shows the call structure that can be used
-anywhere within a module UI script:
+### Adding tooltips from within renderUI expressions
+
+Slightly different handling is required if you wish to add a tooltip
+along with a UI element during a call to `renderUI()`.
+Do this using `mdiTooltip()` - note the difference in name from `addMdiTooltip()`:
 
 ```r
-# <moduleName>_ui.R
-mdiTooltipUI(
-    ns(id), 
+mdiTooltip(
+    session, 
+    id,
     title, 
-    placement = "top"
+    placement = "top", 
+    asis = FALSE,
+    lineWidth = 35
 )
 ```
 
-for example:
+where:
+
+- **session** = the session object of the calling module
+- **id** = the id of the UI element that the tooltip is attached to
+- **title** = the content of the tooltip
+- **placement** = where the tooltip should appear (top, bottom, left, right)
+- **asis** = use `id` directly, not as `session$ns(id)`
+- **lineWidth** = nominal number of characters per tooltip line
+
+For example:
 
 ```r
-# <moduleName>_ui.R
-ns <- NS(id)
-mdiTooltipUI(
-    ns('elementId'), 
-    'Important information about the element'
-)
+# <moduleName>_server.R
+output$myOutput <- renderUI({
+    tags$span(
+        ...,
+        mdiTooltip(session, "elementId", "information about the element"),
+    )
+})
 ```
 
 ### Adding help icon (?) tooltips to Shiny inputs
 
-A known limitation is that `mdiTooltip()` does not
-work to place tooltips on Shiny inputs, e.g., `selectInput()`. Thankfully, 
-that is rarely a good idea as you do not want popups to appear
+It is rarely a good idea to put a tooltip directly on Shiny inputs, 
+e.g., `textInput()`, as you do not want popups to appear
 every time a user interacts with an input, only when they want help.
 
-Instead, the apps framework provides the `addInputHelp()` function
-to add typical **?** icons to an input's label whose sole purpose is to provide 
-context-dependent help.
+The apps framework provides the `addInputHelp()` function
+to add typical **?** icons to an input's label whose sole purpose 
+is to provide context-dependent help.
 
 {% include figure.html file="user-feedback/addInputHelp.png" border=true %}
 
@@ -101,7 +118,8 @@ The call structure is:
 addInputHelp(
     session, 
     id, 
-    title
+    title,
+    lineWidth = 35
 )
 ```
 
@@ -109,6 +127,7 @@ where:
 - **session** = the session object of the calling module
 - **id** = the id of the Shiny input that the tooltip is attached to
 - **title** = the tooltip text
+- **lineWidth** = nominal number of characters per tooltip line
 
 for example:
 

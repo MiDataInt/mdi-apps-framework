@@ -147,9 +147,9 @@ getOptionInput <- function(value, option){
     tags$span(
         class = if(option$required) "" else "pr-optional-input",
         x,
-        mdiTooltip(session, helpId, option$description, ui = TRUE),
-        # if(isDirectory) mdiTooltip(session, dirId_1, "click to search for a directory", ui = TRUE),
-        # mdiTooltip(session, addId, "add an array item", ui = TRUE),
+        mdiTooltip(session, helpId, option$description),
+        # if(isDirectory) mdiTooltip(session, dirId_1, "click to search for a directory"),
+        # mdiTooltip(session, addId, "add an array item"),
         # if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
     )
 }

@@ -17,7 +17,7 @@ documentationLinkServer <- function(
 #----------------------------------------------------------------------
 
 # show a tooltip on the icon
-mdiTooltip(session, "show", "Open the documentation")
+addMdiTooltip(session, id = "show", title = "Open the documentation")
 
 # parse the docs url
 if(is.null(url)) url <- paste0(
