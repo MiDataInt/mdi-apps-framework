@@ -182,6 +182,11 @@ let initializeAceSession = function(options){
 Shiny.addCustomMessageHandler('initializeAceSession', function(options) {
     initializeAceSession(options)
 });
+Shiny.addCustomMessageHandler('clearAceSession', function(editorId) {
+    let mode = aceSessionModes.R;
+    let session = ace.createEditSession("", mode);
+    window[editorId].setSession(session);
+});
 let resetSessionContents = function(editorId, path){
     initializeAceSession({
         editorId: editorId,

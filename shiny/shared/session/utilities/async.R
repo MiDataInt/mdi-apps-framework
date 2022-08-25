@@ -1,6 +1,8 @@
 #----------------------------------------------------------------------
-# MDI support for running asynchronous tasks as a wrapper around future_promise
+# MDI support for running asynchronous tasks 
 #----------------------------------------------------------------------
+
+# as a wrapper around future_promise
 mdi_async <- function(
     taskFn,             # a function that executes the asynchronous task; must not call reactives
     reactiveVal,        # reactiveVal (or a function with one argument) to monitor the task's progress and results
@@ -56,4 +58,20 @@ mdi_async <- function(
 
     # usually return NULL, but return the promise object if requested
     if(promise) p else NULL
+}
+
+# using an observer with invalidateLater
+setTimeout <- function(action, ..., delay = 5000){
+    timeHasElapsed <- FALSE
+    jobId <- sample(1e8, 1)
+    selfDestruct <- observe({
+        if(timeHasElapsed){
+            action(jobId, ...)
+            selfDestruct$destroy()
+        } else {
+            timeHasElapsed <<- TRUE
+            invalidateLater(delay)
+        }
+    })
+    jobId
 }
