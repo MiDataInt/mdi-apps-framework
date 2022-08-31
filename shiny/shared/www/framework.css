@@ -431,8 +431,12 @@ table.dataTable tbody tr.selected {
     padding-left: 5px;
     vertical-align: bottom;
 }
-.ace-path-action, .ace-dir-action {
-    margin-left: 5px;
+.ace-path-action, .ace-dir-action, .ace-file-second {
+    padding-left: 5px;
+}
+.ace-file-second {
+    margin-left: 4px;
+    border-left: 1px solid #ddd;
 }
 .ace-editor-error-wrapper pre {
     border: none;

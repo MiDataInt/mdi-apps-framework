@@ -68,18 +68,18 @@ aceEditorUI <- function(
                         actionLink(
                             ns("confirmAction"),   
                             "",
-                            class = "ace-file-option ace-confirm-action"
+                            class = "ace-file-option"
                         ),
                         actionLink(
                             ns("deletePath"), 
                             "Delete", 
-                            class = "ace-file-option ace-path-action", 
-                            style = "display: none; margin-left: 20px;"
+                            class = "ace-file-option ace-path-action ace-dir-action ace-file-second", 
+                            style = "display: none;"
                         ),
                         actionLink(
                             ns("movePath"), 
                             "Move", 
-                            class = "ace-file-option ace-path-action", 
+                            class = "ace-file-option ace-path-action ace-dir-action", 
                             style = "display: none;"
                         ),
                         actionLink(
@@ -95,10 +95,10 @@ aceEditorUI <- function(
                             style = "display: none;"
                         ),
                         actionLink(
-                            ns("cancel"), 
+                            ns("cancelAction"), 
                             "Cancel", 
-                            class = "ace-file-option ace-cancel-action", 
-                            style = "display: none; margin-left: 20px;"
+                            class = "ace-file-option ace-file-second", 
+                            style = "display: none;"
                         )
                     ) else "",
                     textOutput(ns("file")), # the display of the active file path
@@ -109,6 +109,7 @@ aceEditorUI <- function(
                     textInput(
                         ns("pathEdit"), # for editing the file path for move/rename
                         NULL,
+                        value = "",
                         width = "100%"
                     ),
                     style = "display: none"
@@ -129,9 +130,7 @@ aceEditorUI <- function(
             width = 12,
             actionLink(ns("toggleWidth"),  "Toggle Width",  style = "margin-right: 15px;"),
             actionLink(ns("toggleHeight"), "Toggle Height", style = "margin-right: 15px;"),
-            actionLink(ns("checkSyntax"),  "(Re)Check Syntax", style = "margin-right: 15px;"),
-            if(editable) actionLink(ns("createNew"), "Create New", style = "margin-right: 15px;") else "",
-            if(editable) actionLink(ns("rename"),    "Rename", style = "margin-right: 15px;") else ""
+            actionLink(ns("checkSyntax"),  "(Re)Check Syntax", style = "margin-right: 15px;")
         ))
     )
 }
