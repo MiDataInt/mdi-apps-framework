@@ -231,7 +231,7 @@ output$file <- renderText({
         path
     } else if (state == states$choosing){
         show("fileMenu")
-        show(selector = if(is.null(directory)) ".ace-path-action" else ".ace-dir-action")
+        show(selector = if(is.null(directory) && nrow(tabs()) > 0) ".ace-file-action" else ".ace-dir-action")
         hide("path-edit-wrapper")
         path
     } else {
@@ -244,6 +244,7 @@ output$file <- renderText({
             freezeReactiveValue(input, "pathEdit")
             updateTextInput(session, "pathEdit", 
                             value = if(action$editPath) path else "")
+            runjs(paste0("$('#", session$ns("pathEdit"), "').focus()"))
         }
         action$message
     }
@@ -256,9 +257,13 @@ promptFileAction <- function(action){
 }
 queueFileAction <- function(action){
     directory <- directory()
-    path <- if(is.null(directory)) tabs()[active == TRUE, path] else directory
+    tabs <- tabs()
+    path <- if(!is.null(directory)) directory 
+            else if(any(tabs$active)) tabs[active == TRUE, path]
+            else input$baseDir
     req(path)
-    if(startsWith(path, serverEnv$APPS_FRAMEWORK_DIR)){
+#############33
+    if(FALSE && startsWith(path, serverEnv$APPS_FRAMEWORK_DIR)){
         promptFileAction(list(
             message = " !!! action cannot be applied to framework files !!!"
         ))
@@ -277,7 +282,6 @@ toggleFileMenu <- function(jobId, state){
     if(is.null(jobId) || fileMenuState() == states$choosing) fileMenuState(state)
 }
 observers$fileMenu <- observeEvent(input$fileMenu, {
-    if(is.null(directory()) && nrow(tabs()) == 0) return()
     toggleFileMenu(NULL, states$choosing)
     setTimeout(toggleFileMenu, states$waiting)
 })
@@ -348,7 +352,9 @@ observers$addFile <- observeEvent(input$addFile, {
         do = function(...){
             newPath <<- trimws(input$pathEdit)
             if(newPath == "") return()
-            newPath <<- file.path(directory(), newPath)
+            dir <- directory()
+            if(is.null(dir)) dir <- input$baseDir
+            newPath <<- file.path(dir, newPath)
             file.create(newPath)
         },       
         switchTo = function(...){
@@ -367,7 +373,9 @@ observers$addDir <- observeEvent(input$addDir, {
         do = function(...){
             newPath <- trimws(input$pathEdit)
             if(newPath == "") return()
-            dir.create(file.path(directory(), newPath))
+            dir <- directory()
+            if(is.null(dir)) dir <- input$baseDir
+            dir.create(file.path(dir, newPath))
         }
     ))
 })

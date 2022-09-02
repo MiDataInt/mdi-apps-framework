@@ -160,6 +160,42 @@ observers$addApp <- observeEvent(input$addApp, {
 })
 
 #----------------------------------------------------------------------
+# developers: add components to tools
+#----------------------------------------------------------------------
+nameMessage   <- "please enter a component name"
+existsMessage <- "component already exists"
+componentDir <- reactive({
+    name <- trimws(input$componentName)
+    if(name == "") return(nameMessage)
+    dir <- if(input$sharedComponent) file.path(gitStatusData$suite$dir, 'shiny/shared/session/modules') 
+           else file.path(app$DIRECTORY, "modules")
+    dir <- switch(
+        input$componentType,
+        appStep = file.path(dir, "appSteps", name),
+        widget  = file.path(dir, "widgets",  name)
+    ) 
+    if(dir.exists(dir) || file.exists(dir)) existsMessage else dir
+})
+output$componentDir <- renderText({
+   componentDir()
+})
+observers$addComponent <- observeEvent(input$addComponent, {
+    dir <- componentDir()
+    req(!(dir %in% c(nameMessage, existsMessage)))
+    dir.create(dir, recursive = TRUE)
+    name <- basename(dir)
+    tmpDir <- file.path(serverEnv$SHARED_DIR, 'templates', input$componentType)
+    createModuleFile <- function(type){
+        txt <- loadResourceFile(file.path(tmpDir, paste0("module_", type, ".R")))
+        txt <- gsub("\\r", "", txt)
+        txt <- gsub("__MODULE_NAME__", name, txt)
+        cat(txt, file = file.path(dir, paste0(name, "_", type, ".R")))
+    }
+    createModuleFile('ui')
+    createModuleFile('server')
+})
+
+#----------------------------------------------------------------------
 # return value
 #----------------------------------------------------------------------
 list(

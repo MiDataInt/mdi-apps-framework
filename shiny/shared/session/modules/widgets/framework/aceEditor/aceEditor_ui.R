@@ -73,13 +73,13 @@ aceEditorUI <- function(
                         actionLink(
                             ns("deletePath"), 
                             "Delete", 
-                            class = "ace-file-option ace-path-action ace-dir-action ace-file-second", 
+                            class = "ace-file-option ace-file-action ace-dir-action ace-file-second", 
                             style = "display: none;"
                         ),
                         actionLink(
                             ns("movePath"), 
                             "Move", 
-                            class = "ace-file-option ace-path-action ace-dir-action", 
+                            class = "ace-file-option ace-file-action ace-dir-action", 
                             style = "display: none;"
                         ),
                         actionLink(
