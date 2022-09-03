@@ -163,8 +163,10 @@ observers$addApp <- observeEvent(input$addApp, {
 # developers: add components to tools
 #----------------------------------------------------------------------
 nameMessage   <- "please enter a component name"
-existsMessage <- "component already exists"
+existsMessage <- "component exists or was just created successfully"
+invalidateComponentDir <- reactiveVal(0)
 componentDir <- reactive({
+    invalidateComponentDir()
     name <- trimws(input$componentName)
     if(name == "") return(nameMessage)
     dir <- if(input$sharedComponent) file.path(gitStatusData$suite$dir, 'shiny/shared/session/modules') 
@@ -185,14 +187,23 @@ observers$addComponent <- observeEvent(input$addComponent, {
     dir.create(dir, recursive = TRUE)
     name <- basename(dir)
     tmpDir <- file.path(serverEnv$SHARED_DIR, 'templates', input$componentType)
-    createModuleFile <- function(type){
-        txt <- loadResourceFile(file.path(tmpDir, paste0("module_", type, ".R")))
+    createModuleFile <- function(type, ext){
+        fileName <- if(ext == "R") paste0("module_", type, ".", ext)
+                              else paste0(type, ".", ext)
+        file <- file.path(tmpDir, fileName)
+        if(!file.exists(file)) return()
+        txt <- slurpFile(file)
         txt <- gsub("\\r", "", txt)
         txt <- gsub("__MODULE_NAME__", name, txt)
-        cat(txt, file = file.path(dir, paste0(name, "_", type, ".R")))
+        fileName <- if(ext == "R") paste0(name, "_", type, ".", ext)
+                              else fileName
+        cat(txt, file = file.path(dir, fileName))
     }
-    createModuleFile('ui')
-    createModuleFile('server')
+    createModuleFile('ui', 'R')
+    createModuleFile('server', 'R')
+    createModuleFile('module', 'yml')
+    createModuleFile('README', 'md')
+    invalidateComponentDir( invalidateComponentDir() + 1 )
 })
 
 #----------------------------------------------------------------------

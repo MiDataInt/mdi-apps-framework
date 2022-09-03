@@ -129,7 +129,7 @@ addMdiToolsUI <- function(
                 column(
                     width = 4,
                     selectInput(ns("componentType"), "Component Type", 
-                                choices = c(appStep = "App Step", widget = "Widget"), 
+                                choices = c("App Step" = "appStep", "Widget" = "widget"), 
                                 width = "100%")
                 ),
                 column(

@@ -132,6 +132,13 @@ let initializeAceCodeEditor = function(editorId, readOnly, mode = "r"){
     window[editorId].setTheme("ace/theme/crimson_editor");
     window[editorId].session.setMode("ace/mode/" + mode);
     window[editorId].setReadOnly(readOnly);
+    if(!readOnly) window[editorId].commands.addCommand({
+        name: 'save',
+        bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
+        exec: function(editor) {
+            saveAceSessionContents(editorId, aceCurrentPath, 'save');
+        }
+    })    
 }
 Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
     initializeAceCodeEditor(editorId, false);
@@ -156,6 +163,7 @@ let aceSessionModes = {
     md:  "ace/mode/markdown"
 };
 let aceTabs = {};
+let aceCurrentPath = "";
 let initializeAceSession = function(options){
     let ext = options.path.split('.').pop();
     let mode = aceSessionModes[ext];
@@ -177,6 +185,7 @@ let initializeAceSession = function(options){
             );
         });
     }
+    aceCurrentPath = options.path;
     window[options.editorId].setSession(aceTabs[options.path].session);
 }
 Shiny.addCustomMessageHandler('initializeAceSession', function(options) {
@@ -185,6 +194,7 @@ Shiny.addCustomMessageHandler('initializeAceSession', function(options) {
 Shiny.addCustomMessageHandler('clearAceSession', function(editorId) {
     let mode = aceSessionModes.R;
     let session = ace.createEditSession("", mode);
+    aceCurrentPath = "";
     window[editorId].setSession(session);
 });
 let resetSessionContents = function(editorId, path){
@@ -201,6 +211,7 @@ let resetSessionContents = function(editorId, path){
     );
 }
 let saveAceSessionContents = function(editorId, path, action){
+    if(path === "") return;
     let tab = aceTabs[path];
     Shiny.setInputValue(
         editorId + "-contents", 
@@ -215,8 +226,10 @@ let saveAceSessionContents = function(editorId, path, action){
 Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
     delete aceTabs[options.closingPath];
     if(options.newPath === null){
+        aceCurrentPath = "";
         window[options.editorId].setSession(ace.createEditSession("", aceSessionModes.R));
     } else {
+        aceCurrentPath = options.newPath;
         window[options.editorId].setSession(aceTabs[options.newPath].session);
     }
 });
