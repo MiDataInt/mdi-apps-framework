@@ -15,6 +15,7 @@ bufferedTableServer <- function(
     selection = 'single',
     selectionFn = function(selectedRows) NULL,
     options = list(), # passed as is to renderDT
+    filter  = list(), 
     async = NULL # for internal use only; set to mdi_async object by asyncTableServer
 ) {
     moduleServer(id, function(input, output, session) {
@@ -44,6 +45,7 @@ output[[tableId]] <- renderDT(
         d        
     },
     options = options,
+    filter = filter,
     class = "display table-compact-4",
     escape = FALSE, 
     selection = selection, 

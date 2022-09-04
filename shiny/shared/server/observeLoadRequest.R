@@ -75,7 +75,7 @@ executeLoadRequest <- function(loadRequest){
     nAppSteps <- length(app$config$appSteps)
     appStepNames <- names(app$config$appSteps)
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
-    isColdStart <- !is.null(loadRequest$coldStart) && loadRequest$coldStart
+    assign('isColdStart', !is.null(loadRequest$coldStart) && loadRequest$coldStart, envir = sessionEnv)
     isBookmarkFile <- !isColdStart && loadRequest$file$type == "bookmark"
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
     splashScreenName <- 'appName' # the name of the app overview tab

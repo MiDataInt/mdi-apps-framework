@@ -31,7 +31,14 @@ output$progress <- renderUI({
     req(async$pending)
     mdiIndeterminateProgressBar()
 })
-table <- bufferedTableServer("table", id, input, tableData, async = tableData_async, ...)
+table <- bufferedTableServer(
+    "table", 
+    parentId = id, 
+    parentInput = input, 
+    tableData = tableData, 
+    async = tableData_async, 
+    ...
+)
 
 #----------------------------------------------------------------------
 # set return value

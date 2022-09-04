@@ -7,6 +7,6 @@ nav_order: 10
 
 ## {{page.title}}
 
-The **__MODULE_NAME__** widget allows users to:
+The **{{page.title}}** widget allows users to:
 
 - continue documentation ...
