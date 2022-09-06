@@ -9,9 +9,12 @@ selectSamplesServer <- function(id, options, bookmark, locks) {
     moduleServer(id, function(input, output, session) {    
 #----------------------------------------------------------------------
 module <- 'selectSamples'
-appStepDir <- getAppStepDir(module, shared = TRUE)
+options <- setDefaultOptions(options, stepModuleInfo[[module]])
+appStepDir <- getAppStepDir(module, framework = TRUE)
 if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
     session,
+    url = getDocumentationUrl("shiny/shared/session/modules/appSteps/selectSamples/README", 
+                              framework = TRUE),
     envir = environment(),   
     baseDirs = appStepDir
 )
@@ -23,7 +26,7 @@ if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
 # initialize a single source applied to all samples to mimic sourceFileUpload
 sourceId <- "allSamples"
 sources <- list(list = list())
-sources$list[[sourceId]] <- data.frame(
+sources$list[[sourceId]] <- data.table(
     FileName    = "",    
     Project     = sourceId,
     N_Samples   = 0,
@@ -37,7 +40,7 @@ sources$summary <- sources$list[[sourceId]]
 sampleSummaryTemplate <- cbind(
     Remove = character(),
     Name = character(),
-    get(options$selectedSamplesTemplate)
+    as.data.table(get(options$selectedSamplesTemplate))
 )
 
 #----------------------------------------------------------------------
@@ -54,13 +57,13 @@ loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
 cacheFileName <- paste(app$NAME, "availableSamples", sep = ".")
 cacheFile <- file.path(serverEnv$CACHE_DIR, paste(cacheFileName, "rds", sep = "."))
 cacheTtl <- 7 * 24 * 60 * 60 # TODO: expose as option?
-if(!file.exists(cacheFile)) get(options$getAvailableSamples)()
+if(!file.exists(cacheFile)) get(options$cacheAvailableSamples)(cacheFile)
 invalidateAvailableSamples <- reactiveVal(0)
 availableSamples <- reactive({
     invalidateAvailableSamples()
     x <- loadPersistentFile(file = cacheFile, ttl = cacheTtl, silent = TRUE)
     req(x)
-    persistentCache[[cacheFile]]$data
+    as.data.table(persistentCache[[cacheFile]]$data)
 })
 
 #----------------------------------------------------------------------
@@ -77,11 +80,9 @@ samples <- summaryTableServer(
     type = 'longList100',
     remove = list(
         confirm = FALSE,
-        remove = function(id){
-            ids <- selectedIds[selectedIds != id]
-            rowIs <- which(availableSamples()[[options$sampleIdCol]] %in% ids)
-            availableSamplesTable$table$selectRows(rowIs)
-            setSelectedSamples(rowIs)
+        remove = function(id) {
+            samples$names <- samples$names[names(samples$names) != paste(sourceId, id, sep = ":")]
+            setSelectedSamplesById(selectedIds[selectedIds != id])
         }
     ),
     names = list(
@@ -89,11 +90,21 @@ samples <- summaryTableServer(
         source = id
     )
 )
+samples$table <- NULL # custom addition to samples object create by us, for filling outcomes
+
+#----------------------------------------------------------------------
+# execute sample selections (i.e., link selected samples table to available samples table)
+#---------------------------------------------------------------------
+setSelectedSamplesById <- function(ids){
+    rowIs <- which(availableSamples()[[options$sampleIdCol]] %in% ids)
+    availableSamplesTable$table$selectRows(NULL)
+    setSelectedSamples(rowIs)    
+}
 setSelectedSamples <- function(rowIs){
     nRows <- length(rowIs)
-    if(nRows > 0){
-        # lastSelectedRowI <- rowIs[nRows]
+    if(nRows > 0 && !is.na(rowIs[1])){
         dt <- availableSamples()[rowIs]
+        samples$table <- dt
         samples$summary <- cbind(
             Remove = "",
             Name = "",
@@ -102,11 +113,13 @@ setSelectedSamples <- function(rowIs){
         samples$list <- lapply(seq_len(nrow(dt)), function(i) dt[i])
         ids <- dt[[options$sampleIdCol]]
         names(samples$list) <- ids
-        samples$ids <- ids
         selectedIds <<- ids
+        samples$ids <- paste(sourceId, ids, sep = ":")
     } else {
+        samples$table <- NULL
         samples$summary <- sampleSummaryTemplate
         samples$list <- list()
+        selectedIds <<- character()        
         samples$ids <- character()
     }
 }
@@ -119,7 +132,7 @@ availableSamplesTable <- bufferedTableBoxServer(
     #----------------------------
     reload = function(){
         runjs(paste0('$("#', session$ns("availableSamples-reload"), '").blur()'))
-        get(options$getAvailableSamples)()
+        get(options$cacheAvailableSamples)(cacheFile)
         invalidateAvailableSamples( invalidateAvailableSamples() + 1 )
     },
     download = downloadHandler(
@@ -132,13 +145,20 @@ availableSamplesTable <- bufferedTableBoxServer(
     ),
     #----------------------------
     tableData = availableSamples,
-    selection = "multiple",
-    selectionFn = setSelectedSamples,
+    selection = "single",
     options = list(
         searchDelay = 0
     ),
     filterable = TRUE
 )
+observeEvent(availableSamplesTable$table$selectionObserver(), {
+    rowI <- availableSamplesTable$table$selectionObserver()
+    req(rowI)
+    setSelectedSamplesById(unique(c(
+        selectedIds,
+        availableSamples()[rowI, .SD, .SDcols = options$sampleIdCol]
+    )))
+})
 
 #----------------------------------------------------------------------
 # define bookmarking actions
@@ -149,6 +169,9 @@ observe({
     updateTextInput(session, 'analysisSetName', value = bm$outcomes$analysisSetName)
     samples$list  <- bm$outcomes$samplesList
     samples$names <- bm$outcomes$sampleNames
+    isolate({ 
+        setSelectedSamplesById(names(bm$outcomes$samplesList)) 
+    })
 })
 
 #----------------------------------------------------------------------
@@ -157,17 +180,25 @@ observe({
 list(
     outcomes = list(
         analysisSetName = reactive(input$analysisSetName),
-        sources         = reactive(sources$list),
-        samplesList     = reactive(samples$list),
-        samples = reactive({
-            data.table(
-                Source_ID = sourceId,
-                Project = sourceId,
-                Sample_ID = selectedIds,
-
-                Description = selectedIds ###############
-
-            )
+        sources     = reactive(sources$list),
+        samplesList = reactive(samples$list),
+        samples = reactive({  
+            if(!is.null(samples$table) && nrow(samples$table) > 0){
+                data.table(
+                    Source_ID   = sourceId,
+                    Project     = sourceId,
+                    Sample_ID   = samples$table[[options$sampleIdCol]],
+                    Description = if(is.null(options$descriptionCol)) "" 
+                                else samples$table[[options$descriptionCol]]
+                )  
+            } else {
+                data.table(
+                    Source_ID   = character(),
+                    Project     = character(),
+                    Sample_ID   = character(),
+                    Description = character()
+                )
+            }
         }),
         sampleNames = reactive(samples$names)        
     ),

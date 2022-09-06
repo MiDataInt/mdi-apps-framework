@@ -20,7 +20,7 @@ selectSamplesUI <- function(id, options) {
 
         # page header links, uncomment as needed
         id = id,
-        documentation = FALSE,
+        documentation = serverEnv$IS_DEVELOPER,
         terminal = FALSE,
         console = serverEnv$IS_DEVELOPER,
         code = serverEnv$IS_DEVELOPER,
@@ -28,8 +28,8 @@ selectSamplesUI <- function(id, options) {
 
         # analysis set name
         tags$p(
-            "Give this analysis set a short, useful name, ",
-            "then click available sample rows to add them to the selection list."
+            "Give this analysis set a short, useful name. ",
+            "Then click available sample rows to add them to the selection list and rename as needed."
         ) ,      
         fluidRow(
             box(
@@ -41,28 +41,19 @@ selectSamplesUI <- function(id, options) {
             )
         ),
 
-        # # table of all selected samples with "Remove" buttons and name edit boxes
-        # summaryTableUI(
-        #     id = ns("selectedSamples"), 
-        #     title = "Selected Samples", 
-        #     width = 12, 
-        #     collapsible = TRUE
-        # ),
-
-        # table of all available samples for making selections
+        # sample boxes
         fluidRow(
-            bufferedTableBoxUI(
-                id = ns("selectedSamples"),
-                title = "Selected Samples",
-                #----------------------------
-                download = TRUE,
-                #----------------------------
-                width = options$selectedWidth,
-                solidHeader = TRUE,
-                status = 'primary',
-                collapsible = TRUE,
-                collapsed = FALSE
+
+            # table of all selected samples with "Remove" buttons and name edit boxes
+            summaryTableUI(
+                id = ns("selectedSamples"), 
+                title = "Selected Samples", 
+                width = options$selectedWidth, 
+                collapsible = TRUE, 
+                skipFluidRow = TRUE
             ),
+
+            # table of all available samples for making selections
             bufferedTableBoxUI(
                 id = ns("availableSamples"),
                 title = "Available Samples",

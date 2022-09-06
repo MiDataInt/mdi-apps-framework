@@ -11,9 +11,9 @@ nav_order: 10
 The **sourceFileUpload** appStep is the first step module of most apps.
 It allows users to:
 
-- add additional data packages to create an extended analysis set
-- provide a helpful name for the analysis set
-- provide human-readable names for any samples in manifestFiles
+- add additional data packages to create an extended Analysis Set
+- provide a helpful name for the Analysis Set
+- provide human-readable names for any Samples in manifestFiles
 - examine high-level summaries of the data in their packages
 
 {% include figure.html file="app-steps/source-file-upload.png" border=true %}

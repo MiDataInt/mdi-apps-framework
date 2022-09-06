@@ -8,20 +8,20 @@ summaryTableUI <- function(
     id, 
     title, 
     width, 
-    collapsible = FALSE
+    collapsible = FALSE,
+    skipFluidRow = FALSE
 ) {
     ns <- NS(id)
-    fluidRow(
-        box(
-            width = width,
-            DTOutput(ns("table")),
-            title = tags$span(
-                tags$span(id = ns("title"), title),
-                tags$span(id = ns("titleSuffix"), "")
-            ),
-            status = 'primary',
-            solidHeader = TRUE,
-            collapsible = collapsible
-        )
+    box <- box(
+        width = width,
+        DTOutput(ns("table")),
+        title = tags$span(
+            tags$span(id = ns("title"), title),
+            tags$span(id = ns("titleSuffix"), "")
+        ),
+        status = 'primary',
+        solidHeader = TRUE,
+        collapsible = collapsible
     )
+    if(skipFluidRow) box else fluidRow(box)
 }
