@@ -2,7 +2,7 @@
 # ui
 #----------------------------------------------------------------------
 shortLabel:       "__MODULE_NAME__" # shown on dashboard menu 
-shortDescription: "__MODULE_NAME__" # shown on Overview page
+shortDescription: "__MODULE_NAME__." # shown on Overview page
 longLabel:        "__MODULE_NAME__" # shown at top of appStep page 
 
 #----------------------------------------------------------------------

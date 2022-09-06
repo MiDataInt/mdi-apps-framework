@@ -22,8 +22,8 @@ __MODULE_NAME__UI <- function(id, options) {
         id = id,
         # documentation = TRUE,
         # terminal = TRUE,
-        # console = TRUE,
-        # code = TRUE,
+        console = serverEnv$IS_DEVELOPER,
+        code = serverEnv$IS_DEVELOPER,
         # settings = TRUE,
 
         # appStep UI elements, populate as needed

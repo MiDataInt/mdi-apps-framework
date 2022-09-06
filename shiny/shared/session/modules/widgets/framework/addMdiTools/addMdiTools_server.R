@@ -195,6 +195,7 @@ observers$addComponent <- observeEvent(input$addComponent, {
         txt <- slurpFile(file)
         txt <- gsub("\\r", "", txt)
         txt <- gsub("__MODULE_NAME__", name, txt)
+        txt <- gsub("__IS_SHARED_MODULE__", if(input$sharedComponent) "TRUE" else "FALSE", txt)
         fileName <- if(ext == "R") paste0(name, "_", type, ".", ext)
                               else fileName
         cat(txt, file = file.path(dir, fileName))

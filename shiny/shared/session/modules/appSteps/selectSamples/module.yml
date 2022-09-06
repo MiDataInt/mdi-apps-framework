@@ -2,7 +2,7 @@
 # ui
 #----------------------------------------------------------------------
 shortLabel:       "Select Samples" # shown on dashboard menu 
-shortDescription: "Select samples to analyze" # shown on Overview page
+shortDescription: "Select samples to analyze." # shown on Overview page
 longLabel:        "Select samples to analyze" # shown at top of appStep page 
 selectedWidth:       4
 availableWidth:      8

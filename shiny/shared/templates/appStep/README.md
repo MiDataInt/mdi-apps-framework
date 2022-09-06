@@ -7,6 +7,6 @@ nav_order: 10
 
 ## {{page.title}}
 
-The **{{page.title}}** appStep allows users to:
+The **__MODULE_NAME__** appStep allows users to:
 
 - continue documentation ...
