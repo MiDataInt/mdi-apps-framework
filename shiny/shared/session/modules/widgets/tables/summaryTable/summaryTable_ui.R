@@ -4,21 +4,24 @@
 #----------------------------------------------------------------------
 
 # module ui function
-summaryTableUI <- function(id, title, width, collapsible = FALSE) {
-    
-    # initialize namespace
+summaryTableUI <- function(
+    id, 
+    title, 
+    width, 
+    collapsible = FALSE
+) {
     ns <- NS(id)
-    
-    # box with the table
-    fluidRow(box(
-        width = width,
-        DTOutput(ns("table")),
-        title = tags$span(
-            tags$span(id = ns("title"), title),
-            tags$span(id = ns("titleSuffix"), "")
-        ),
-        status = 'primary',
-        solidHeader = TRUE,
-        collapsible = collapsible
-    ))
+    fluidRow(
+        box(
+            width = width,
+            DTOutput(ns("table")),
+            title = tags$span(
+                tags$span(id = ns("title"), title),
+                tags$span(id = ns("titleSuffix"), "")
+            ),
+            status = 'primary',
+            solidHeader = TRUE,
+            collapsible = collapsible
+        )
+    )
 }

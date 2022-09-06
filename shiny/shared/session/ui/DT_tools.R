@@ -213,3 +213,33 @@ rowSelectionObserver <- function(parentTable, input){
     })
     selected
 }
+
+#----------------------------------------------------------------------
+# support custom column filters - do NOT use DT filter argument, it corrupts dialogs!
+#----------------------------------------------------------------------
+insertColumnFilters <- function(session, tableId, tableData, rownames = TRUE){
+    tableId <- session$ns(tableId)
+    j <- if(rownames) 0 else 1
+    filters <- lapply(seq_len(length(names(tableData))), function(i){
+        type <- typeof(tableData[[i]])
+        tags$td(
+            tags$input(
+                "",
+                id = paste0(tableId, "-filter-", i),
+                placeholder = type,
+                onkeyup = paste0('setDTColumnFilter("', tableId, '", ', i - j, ', "', type, '", $(this).val())'),
+                style = "width: 100%;"
+            ),
+            class = "mdi-table-column-filter"
+        )
+    })
+    insertUI(
+        paste0("#", paste(tableId, "thead")),
+        where = "beforeEnd",
+        tags$tr(
+            if(rownames) tags$td("") else NULL,
+            filters,            
+        ),
+        immediate = FALSE
+    )
+}

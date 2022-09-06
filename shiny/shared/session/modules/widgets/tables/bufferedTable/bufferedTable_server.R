@@ -15,7 +15,8 @@ bufferedTableServer <- function(
     selection = 'single',
     selectionFn = function(selectedRows) NULL,
     options = list(), # passed as is to renderDT
-    filter  = list(), 
+    filterable = FALSE, # add MDI custom filters to all table columns
+    server = !filterable, # TRUE for server-side processing; filtering requires client-side, editing requires server-side # nolint
     async = NULL # for internal use only; set to mdi_async object by asyncTableServer
 ) {
     moduleServer(id, function(input, output, session) {
@@ -42,10 +43,11 @@ output[[tableId]] <- renderDT(
             if(x$pending) NULL else x$value
         }
         buffer(d)
+        if(filterable) insertColumnFilters(session, tableId, d, rownames = TRUE)
         d        
     },
+    server = server,
     options = options,
-    filter = filter,
     class = "display table-compact-4",
     escape = FALSE, 
     selection = selection, 
@@ -92,6 +94,7 @@ if(selection != 'none' && !is.null(selectionFn)){
 # update the table data without a complete redraw, i.e. updates "in place"
 # executed whenever the buffer changes
 observeEvent(buffer(), {
+    req(server) # replaceData() is inconsistent with client-side processing
     buffer <- buffer()
     req(buffer)
     isolate({ replaceData(proxy, buffer, resetPaging = FALSE, clearSelection = "none") })

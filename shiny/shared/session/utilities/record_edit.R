@@ -103,26 +103,29 @@ addRemoveObserver <- function(input, inputId, module, data, sendFeedback = NULL,
         reportProgress(inputId, module)
         selectedRow <- getTableActionLinkRow(input, inputId)
         id <- names(data$list)[selectedRow]
-        name <- if(is.character(remove$name)) data$list[[id]][[remove$name]] else remove$name(id)
+        removeRow <- function(...){
+            if(delete) {
+                path <- data$list[[id]]$path
+                if(!is.null(path) && file.exists(path)) unlink(path)
+            }
+            reportProgress(paste(selectedRow, '=', id))
+            if(!is.null(data$clearLocks)) data$clearLocks(id) # only caller knows how to do lock clearing 
+            if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory # nolint
+            data$selected(NA)
+            data$list[[id]]  <- NULL # cascades to update data$ids via dataListObserver
+            data$names[[id]] <- NULL
+            if(!is.null(remove$remove)) remove$remove(id)
+            if(!is.null(sendFeedback)) sendFeedback(NULL)       
+        }
+        if(!is.null(remove$confirm) && !remove$confirm) return(removeRow())
+        name <- if(is.character(remove$name)) data$list[[id]][[remove$name]] else remove$name(id)        
         showUserDialog(
             if(delete) 'Confirm File Deletion' else 'Confirm Removal',
             tags$p(remove$message),
             tags$p(name),
             size = if(nchar(remove$message) > 100 || nchar(name) > 50) 'm' else 's',
             type = if(delete) 'deleteCancel' else 'okCancel',
-            callback = function(parentInput) {
-                if(delete) {
-                    path <- data$list[[id]]$path
-                    if(!is.null(path) && file.exists(path)) unlink(path)
-                }
-                reportProgress(paste(selectedRow, '=', id))
-                if(!is.null(data$clearLocks)) data$clearLocks(id) # only caller knows how to do lock clearing 
-                if(!is.null(data$purgeOutput) && serverEnv$IS_LOCAL) purgeOutputFiles(id) # when removing a job, delete its entire directory # nolint
-                data$selected(NA)
-                data$list[[id]]  <- NULL # cascades to update data$ids via dataListObserver
-                data$names[[id]] <- NULL
-                if(!is.null(sendFeedback)) sendFeedback(NULL)               
-            }
+            callback = removeRow
         )
     })
 }

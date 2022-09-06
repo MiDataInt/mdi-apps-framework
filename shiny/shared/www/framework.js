@@ -235,13 +235,43 @@ Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
 });
 
 /*  ------------------------------------------------------------------------
-    DT table action links
+    DT table actions
     ------------------------------------------------------------------------*/
 let handleActionClick = function(parentId, instanceId, confirmMessage){
     if(confirmMessage === "NO_CONFIRM" || confirm(confirmMessage) === true){
         Shiny.setInputValue(parentId, instanceId + '__' + Math.floor(Math.random() * 1e6)); // random allows repeat clicks
     }
 };
+let dtNumericFilters = [];
+let setDTColumnFilter = function(tableId, columnI, type, filter){
+    let table = $('#' + tableId + " .dataTable");
+    const dtId = table.attr('id'); // not the same as tableId, this is set by DataTables
+    table = table.DataTable();    
+    if(type == "character"){ // datatables handles character column matching
+        table.columns(columnI).search(filter);
+    } else { // MDI handles numeric column matching via custom search functions instantiated on first use
+        const filterId = tableId + "-filter-" + columnI;
+        if(!dtNumericFilters[filterId]){
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex){
+                if(dtId !== settings.sTableId) return true; // only apply filters to the table that create them 
+                const filter = $("#" + filterId).val().replaceAll(" ", "");
+                if(filter === "") return true;
+                const i = filter.search(/\d/);
+                if(i === -1) return true;
+                let operation = i === 0 ? "==" : filter.substring(0, i);
+                if(operation === "=") operation = "==";
+                try {                
+                    const expr = data[columnI] + " " + operation + " " + parseFloat(filter.substring(i));
+                    return(eval(expr));
+                } catch (error) {
+                    return(true);
+                }
+            }); 
+            dtNumericFilters[filterId] = true;
+        }
+    }
+    table.draw();
+}
 
 /*  ------------------------------------------------------------------------
     Pipeline Runner, functions to simplify the number of required input observers in R
