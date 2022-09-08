@@ -8,6 +8,11 @@
 #     }
 #----------------------------------------------------------------------
 
+# data plot images and interactions
+click <- function(x, ...) {
+    UseMethod("click", x)
+}
+
 # retrieve an XY table for plotting in a scatter plot, etc.
 # results expected be returned as a data.table(x=x,y=y)
 getXY <- function(x, ...) {
@@ -27,7 +32,8 @@ nSamples <- function(x, ...) {
     UseMethod("nSamples", x)
 }
 
-# initialize and use an HMM object from a class object; typically call HMM::initHMM, HMM::viterbi
+# initialize and use an HMM object from a class object
+# typically call HMM::initHMM, HMM::viterbi
 initHMM <- function(x, ...) {
     UseMethod("initHMM", x)
 }

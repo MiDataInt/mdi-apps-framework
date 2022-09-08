@@ -24,6 +24,7 @@ R:
         #- DBI
     graphics:
         - ggplot2
+        - gridExtra
         - plotly # client-side interactive plots 
         - RColorBrewer
     framework:
