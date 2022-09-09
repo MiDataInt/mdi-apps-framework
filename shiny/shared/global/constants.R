@@ -97,5 +97,7 @@ CONSTANTS <- list(
         teal    = '#17becf',  # blue-teal
         black   = 'black',
         grey    = '#7f7f7f'
-    )
+    ),
+
+    cmPerInch = 2.54
 )
