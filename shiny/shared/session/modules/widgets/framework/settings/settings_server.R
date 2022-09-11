@@ -20,7 +20,8 @@ settingsServer <- function(
     fade = FALSE,
     title = "Set Parameters",
     immediate = FALSE, # if TRUE, setting changes are transmitted in real time
-    resettable = TRUE  # if TRUE, a Reset All Setting link will be provided
+    resettable = TRUE,  # if TRUE, a Reset All Setting link will be provided
+    s3Class = NULL # optional S3 class to assign to the settings object
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -270,7 +271,10 @@ retval$get <- function(tab, id){
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
 }
-retval
+structure(
+    retval,
+    class = c(s3Class, "mdiSettings")
+) 
 
 #----------------------------------------------------------------------
 # END MODULE SERVER
