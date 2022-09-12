@@ -56,6 +56,15 @@ mdiInteractivePlotInit <- observe({
 #----------------------------------------------------------------------
 observe({
     d <- contents()
+    if(is.null(d)){
+        session$sendCustomMessage("mdiInteractivePlotUpdate", list(
+            prefix = idPrefix,
+            src = "",
+            width  = 0,
+            height = 0
+        ))
+        return()
+    }
     if(is.null(d$pngFile)){
         png(
             pngFile,

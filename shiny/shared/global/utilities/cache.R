@@ -35,7 +35,8 @@ loadPersistentFile <- function(
     header = TRUE,
     colClasses = NULL, # either a character vector or a function that returns one
     #-----------------------
-    postProcess = NULL # a function applied to data after loading and before caching
+    postProcess = NULL, # a function applied to data after loading and before caching
+    ... # additional argument passed to fread
 ){
 
     # adjust call parameters
@@ -79,8 +80,8 @@ loadPersistentFile <- function(
                 file,
                 sep = sep,        
                 header = header,
-                stringsAsFactors = FALSE,
-                colClasses = colClasses
+                colClasses = colClasses,
+                ...
             )
         },
         ttl  = ttl
