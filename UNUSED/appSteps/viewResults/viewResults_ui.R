@@ -17,7 +17,7 @@ viewResultsUI <- function(id, options) {
     options <- setDefaultOptions(options, stepModuleInfo$view)
 
     # incorporate options text into templates
-    title <- HTML( paste( options$longLabel, stepSettingsUI(ns('settings')) ) )
+    title <- HTML( paste( options$longLabel, settingsUI(ns('settings')) ) )
     leaderText <- tags$p(HTML("<strong>Select an analysis</strong> whose results you would like to view."))
 
     # return the UI contents

@@ -24,7 +24,7 @@ mdiHeaderLinks <- function(
         if(!serverEnv$IS_SERVER && console) rConsoleLink(ns('console'), class = class) else "",
         if(!serverEnv$IS_SERVER && terminal) commandTerminalLink(ns('terminal'), class = class) else "",
         if(download) downloadLink(ns("download"), label = icon("download"), class = class) else "",
-        if(settings) stepSettingsUI(ns('settings'), class = class) else ""
+        if(settings) settingsUI(ns('settings'), class = class) else ""
     ))
 }
 

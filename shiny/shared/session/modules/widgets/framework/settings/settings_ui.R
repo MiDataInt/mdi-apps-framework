@@ -2,14 +2,6 @@
 # static components for caching and only occasionally displaying a set 
 # of input parameters for controlling how an application step or component behaves
 #----------------------------------------------------------------------
-# user click of a gear icon opens a dynamically populated popup
-#----------------------------------------------------------------------
-# usage in appStepUI:
-#    standardSequentialTabItem(
-#        HTML(paste( options$longLabel, settingsUI(ns('settings')) )),
-#        options$leaderText,
-#        ...
-#----------------------------------------------------------------------
 
 # module ui function
 settingsUI <- function(id, isHeader = TRUE, class = NULL) {
@@ -25,7 +17,6 @@ settingsUI <- function(id, isHeader = TRUE, class = NULL) {
         icon('cog', verify_fa = FALSE),
         class = if(!is.null(class)) class else if(isHeader) "header-link" else NULL
     )
-
 }
 
 # legacy name assignment
