@@ -27,14 +27,16 @@ loadPersistentFile <- function(
     sourceId = NULL, # ... or source
     contentFileType = NULL, 
     #-----------------------
-    force = FALSE, # force the object to be reloaded anew
-    ttl = NULL,    # how long to cache the object after last access, in seconds
-    silent = NULL, # fail silently and return NULL if file not found
+    force = FALSE,   # force the object to be reloaded anew from the disk file
+    unlink = FALSE,  # delete the file prior to loading the cache; requires options `force` and `create`
+    ttl = NULL,      # how long to cache the object after last access, in seconds
+    silent = NULL,   # fail silently and return NULL if file not found
     #-----------------------
-    sep = "\t", # parameters passed to fread
+    sep = "\t",      # parameters passed to fread
     header = TRUE,
     colClasses = NULL, # either a character vector or a function that returns one
     #-----------------------
+    create = NULL, # a function(file) called to create a non-existent file prior to RAM caching
     postProcess = NULL, # a function applied to data after loading and before caching
     ... # additional argument passed to fread
 ){
@@ -46,30 +48,39 @@ loadPersistentFile <- function(
     if(is.null(file) || length(file) == 0) {
         if(!silent) stop("load cache error, missing file")   
         return(NULL) 
-    }  
+    }    
 
     # check the cache for the requested file
-    cleanPersistentCache(file)    
+    cleanPersistentCache(file)  
     if(!force && !is.null(persistentCache[[file]])) return(touchPersistentCache(file))
     reportProgress("loading persistent cache")
     reportProgress(file)   
 
+    # force a full reload of the file too, not just the RAM cache
+    if(unlink && file.exists(file)) unlink(file)
+
     # load an RDS file into R
     isRdsFile <- endsWith(file, ".rds")
     rdsFile <- if(isRdsFile) file else paste(file, "rds", sep = ".")
-    if(file.exists(rdsFile) && (isRdsFile || !force)){ 
+    loadRdsFile <- function(){
         persistentCache[[file]] <<- readRDS(rdsFile)
         if(is.null(persistentCache[[file]]$ttl)) persistentCache[[file]] <<- list(
             data = persistentCache[[file]],
             ttl  = ttl
         )
-        return(touchPersistentCache(file))
+        touchPersistentCache(file)
     }
+    if(file.exists(rdsFile) && (isRdsFile || !force)) return( loadRdsFile() )
 
     # load a non-RDS file into R
     if(!file.exists(file)) {
-        if(!silent) stop("load cache error, non-existent file")   
-        return(NULL) 
+        if(is.null(create)){
+            if(!silent) stop("load cache error, non-existent file")   
+            return(NULL) 
+        } else {
+            create(file)
+            if(isRdsFile) return( loadRdsFile() )
+        }
     }
     persistentCache[[file]] <<- list(
         data = if(endsWith(file, ".yml")){

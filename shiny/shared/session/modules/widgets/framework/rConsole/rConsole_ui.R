@@ -9,7 +9,7 @@ rConsoleUI <- function(id) {
     tagList(
         fluidRow(
             column(
-                width = 5, # text input where user types commands
+                width = 6, # text input where user types commands
                 tags$div(
                     id = ns("ace"), # the Ace editor for free code entry
                     tags$div(
@@ -29,7 +29,7 @@ rConsoleUI <- function(id) {
                 )  
             ),
             column(
-                width = 7,
+                width = 6,
                 fluidRow(
                     column(
                         width = 12,

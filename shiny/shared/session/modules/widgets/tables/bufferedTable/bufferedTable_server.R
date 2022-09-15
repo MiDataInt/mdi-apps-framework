@@ -14,6 +14,7 @@ bufferedTableServer <- function(
     editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), handler=function(d), boxColumn=1, [rawColumn=2])) # nolint
     selection = 'single',
     selectionFn = function(selectedRows) NULL,
+    select = NULL, # a reactive that will set the selected row(s)
     options = list(), # passed as is to renderDT
     filterable = FALSE, # add MDI custom filters to all table columns
     server = !filterable, # TRUE for server-side processing; filtering requires client-side, editing requires server-side # nolint
@@ -50,7 +51,10 @@ output[[tableId]] <- renderDT(
     options = options,
     class = "display table-compact-4",
     escape = FALSE, 
-    selection = selection, 
+    selection = list(
+        mode = selection,
+        selected = if(is.null(select)) NULL else select()
+    ),
     editable = FALSE,
     rownames = TRUE # must be true for editing to work, not sure why (datatables peculiarity)
 )
@@ -90,6 +94,11 @@ if(selection != 'none' && !is.null(selectionFn)){
         selectionFn(input[[selectedId]])
     })    
 }
+
+# update the row selection based on a caller's reactive
+if(!is.null(select)) observeEvent(select(), {
+    selectRows(proxy, select())
+})
 
 # update the table data without a complete redraw, i.e. updates "in place"
 # executed whenever the buffer changes
