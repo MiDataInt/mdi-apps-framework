@@ -15,7 +15,10 @@ popupInputUI <- function(id, label, value = "Click Me") {
             label
         ),
         tags$div(
-            actionButton(buttonId, value, style = "width: 100%;")  
+            actionButton(
+                buttonId, value, 
+                style = "width: 100%; text-overflow: ellipsis; overflow: hidden; direction: rtl;"
+            )      
         )
     )
 }

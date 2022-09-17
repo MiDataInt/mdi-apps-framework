@@ -10,6 +10,7 @@ popupInputServer <- function(
     title,
     callback,
     ..., # additional options passed to showUserDialog
+    active = NULL,    
     size = "l",
     type = 'okCancel', 
     easyClose = TRUE
@@ -26,7 +27,8 @@ value <- reactiveVal(NULL)
 #----------------------------------------------------------------------
 # open dialog in response to button click for complicated input value selection
 #----------------------------------------------------------------------
-observeEvent(input$button, {   
+observeEvent(input$button, {
+    req(is.null(active) || active())
     showUserDialog(
         title,
         ...,
