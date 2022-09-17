@@ -119,8 +119,11 @@ pixelToAxes <- function(x, y){
     } else {
         return(list(x = x, y = y))
     }
-    if(is.null(contents$xlim)) contents$xlim <- contents$plotArgs$xlim
-    if(is.null(contents$ylim)) contents$ylim <- contents$plotArgs$ylim
+    if(is.null(layout$xlim)) layout$xlim <- contents$plotArgs$xlim
+    if(is.null(layout$ylim)) layout$ylim <- contents$plotArgs$ylim
+    req(layout$xlim)
+    req(layout$ylim)
+    req(layout$mai)
     list(
         x = pixelToAxis(x, layout, 2, 4, "width",  "xlim", FALSE), 
         y = pixelToAxis(y, layout, 1, 3, "height", "ylim", TRUE)
