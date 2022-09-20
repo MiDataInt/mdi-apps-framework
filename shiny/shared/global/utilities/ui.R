@@ -99,3 +99,16 @@ collapsibleBox <- function(
         collapsed = collapsed
     )
 }
+
+#----------------------------------------------------------------
+# UI/graphics unit conversion
+#----------------------------------------------------------------
+getInches <- function(value, unit, linesPerInch){
+    if(is.null(unit)) unit <- "inches"
+    switch(
+        substr(unit, 1, 2),
+        "in" = value,
+        "cm" = value / CONSTANTS$cmPerInch,
+        "li" = value / linesPerInch
+    )
+}
