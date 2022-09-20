@@ -130,10 +130,10 @@ badSourceFile <- function(filePath, msg=""){
 # load an incoming Stage 1 pipeline output package file
 #----------------------------------------------------------------------
 loadPackageFile <- function(packagePath, packageId, packageFileName){ # packagePath validated upstream as package usable by app
-    dataDir <- getPackageDir(packageId)
+    dataDir <- getPackageDir(packageId) # packageId is the package file md5sum
 
     # extract the contents declared to be in the package file
-    packageConfig <- getPackageFileConfig(packagePath, sourceFileInput$sendFeedback)
+    packageConfig <- getPackageFileConfig(packagePath, sourceFileInput$sendFeedback) # i.e., package.yml
     if(is.null(packageConfig$uploadType)) badSourceFile(packagePath, msg = "missing upload type in package file")
     contentFileTypes <- app$config$uploadTypes[[ packageConfig$uploadType ]]$contentFileTypes
     # contentFileTypes[[manifestFileType]] <- list(required = TRUE)
