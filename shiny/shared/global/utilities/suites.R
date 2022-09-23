@@ -122,14 +122,17 @@ parseAppDirectory <- function(appDir, extended = FALSE){
         tryCatch({
             config <- read_yaml(file.path(appDir, "config.yml"))
             list(
+                displayName = if(is.null(config$name)) dirApp[1] else config$name,
                 description = if(is.null(config$description)) "not available" else config$description, 
                 coldStartable = if(is.null(config$suppressColdStart)) TRUE else !config$suppressColdStart
             )            
         }, error = function(e) list(
+            displayName = "",
             description = "config load error", 
             coldStartable = FALSE
         ))
     } else list(
+        displayName = "",
         description = "", 
         coldStartable = NA
     )
@@ -146,7 +149,8 @@ parseAppDirectory <- function(appDir, extended = FALSE){
         suiteSharedClassesDir = file.path(suiteGlobalDir, 'classes'),
         suiteSharedModulesDir = file.path(suiteSessionDir, 'modules'),
         suiteSharedTypesDir   = file.path(suiteSessionDir, 'types'),
-        description = extended$description,
+        displayName   = extended$displayName,
+        description   = extended$description,
         coldStartable = extended$coldStartable
     )
 }

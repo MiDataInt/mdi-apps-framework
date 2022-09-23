@@ -24,18 +24,22 @@ launchId <- "launchApp"
 appDirCols <- list(
     fork = "Fork", 
     suite = "Tool Suite", 
-    name = "App Name", 
+    displayName = "App Name", 
     description = "Description"
 )
+appNameMap <- list()
 tableCols <- c("Action", unlist(appDirCols))
 buffer <- NULL
 output$table <- renderDT({
         dt <- do.call(rbind, lapply(names(appDirs), function(appName){
             x <- parseAppDirectory(appDirs[[appName]], extended = TRUE)
-            if(x$coldStartable) as.data.table(x[names(appDirCols)]) else NULL
+            if(x$coldStartable) {
+                appNameMap[[x$displayName]] <<- x$name
+                as.data.table(x[names(appDirCols)]) 
+            } else NULL
         }))
         if(is.null(dt)) stop("No available apps.")
-        dt <- dt[][order(fork, suite, name), ]
+        dt <- dt[][order(fork, suite, displayName), ]
         buffer <<- dt
         names(dt) <- unlist(appDirCols)
         dt$Action <- tableActionLinks(session$ns(launchId), nrow(dt), "Launch ")
@@ -58,7 +62,7 @@ output$table <- renderDT({
 observers$launch <- observeEvent(input[[launchId]], {
     row <- getTableActionLinkRow(input, launchId)
     loadRequest(list(
-        app = buffer[row, name], 
+        app = buffer[row, appNameMap[[displayName]]], 
         coldStart = TRUE,
         file = list(name = character(), path = character(),
                     type = character(), nocache = logical()),

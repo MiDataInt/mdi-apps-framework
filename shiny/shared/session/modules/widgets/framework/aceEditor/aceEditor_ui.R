@@ -7,7 +7,8 @@ aceEditorUI <- function(
     id, 
     baseDirs = NULL, # one or more directories from which all files are shown as trees
     showFile = NULL, # a single target file to show in lieu of baseDirs
-    baseDir  = NULL  # which of baseDirs or showFile to place into view
+    baseDir  = NULL, # which of baseDirs or showFile to place into view
+    editable = FALSE # whether to show the create/delete links
 ) {
     ns <- NS(id)
     widths <- list(tree = 4, editor = 8)
@@ -57,8 +58,61 @@ aceEditorUI <- function(
                 width = widths$editor,
                 style = "padding-left: 0; border-left: 1px solid #ddd;",
                 tags$div(
+                    if(editable) tags$div(
+                        class = "ace-file-menu",
+                        actionLink(
+                            ns("fileMenu"),   
+                            "File",
+                            class = "ace-file-option"
+                        ),
+                        actionLink(
+                            ns("confirmAction"),   
+                            "",
+                            class = "ace-file-option"
+                        ),
+                        actionLink(
+                            ns("deletePath"), 
+                            "Delete", 
+                            class = "ace-file-option ace-file-action ace-dir-action ace-file-second", 
+                            style = "display: none;"
+                        ),
+                        actionLink(
+                            ns("movePath"), 
+                            "Move", 
+                            class = "ace-file-option ace-file-action ace-dir-action", 
+                            style = "display: none;"
+                        ),
+                        actionLink(
+                            ns("addFile"), 
+                            "Add File", 
+                            class = "ace-file-option ace-dir-action", 
+                            style = "display: none;"
+                        ),
+                        actionLink(
+                            ns("addDir"), 
+                            "Add Dir", 
+                            class = "ace-file-option ace-dir-action", 
+                            style = "display: none;"
+                        ),
+                        actionLink(
+                            ns("cancelAction"), 
+                            "Cancel", 
+                            class = "ace-file-option ace-file-second", 
+                            style = "display: none;"
+                        )
+                    ) else "",
                     textOutput(ns("file")), # the display of the active file path
-                    class = "aceEditorDialog-file"
+                    class = "ace-file-line"
+                ),
+                tags$span(
+                    id = ns("path-edit-wrapper"),
+                    textInput(
+                        ns("pathEdit"), # for editing the file path for move/rename
+                        NULL,
+                        value = "",
+                        width = "100%"
+                    ),
+                    style = "display: none"
                 ),
                 tags$div(
                     id = ns("ace"), # the Ace editor itself

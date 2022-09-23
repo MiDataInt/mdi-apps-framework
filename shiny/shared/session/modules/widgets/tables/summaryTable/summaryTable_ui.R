@@ -4,13 +4,15 @@
 #----------------------------------------------------------------------
 
 # module ui function
-summaryTableUI <- function(id, title, width, collapsible = FALSE) {
-    
-    # initialize namespace
+summaryTableUI <- function(
+    id, 
+    title, 
+    width, 
+    collapsible = FALSE,
+    skipFluidRow = FALSE
+) {
     ns <- NS(id)
-    
-    # box with the table
-    fluidRow(box(
+    box <- box(
         width = width,
         DTOutput(ns("table")),
         title = tags$span(
@@ -20,5 +22,6 @@ summaryTableUI <- function(id, title, width, collapsible = FALSE) {
         status = 'primary',
         solidHeader = TRUE,
         collapsible = collapsible
-    ))
+    )
+    if(skipFluidRow) box else fluidRow(box)
 }

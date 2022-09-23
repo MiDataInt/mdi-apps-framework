@@ -25,3 +25,7 @@ By convention, a class is defined by scripts named:
 - **myClass_constructor.R** - for object instantiation
 - **myClass_methods.R** - where generic S3 methods are found
 - **myClass_utilities.R** - functions called by the above scripts
+
+or, alternatively, simpler classes may be defined in a single script:
+
+- **myClass.R** - with all required constructors, methods and utilities

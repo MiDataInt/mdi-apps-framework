@@ -20,7 +20,7 @@ viewResultsServer <- function(id, options, bookmark, locks) {
 # initialize module
 #----------------------------------------------------------------------
 currentSchemaId <- reactiveVal(NULL)
-settings <- stepSettingsServer( # display settings not stored in the UI, exposed by gear icon click
+settings <- settingsServer( # display settings not stored in the UI, exposed by gear icon click
     id = 'settings',
     parentId = id,
     cacheKey = currentSchemaId

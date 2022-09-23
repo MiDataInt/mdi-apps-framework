@@ -129,7 +129,13 @@ serverEnv$SUPPRESS_PIPELINE_RUNNER <-
     is.null(serverConfig$pipeline_runner) ||         
     (is.logical(serverConfig$pipeline_runner) && !serverConfig$pipeline_runner) ||
     (is.character(serverConfig$pipeline_runner) && serverConfig$pipeline_runner != "auto") ||
-    (is.character(serverConfig$pipeline_runner) && serverEnv$IS_SERVER) 
+    (is.character(serverConfig$pipeline_runner) && serverEnv$IS_SERVER)
+
+# set max file upload size
+if(is.null(serverConfig$max_upload_mb) || serverConfig$max_upload_mb == "auto"){
+    serverConfig$max_upload_mb <- if(serverEnv$IS_SERVER) 5 else 200
+}
+options(shiny.maxRequestSize = serverConfig$max_upload_mb * 1024^2)
 
 # create the persistent cache object shared across all sessions
 # not for sensitive data in public server modes, etc.

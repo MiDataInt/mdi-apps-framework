@@ -160,6 +160,54 @@ observers$addApp <- observeEvent(input$addApp, {
 })
 
 #----------------------------------------------------------------------
+# developers: add components to tools
+#----------------------------------------------------------------------
+nameMessage   <- "please enter a component name"
+existsMessage <- "component exists or was just created successfully"
+invalidateComponentDir <- reactiveVal(0)
+componentDir <- reactive({
+    invalidateComponentDir()
+    name <- trimws(input$componentName)
+    if(name == "") return(nameMessage)
+    dir <- if(input$sharedComponent) file.path(gitStatusData$suite$dir, 'shiny/shared/session/modules') 
+           else file.path(app$DIRECTORY, "modules")
+    dir <- switch(
+        input$componentType,
+        appStep = file.path(dir, "appSteps", name),
+        widget  = file.path(dir, "widgets",  name)
+    ) 
+    if(dir.exists(dir) || file.exists(dir)) existsMessage else dir
+})
+output$componentDir <- renderText({
+   componentDir()
+})
+observers$addComponent <- observeEvent(input$addComponent, {
+    dir <- componentDir()
+    req(!(dir %in% c(nameMessage, existsMessage)))
+    dir.create(dir, recursive = TRUE)
+    name <- basename(dir)
+    tmpDir <- file.path(serverEnv$SHARED_DIR, 'templates', input$componentType)
+    createModuleFile <- function(type, ext){
+        fileName <- if(ext == "R") paste0("module_", type, ".", ext)
+                              else paste0(type, ".", ext)
+        file <- file.path(tmpDir, fileName)
+        if(!file.exists(file)) return()
+        txt <- slurpFile(file)
+        txt <- gsub("\\r", "", txt)
+        txt <- gsub("__MODULE_NAME__", name, txt)
+        txt <- gsub("__IS_SHARED_MODULE__", if(input$sharedComponent) "TRUE" else "FALSE", txt)
+        fileName <- if(ext == "R") paste0(name, "_", type, ".", ext)
+                              else fileName
+        cat(txt, file = file.path(dir, fileName))
+    }
+    createModuleFile('ui', 'R')
+    createModuleFile('server', 'R')
+    createModuleFile('module', 'yml')
+    createModuleFile('README', 'md')
+    invalidateComponentDir( invalidateComponentDir() + 1 )
+})
+
+#----------------------------------------------------------------------
 # return value
 #----------------------------------------------------------------------
 list(

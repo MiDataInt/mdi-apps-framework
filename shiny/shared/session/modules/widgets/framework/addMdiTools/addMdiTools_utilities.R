@@ -6,10 +6,9 @@ showAddMdiTools <- function(
 ){
     id <- "addMdiToolsDialog" # addMdiTools is a single-instance link
     nsId <- session$ns(id)
-    ns <- NS(nsId)
     addMdiTools <- addMdiToolsServer(id)    
     onExit <- function(...){
-        removeMatchingInputValues(session, id)
+        # removeMatchingInputValues(session, id)
         destroyModuleObservers(addMdiTools)
         removeModal()
     }

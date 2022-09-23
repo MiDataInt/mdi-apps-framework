@@ -85,12 +85,14 @@ purgeOutputFiles <- function(schemaId){
 #----------------------------------------------------------------------
 
 # the module directory for an app step
-getAppStepDir <- function(module, framework = FALSE){
+getAppStepDir <- function(module, shared = FALSE, framework = FALSE){
     if(framework) file.path(serverEnv$SHARED_DIR, "session/modules/appSteps", module)
+    else if(shared) file.path(gitStatusData$suite$dir, "shiny/shared/session/modules/appSteps", module)
     else file.path(app$DIRECTORY, "modules/appSteps", module)
 }
-getWidgetDir <- function(module, framework = FALSE){
+getWidgetDir <- function(module, shared = FALSE, framework = FALSE){
     if(framework) file.path(serverEnv$SHARED_DIR, "session/modules/widgets", module)
+    else if(shared) file.path(gitStatusData$suite$dir, "shiny/shared/session/modules/widgets", module)
     else file.path(app$DIRECTORY, "modules/widgets", module)
 }
 

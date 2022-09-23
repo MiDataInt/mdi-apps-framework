@@ -53,7 +53,8 @@ showAceEditor <- function(
             nsId, 
             baseDirs = baseDirs,
             showFile = showFile,
-            baseDir  = cache$baseDir
+            baseDir  = cache$baseDir,
+            editable = editable
         ),
         size = "l", 
         type = 'dismissOnly', 
@@ -79,6 +80,9 @@ initializeAceSession <- function(editorId, path, loaded){ # initialize a file fo
         contents = contents
     ))
     contents
+}
+clearAceSession <- function(editorId){
+    session$sendCustomMessage("clearAceSession", editorId)
 }
 resetSessionContents <- function(editorId, path){
     session$sendCustomMessage("resetSessionContents", list(

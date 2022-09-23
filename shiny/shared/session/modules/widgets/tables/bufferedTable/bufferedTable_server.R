@@ -14,7 +14,10 @@ bufferedTableServer <- function(
     editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), handler=function(d), boxColumn=1, [rawColumn=2])) # nolint
     selection = 'single',
     selectionFn = function(selectedRows) NULL,
+    select = NULL, # a reactive that will set the selected row(s)
     options = list(), # passed as is to renderDT
+    filterable = FALSE, # add MDI custom filters to all table columns
+    server = !filterable, # TRUE for server-side processing; filtering requires client-side, editing requires server-side # nolint
     async = NULL # for internal use only; set to mdi_async object by asyncTableServer
 ) {
     moduleServer(id, function(input, output, session) {
@@ -41,12 +44,17 @@ output[[tableId]] <- renderDT(
             if(x$pending) NULL else x$value
         }
         buffer(d)
+        if(filterable) insertColumnFilters(session, tableId, d, rownames = TRUE)
         d        
     },
+    server = server,
     options = options,
     class = "display table-compact-4",
     escape = FALSE, 
-    selection = selection, 
+    selection = list(
+        mode = selection,
+        selected = if(is.null(select)) NULL else select()
+    ),
     editable = FALSE,
     rownames = TRUE # must be true for editing to work, not sure why (datatables peculiarity)
 )
@@ -87,9 +95,15 @@ if(selection != 'none' && !is.null(selectionFn)){
     })    
 }
 
+# update the row selection based on a caller's reactive
+if(!is.null(select)) observeEvent(select(), {
+    selectRows(proxy, select())
+})
+
 # update the table data without a complete redraw, i.e. updates "in place"
 # executed whenever the buffer changes
 observeEvent(buffer(), {
+    req(server) # replaceData() is inconsistent with client-side processing
     buffer <- buffer()
     req(buffer)
     isolate({ replaceData(proxy, buffer, resetPaging = FALSE, clearSelection = "none") })

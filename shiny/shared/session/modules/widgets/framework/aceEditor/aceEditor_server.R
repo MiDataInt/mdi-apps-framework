@@ -43,11 +43,15 @@ if(is.null(loaded)) loaded <- list()
 # the file selector tree
 #----------------------------------------------------------------------
 files <- reactiveValues() # named vectors of files (name = path, value = path relative to baseDir) by baseDir
+directory <- reactiveVal(NULL) # set to path when a directory is clicked in the tree
+currentType <- reactive({ if(!is.null(directory())) "directory" else "file" })
+invalidateTree <- reactiveVal(0)
 output$tree <- shinyTree::renderTree({
     req(input$baseDir)
+    invalidateTree()
     show(selector = spinnerSelector)
     relPaths <- if(isSingleFile) basename(showFile)
-                else list.files(input$baseDir, recursive = TRUE)   
+                else list.files(input$baseDir, include.dirs = TRUE, recursive = TRUE)   
     paths <- file.path(input$baseDir, relPaths)
     names(relPaths) <- paths
     files[[input$baseDir]] <- relPaths
@@ -67,14 +71,14 @@ observers$tree <- observeEvent(input$tree, {
     req(length(x) == 1) # == 0 when not selected; never >0 since multi-select disabled
     x <- x[[1]]    
     x <- paste(c(attr(x, 'ancestry'), x), collapse = "/") # reassemble the file path relative to tree root
-    req(x %in% files[[input$baseDir]]) # this line suppresses directories in the tree
-    setActiveTab(file.path(input$baseDir, x))
-})
-# show the relative path of the selected file in the editor pane
-output$file <- renderText({ # must remove leading "./" for rtl ellipsis to work correctly 
-    path <- tabs()[active == TRUE, path]
-    gsub(paste0(serverEnv$MDI_DIR, '/'), '', path)
-    # substring(, 2) 
+    path <- file.path(input$baseDir, x)
+    if(dir.exists(path)){
+        setActiveTab(NULL, deselect = TRUE)
+        directory(path)
+    } else {
+        directory(NULL)
+        setActiveTab(path)
+    }
 })
 
 #----------------------------------------------------------------------
@@ -87,9 +91,17 @@ tabs <- reactiveVal(if(is.null(tabs)) data.table(
     error = logical(),
     message = character()
 ) else tabs)
-setActiveTab <- function(activePath, closingPath = NULL){
+setActiveTab <- function(activePath, closingPath = NULL, deselect = FALSE){
     show(selector = spinnerSelector)
-    tabs <- tabs()        
+    tabs <- tabs()
+    if(deselect){ # no selected tab, working in a directory
+        tabs[, active := FALSE]
+        tabs(tabs) 
+        invalidateTabs( invalidateTabs() + 1 )
+        clearAceSession(editorId)
+        hide(selector = spinnerSelector) 
+        return()
+    }   
     if(!is.null(activePath)){
         tabs$active <- FALSE
         if(activePath %in% tabs$path) tabs[path == activePath, active := TRUE]        
@@ -105,7 +117,7 @@ setActiveTab <- function(activePath, closingPath = NULL){
         terminateAceSession(editorId, closingPath, activePath)
     }
     tabs(tabs) 
-    hide(selector = spinnerSelector)         
+    hide(selector = spinnerSelector) 
     checkCodeSyntax(activePath, contents)     
 }
 invalidateTabs <- reactiveVal(0)
@@ -145,27 +157,36 @@ output$tabs <- renderUI({
 observers$switchId <- observeEvent(input[[switchId]], {
     newPath <- input[[switchId]] # when a currently inactive tab is clicked
     req(newPath)
-    activePath <- tabs()[active == TRUE, path]
-    req(activePath)
-    req(newPath != activePath)
+    directory <- directory()
+    if(!is.null(directory)){
+        directory(NULL)
+    } else {
+        activePath <- tabs()[active == TRUE, path]
+        req(activePath)
+        req(newPath != activePath)        
+    }
     setActiveTab(newPath)
 })
-observers$closeId <- observeEvent(input[[closeId]], {
-    closingPath <- input[[closeId]] # the X icon that close files AND discards all changes
-    req(closingPath)
+closeTab <- function(closingPath){
     tabs <- tabs()    
-    closingI <- tabs[path == closingPath, .I]
-    isChanged <- tabs[path == closingPath, changed]
+    closingI <- which(tabs$path == closingPath)
     tabs <- tabs[path != closingPath]
     if(nrow(tabs) > 0){
-        newI <- if(closingI > 1) closingI - 1 else 1  
+        newI <- if(any(tabs$active)) which(tabs$active) 
+                else if(closingI > 1) closingI - 1 
+                else 1  
         newPath <- tabs[newI, path]
     } else {
         newPath <- NULL
     }
     tabs(tabs)
     loaded[closingPath] <<- FALSE
-    setActiveTab(newPath, closingPath)
+    setActiveTab(newPath, closingPath)    
+}
+observers$closeId <- observeEvent(input[[closeId]], {
+    closingPath <- input[[closeId]] # the X icon that close files AND discards all changes
+    req(closingPath)
+    closeTab(closingPath)
 })
 observers$discardId <- observeEvent(input[[discardId]], {
     tabs <- tabs()   # used in single-file mode only in lieu of X icon
@@ -178,6 +199,185 @@ observers$discardId <- observeEvent(input[[discardId]], {
     setActiveTab(path)
     invalidateError(invalidateError() + 1)
     invalidateTabs(invalidateTabs() + 1)
+})
+
+#----------------------------------------------------------------------
+# file-level actions (create, delete)
+#----------------------------------------------------------------------
+states <- list(
+    waiting    = "waiting",
+    choosing   = "choosing",
+    confirming = "confirming"
+)
+fileMenuState <- reactiveVal(states$waiting)
+pendingFileAction <- reactiveVal(list(
+    name = NULL,
+    message = NULL,
+    action = NULL,
+    path = NULL
+))
+
+# show the relative path of the selected file in the editor pane
+output$file <- renderText({
+    state <- fileMenuState()    
+    action <- pendingFileAction()
+    directory <- directory()
+    path <- if(is.null(directory)) tabs()[active == TRUE, path] else directory
+    path <- gsub(paste0(serverEnv$MDI_DIR, '/'), '', path)
+    hide(selector = '.ace-file-option')
+    if(state == states$waiting){
+        show("fileMenu")
+        hide("path-edit-wrapper")
+        path
+    } else if (state == states$choosing){
+        show("fileMenu")
+        show(selector = if(is.null(directory) && nrow(tabs()) > 0) ".ace-file-action" else ".ace-dir-action")
+        hide("path-edit-wrapper")
+        path
+    } else {
+        freezeReactiveValue(input, "confirmAction")
+        updateActionButton(session, "confirmAction", label = action$name)
+        show("confirmAction")
+        show("cancelAction")
+        if(!is.null(action$editPath)) {
+            show("path-edit-wrapper")
+            freezeReactiveValue(input, "pathEdit")
+            updateTextInput(session, "pathEdit", 
+                            value = if(action$editPath) path else "")
+            runjs(paste0("$('#", session$ns("pathEdit"), "').focus()"))
+        }
+        action$message
+    }
+})
+
+# cascade through file action prompt and execution cycle
+promptFileAction <- function(action){
+    toggleFileMenu(NULL, states$confirming)  
+    pendingFileAction(action)
+}
+queueFileAction <- function(action){
+    directory <- directory()
+    tabs <- tabs()
+    path <- if(!is.null(directory)) directory 
+            else if(any(tabs$active)) tabs[active == TRUE, path]
+            else input$baseDir
+    req(path)
+#############33
+    if(FALSE && startsWith(path, serverEnv$APPS_FRAMEWORK_DIR)){
+        promptFileAction(list(
+            message = " !!! action cannot be applied to framework files !!!"
+        ))
+    } else {
+        action$path <- path
+        promptFileAction(action)
+    }
+}
+parseFileMessage <- function(message1, message2 = "", type = NULL){
+    if(is.null(type)) type <- currentType()
+    paste("***", message1, type, message2, "***")
+}
+
+# handle file menu action clicks
+toggleFileMenu <- function(jobId, state){
+    if(is.null(jobId) || fileMenuState() == states$choosing) fileMenuState(state)
+}
+observers$fileMenu <- observeEvent(input$fileMenu, {
+    toggleFileMenu(NULL, states$choosing)
+    setTimeout(toggleFileMenu, states$waiting)
+})
+observers$confirmAction <- observeEvent(input$confirmAction, {
+    show(selector = spinnerSelector)
+    action <- pendingFileAction()
+    action$do(action$path)
+    invalidateTree( invalidateTree() + 1 )
+    hide(selector = spinnerSelector)
+    toggleFileMenu(NULL, states$waiting)
+    pendingFileAction(list())
+    if(!is.null(action$close) && action$close) closeTab(action$path)
+    if(!is.null(action$switchTo)) action$switchTo(action$path)
+})
+observers$cancelAction <- observeEvent(input$cancelAction, {
+    toggleFileMenu(NULL, states$waiting)
+    pendingFileAction(list())
+})
+observers$deletePath <- observeEvent(input$deletePath, {
+    queueFileAction(list(
+        name = "Delete",
+        message = parseFileMessage("click Delete a 2nd time to delete this"),
+        editPath = NULL,
+        close = TRUE,
+        do = function(path){
+            unlink(path, recursive = !is.null(directory()))
+        }
+    ))
+})
+observers$movePath <- observeEvent(input$movePath, {
+    isFile <- is.null(directory())
+    newPath <- ""
+    queueFileAction(list(
+        name = "Move",
+        message = parseFileMessage("edit the path and click Move to move/rename the"),
+        editPath = TRUE,
+        do = function(oldPath){
+            newPath <<- trimws(input$pathEdit)
+            if(newPath == "") return()
+            newPath <<- file.path(serverEnv$MDI_DIR, newPath)
+            dir <- dirname(newPath)
+            if(!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+            if(isFile){
+                file.copy(oldPath, newPath)
+                unlink(oldPath)
+            } else {
+                R.utils::copyDirectory(oldPath, newPath, overwrite = FALSE)
+                unlink(oldPath, recursive = TRUE) 
+            }      
+        },       
+        switchTo = function(oldPath){
+            if(!isFile) return()
+            closeTab(oldPath)            
+            if(newPath == "" || !file.exists(newPath)) return()
+            setActiveTab(newPath)
+        }
+    ))
+})
+observers$addFile <- observeEvent(input$addFile, {
+    newPath <- ""
+    queueFileAction(list(
+        name = "Add File",
+        message = parseFileMessage(
+            "type a name and click Add File to create a new",
+            type = "file"
+        ),
+        editPath = FALSE,
+        do = function(...){
+            newPath <<- trimws(input$pathEdit)
+            if(newPath == "") return()
+            dir <- directory()
+            if(is.null(dir)) dir <- input$baseDir
+            newPath <<- file.path(dir, newPath)
+            file.create(newPath)
+        },       
+        switchTo = function(...){
+            if(newPath != "") setActiveTab(newPath)
+        }
+    ))
+})
+observers$addDir <- observeEvent(input$addDir, {
+    queueFileAction(list(
+        name = "Add Dir",
+        message = parseFileMessage(
+            "type a name and click Add Dir to create a new",
+            type = "directory"
+        ),
+        editPath = FALSE,
+        do = function(...){
+            newPath <- trimws(input$pathEdit)
+            if(newPath == "") return()
+            dir <- directory()
+            if(is.null(dir)) dir <- input$baseDir
+            dir.create(file.path(dir, newPath))
+        }
+    ))
 })
 
 #---------------------------------------------------------------------
@@ -233,7 +433,7 @@ noSyntax <- "syntax checking not supported"
 noErrors <- "no syntax errors detected"
 supportedExtensions <- c("R", "yml")
 checkCodeSyntax <- function(path_, contents){
-    req(contents)
+    if(is.null(contents) || contents == "") return()
     extension <- rev(strsplit(path_, "\\.")[[1]])[1]
     tabs <- tabs()
     tabs[path == path_, message := tryCatch({

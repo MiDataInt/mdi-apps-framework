@@ -322,6 +322,11 @@ table.dataTable tbody tr.selected {
 .DT-edit-box {
     background-color: #e3eae8;
 }
+.mdi-table-column-filter input {
+    padding: 2px 6px;
+    height: 25px;
+    color: #0174BB;
+}
 
 /*  ------------------------------------------------------------------------
     sortable, including samples grid
@@ -419,19 +424,24 @@ table.dataTable tbody tr.selected {
 .ace-editor-tree-xl {
     height: 679px;
 }
-.aceEditorDialog-file {
+.ace-file-line {
     line-height: 2em; 
-    /* border-left: 47px solid #eee;  */
-    padding-left: 10px; 
     font-style: italic; 
     border-bottom: 1px solid #ddd;
-}
-.aceEditorDialog-file .shiny-text-output {
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
-    direction: rtl;
-    text-align: left;
+}
+.ace-file-line .ace-file-menu, .ace-file-line .shiny-text-output {
+    display: inline-block;
+    padding-left: 5px;
+    vertical-align: bottom;
+}
+.ace-path-action, .ace-dir-action, .ace-file-second {
+    padding-left: 5px;
+}
+.ace-file-second {
+    margin-left: 4px;
+    border-left: 1px solid #ddd;
 }
 .ace-editor-error-wrapper pre {
     border: none;

@@ -24,7 +24,7 @@ configureJobUI <- function(id, options) {
         HTML(paste( 
             options$longLabel, 
             documentationLinkUI(ns('docs')),
-            stepSettingsUI(ns('settings'))
+            settingsUI(ns('settings'))
         )), 
         leaderText,
 

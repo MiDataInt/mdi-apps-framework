@@ -132,6 +132,13 @@ let initializeAceCodeEditor = function(editorId, readOnly, mode = "r"){
     window[editorId].setTheme("ace/theme/crimson_editor");
     window[editorId].session.setMode("ace/mode/" + mode);
     window[editorId].setReadOnly(readOnly);
+    if(!readOnly) window[editorId].commands.addCommand({
+        name: 'save',
+        bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
+        exec: function(editor) {
+            saveAceSessionContents(editorId, aceCurrentPath, 'save');
+        }
+    })    
 }
 Shiny.addCustomMessageHandler('initializeAceCodeEditor', function(editorId) {
     initializeAceCodeEditor(editorId, false);
@@ -156,6 +163,7 @@ let aceSessionModes = {
     md:  "ace/mode/markdown"
 };
 let aceTabs = {};
+let aceCurrentPath = "";
 let initializeAceSession = function(options){
     let ext = options.path.split('.').pop();
     let mode = aceSessionModes[ext];
@@ -177,10 +185,17 @@ let initializeAceSession = function(options){
             );
         });
     }
+    aceCurrentPath = options.path;
     window[options.editorId].setSession(aceTabs[options.path].session);
 }
 Shiny.addCustomMessageHandler('initializeAceSession', function(options) {
     initializeAceSession(options)
+});
+Shiny.addCustomMessageHandler('clearAceSession', function(editorId) {
+    let mode = aceSessionModes.R;
+    let session = ace.createEditSession("", mode);
+    aceCurrentPath = "";
+    window[editorId].setSession(session);
 });
 let resetSessionContents = function(editorId, path){
     initializeAceSession({
@@ -196,6 +211,7 @@ let resetSessionContents = function(editorId, path){
     );
 }
 let saveAceSessionContents = function(editorId, path, action){
+    if(path === "") return;
     let tab = aceTabs[path];
     Shiny.setInputValue(
         editorId + "-contents", 
@@ -210,20 +226,52 @@ let saveAceSessionContents = function(editorId, path, action){
 Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
     delete aceTabs[options.closingPath];
     if(options.newPath === null){
+        aceCurrentPath = "";
         window[options.editorId].setSession(ace.createEditSession("", aceSessionModes.R));
     } else {
+        aceCurrentPath = options.newPath;
         window[options.editorId].setSession(aceTabs[options.newPath].session);
     }
 });
 
 /*  ------------------------------------------------------------------------
-    DT table action links
+    DT table actions
     ------------------------------------------------------------------------*/
 let handleActionClick = function(parentId, instanceId, confirmMessage){
     if(confirmMessage === "NO_CONFIRM" || confirm(confirmMessage) === true){
         Shiny.setInputValue(parentId, instanceId + '__' + Math.floor(Math.random() * 1e6)); // random allows repeat clicks
     }
 };
+let dtNumericFilters = [];
+let setDTColumnFilter = function(tableId, columnI, type, filter){
+    let table = $('#' + tableId + " .dataTable");
+    const dtId = table.attr('id'); // not the same as tableId, this is set by DataTables
+    table = table.DataTable();    
+    if(type == "character"){ // datatables handles character column matching
+        table.columns(columnI).search(filter);
+    } else { // MDI handles numeric column matching via custom search functions instantiated on first use
+        const filterId = tableId + "-filter-" + columnI;
+        if(!dtNumericFilters[filterId]){
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex){
+                if(dtId !== settings.sTableId) return true; // only apply filters to the table that create them 
+                const filter = $("#" + filterId).val().replaceAll(" ", "");
+                if(filter === "") return true;
+                const i = filter.search(/\d/);
+                if(i === -1) return true;
+                let operation = i === 0 ? "==" : filter.substring(0, i);
+                if(operation === "=") operation = "==";
+                try {                
+                    const expr = data[columnI] + " " + operation + " " + parseFloat(filter.substring(i));
+                    return(eval(expr));
+                } catch (error) {
+                    return(true);
+                }
+            }); 
+            dtNumericFilters[filterId] = true;
+        }
+    }
+    table.draw();
+}
 
 /*  ------------------------------------------------------------------------
     Pipeline Runner, functions to simplify the number of required input observers in R

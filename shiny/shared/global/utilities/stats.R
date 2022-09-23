@@ -65,3 +65,12 @@ pearson.matrix <- function(m) { # m is a matrix
   m <-  tcrossprod(m)
   0.5 - m / 2 # return the full matrix, not a dist formatted object
 }
+
+# fit points within a plot axis plus a little padding
+paddedRange <- function(v, paddingFrac = 0.05){
+    range <- range(v)
+    width <- range[2] - range[1]
+    if(width == 0) return(range)
+    padding <- width * paddingFrac
+    c(range[1] - padding, range[2] + padding)
+}

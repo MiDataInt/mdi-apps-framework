@@ -2,11 +2,6 @@
 # reactive components for caching and only occasionally displaying a set 
 # of input parameters for controlling how an application step or component behaves
 #----------------------------------------------------------------------
-# user click of a gear icon opens a dynamically populated popup
-#----------------------------------------------------------------------
-# settings are read from module.yml, settings.yml or as a list
-# see bottom and other modules for format examples
-#----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # BEGIN MODULE SERVER
@@ -20,11 +15,10 @@ settingsServer <- function(
     fade = FALSE,
     title = "Set Parameters",
     immediate = FALSE, # if TRUE, setting changes are transmitted in real time
-    resettable = TRUE  # if TRUE, a Reset All Setting link will be provided
+    resettable = TRUE,  # if TRUE, a Reset All Setting link will be provided
+    s3Class = NULL # optional S3 class to assign to the settings object
 ) {
     moduleServer(id, function(input, output, session) {
-        ns <- NS(id) # in case we create inputs, e.g. via renderUI
-        parentNs <- NS(parentId)
         module <- 'settings' # for reportProgress tracing
 #----------------------------------------------------------------------
 
@@ -33,6 +27,7 @@ settingsServer <- function(
 #----------------------------------------------------------------------
 gearId <- 'gearIcon'
 fullGearId <- paste(parentId, id, gearId, sep = "-")
+dialogObservers <- reactiveValues()
 
 # setting values cache, for pages where settings change in response to calls to 'replace'
 cache <- list()
@@ -114,7 +109,7 @@ initializeSettings(template)
 # react to user click of gear icon by opening a modal popup
 #----------------------------------------------------------------------
 resetAllSettingsId <- paste(parentId, id, "resetAllSettings", sep = "-")
-observeEvent(input[[gearId]], {
+observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent element
     req(hasValidSettings)
     req(nTabs > 0)
     showUserDialog(
@@ -124,14 +119,15 @@ observeEvent(input[[gearId]], {
         size = workingSize,        
         callback = fromInputs,
         fade = fade,
-        type = if(immediate) "okOnly" else "okCancel"
+        type = if(immediate) "okOnly" else "okCancel",
+        observers = dialogObservers
     )
 })
 if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], {
     lapply(names(template), function(tab){
         lapply(names(settings[[tab]]), function(id){
             t <- template[[tab]][[id]]
-            fullId <- parentNs(id)
+            fullId <- session$ns(id)
             switch(
                 t$type,
                 textInput = updateTextInput(sessionSession, fullId, value = t$value),
@@ -154,8 +150,8 @@ getTabInputs <- function(id, tab){
     x <- settings[[tab]][[id]]
     t <- template[[tab]][[id]]
     t$label <- gsub('_', ' ', id)
-    fullId <- parentNs(id)
-    if(immediate) observeEvent(sessionInput[[fullId]], setValue(tab, id, fullId))        
+    fullId <- session$ns(id)
+    if(immediate) dialogObservers[[fullId]] <- observeEvent(sessionInput[[fullId]], setValue(tab, id, fullId))        
     getOption <- function(name, default=NA) if(is.null(x[[name]])) default else x[[name]]
     getInline <- function() if(!is.null(t$inline)) t$inline else TRUE
     column(width = inputWidth, switch(
@@ -218,12 +214,12 @@ fileInputPanel <- function(fullId, t, x){
     buttonId <- paste(fullId, "button", sep = "-")
     clearId  <- paste(fullId, "clear",  sep = "-")
     filePath <- function(fileName) file.path(serverEnv$UPLOADS_DIR, fileName)
-    observeEvent(sessionInput[[buttonId]], {
+    dialogObservers[[buttonId]] <- observeEvent(sessionInput[[buttonId]], {
         file <- sessionInput[[buttonId]]
         file.copy(file$datapath, filePath(file$name))
         updateTextInput(sessionSession, fullId, value = file$name)
     })
-    observeEvent(sessionInput[[clearId]], {
+    dialogObservers[[clearId]] <- observeEvent(sessionInput[[clearId]], {
         unlink(filePath(sessionInput[[fullId]]))        
         updateTextInput(sessionSession, fullId, value = "")
     })
@@ -241,8 +237,8 @@ setValue <- function(tab, id, fullId){ # in immediate mode
     allSettings(x)
     setCachedValues(x)
 }
-setValues <- function(id, tab, input){ # in delayed mode
-    settings[[tab]][[id]]$value <- input[[parentNs(id)]] 
+setValues <- function(id, tab, input){ # in delayed mode 
+    settings[[tab]][[id]]$value <- input[[session$ns(id)]] 
 }
 fromInputs <- function(input){ # same as from bookmark
     lapply(names(template), function(tab){
@@ -270,7 +266,10 @@ retval$get <- function(tab, id){
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
 }
-retval
+structure(
+    retval,
+    class = c(s3Class, "mdiSettings")
+) 
 
 #----------------------------------------------------------------------
 # END MODULE SERVER

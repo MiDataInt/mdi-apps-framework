@@ -47,36 +47,39 @@ showHtmlModal <- function(file, type, title){
 
 # a small format modal popup for getting user input or confirmation
 dialogCallback <- function(parentInput) NULL
+dialogObservers <- NULL
 removeModalOnCallback <- TRUE
 showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
                            size = "s", type = 'okCancel', footer = NULL, 
-                           easyClose = TRUE, fade = NULL, removeModal = TRUE){
+                           easyClose = TRUE, fade = NULL, removeModal = TRUE,
+                           observers = NULL){
     dialogCallback <<- callback
+    dialogObservers <<- observers
     removeModalOnCallback <<- removeModal
     footer <- switch(type,
         dismissOnly = tagList( # an "information only" dialog
             bsButton("userDialogOk", "Dismiss", style = "primary")
         ),
         okOnly = tagList( # an "information only" dialog
-            modalButton("OK")
+            actionButton("userDialogOk", "OK")
         ),
         okOnlyCallback = tagList( # an "information only" dialog
             actionButton("userDialogOk", "OK")
         ),
         okCancel = tagList( # an action that require input and/or confirmation
-            modalButton("Cancel"),
+            actionButton("userDialogCancel", "Cancel"),
             actionButton("userDialogOk", "OK")
         ),
         saveCancel = tagList( 
-            modalButton("Cancel"),
+            actionButton("userDialogCancel", "Cancel"),
             bsButton("userDialogOk", "Save", style = "success")
         ),
         deleteCancel = tagList( 
-            modalButton("Cancel"),
+            actionButton("userDialogCancel", "Cancel"),
             bsButton("userDialogOk", "Delete Permanently", style = "warning")
         ),
         discardCancel = tagList(
-            modalButton("Cancel"),
+            actionButton("userDialogCancel", "Cancel"),
             bsButton("userDialogOk", "Discard Permanently", style = "warning")
         ),
         okOnlyWithAction = tagList( # an information dialog that executes an action upon closing
@@ -96,11 +99,30 @@ showUserDialog <- function(title, ..., callback = function(parentInput) NULL,
         fade = if(is.null(fade)) serverEnv$IS_LOCAL_BROWSER else fade
     ))
 }
+destroyDialogObservers <- function(){
+    if(!is.null(dialogObservers)){
+        lapply(names(dialogObservers), function(x) {
+            dialogObservers[[x]]$destroy()
+        })
+    }
+}
 observeEvent(input$userDialogOk, { # one global observer for session
     removeInputFromSession(session, "userDialogOk") # since button name reused in every dialog
+    removeInputFromSession(session, "userDialogCancel")
     tryCatch({
         dialogCallback(input)
+        destroyDialogObservers()
         if(removeModalOnCallback) removeModal()
+    }, error = function(e){
+        runjs(paste0( '$("#modal-dialog-error").html("', e$message, '")' ))
+    })
+})
+observeEvent(input$userDialogCancel, { # one global observer for session
+    removeInputFromSession(session, "userDialogOk") # since button name reused in every dialog
+    removeInputFromSession(session, "userDialogCancel")
+    tryCatch({
+        destroyDialogObservers()
+        removeModal()
     }, error = function(e){
         runjs(paste0( '$("#modal-dialog-error").html("', e$message, '")' ))
     })

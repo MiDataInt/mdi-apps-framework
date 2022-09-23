@@ -3,7 +3,7 @@ title: assignSamples
 parent: Standard Step Modules
 grand_parent: App Steps
 has_children: false
-nav_order: 20
+nav_order: 30
 ---
 
 ## {{page.title}} appStep module
@@ -16,12 +16,12 @@ of an experiment or project.
 
 The assignSamples UI allows users to:
 
-- create a grid representing the categories that define a sample set
+- create a grid representing the categories that define a Sample Set
 - assign names to the categories
-- assign replicate samples into the cells of the grid, i.e., combinations of categories
+- assign replicate Samples into the cells of the grid, i.e., combinations of categories
 - use various automation tools to auto-fill grids
-- save multiple distinct samples sets from the same data sources
-- edit previously saved samples sets when necessary, e.g., to remove bad samples
+- save multiple distinct Samples Sets from the same data sources
+- edit previously saved Samples Sets when necessary, e.g., to remove bad Samples
 
 {% include figure.html file="app-steps/assign-samples.png" border=true %}
 
@@ -42,11 +42,12 @@ appSteps:
         module: assignSamples
 ```
 
-### Step dependencies: sourceFileUpload
+### Step dependencies: sourceFileUpload or selectSamples
 
-All apps that use the assignSamples module must also use sourceFileUpload
-as their first step, as assignSamples reads its data from one or more
-sources that are the outcomes returned by sourceFileUpload.
+All apps that use the assignSamples module must also use either 
+sourceFileUpload or selectSamples
+as their first step, as assignSamples reads its data from the
+structured outcomes, i.e. data sources and samples, of those steps.
 
 ### Definition and structure of categories and sample sets
 

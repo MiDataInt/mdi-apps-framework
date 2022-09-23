@@ -60,7 +60,13 @@ data <- summaryTableServer(
 # how to lock and unlock sources from sample sets
 #----------------------------------------------------------------------
 changeLocks <- function(sampleSetId, lockFn){
-    sourceIds <- data$list[[sampleSetId]]$assignments$Source_ID
+    parent <- app$config$appSteps[[options$source]]$module
+    assignments <- data$list[[sampleSetId]]$assignments
+    sourceIds <- if(parent == "selectSamples") {
+        paste("allSamples", assignments$Sample_ID, sep = ":")
+    } else {
+        assignments$Source_ID
+    }
     lockFn(locks[[options$source]], module, sampleSetId, sourceIds)   
 }
    

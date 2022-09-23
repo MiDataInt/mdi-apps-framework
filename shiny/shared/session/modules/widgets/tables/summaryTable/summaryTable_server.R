@@ -10,10 +10,18 @@
 # BEGIN MODULE SERVER
 #----------------------------------------------------------------------
 summaryTableServer <- function(
-    id, parentId, stepNumber, stepLocks, sendFeedback,
-    template, type,
-    remove = NULL, names = NULL, parent = NULL,
-    clearLocks = NULL, statusChange = NULL,
+    id, 
+    parentId, 
+    stepNumber, 
+    stepLocks, 
+    sendFeedback,
+    template, 
+    type,
+    remove = NULL, 
+    names = NULL, 
+    parent = NULL,
+    clearLocks = NULL, 
+    statusChange = NULL,
     delete = NULL # for when each table row is linked to a single, specific server file
 ) {
     moduleServer(id, function(input, output, session) {

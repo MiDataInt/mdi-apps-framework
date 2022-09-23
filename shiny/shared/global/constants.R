@@ -97,5 +97,18 @@ CONSTANTS <- list(
         teal    = '#17becf',  # blue-teal
         black   = 'black',
         grey    = '#7f7f7f'
+    ),
+
+    # graphical conversions
+    cmPerInch = 2.54,
+
+    # cache TTL values
+    ttl = list(
+        year   = 31536000,
+        month  = 2592000,
+        week   = 604800,
+        day    = 86400,
+        hour   = 3600,
+        minute = 60
     )
 )

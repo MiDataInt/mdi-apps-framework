@@ -44,6 +44,7 @@ addMdiToolsUI <- function(
 
     # additional actions for developers
     fluidRow(tabBox(
+        id = "developerTabs",
         width = 12,
 
         # create a tool suite        
@@ -109,6 +110,49 @@ addMdiToolsUI <- function(
                 width = 12,            
                 id = ns("addToolError"),
                 style = "margin-top: 5px; color: rgb(200, 0, 0);"
+            ))
+        ),
+
+        # add components to tools
+        if(is.null(app$DIRECTORY)) NULL else tabPanel(
+            "Add to App",
+            tags$p(tags$strong(
+                "Add an app step or widget to the '",
+                app$NAME,
+                "' app"
+            )),
+            tags$p(
+                "Select the component type, whether it is a shared component, ",
+                "enter a name, and click Add Component."
+            ),
+            fluidRow(
+                column(
+                    width = 4,
+                    selectInput(ns("componentType"), "Component Type", 
+                                choices = c("App Step" = "appStep", "Widget" = "widget"), 
+                                width = "100%")
+                ),
+                column(
+                    width = 4,
+                    textInput(ns("componentName"), "Name", width = "100%")
+                ),
+                column(
+                    width = 4,
+                    tags$div(
+                        style = "margin-top: 30px;",
+                        checkboxInput(ns("sharedComponent"), "Shared", width = "100%")
+                    )
+                )
+            ),
+            fluidRow(column(
+                width = 12,
+                style = "margin-top: 10px;",
+                textOutput(ns("componentDir"))
+            )),
+            fluidRow(column(
+                width = 12,
+                style = "margin-top: 20px;",
+                bsButton(ns("addComponent"), "Add Component", style = "success")
             ))
         )
     ))
