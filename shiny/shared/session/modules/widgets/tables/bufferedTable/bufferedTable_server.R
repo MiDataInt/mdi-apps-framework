@@ -31,6 +31,7 @@ tableId <- 'table'
 selectedId <- paste(tableId, 'rows', 'selected', sep = '_')
 proxy <- dataTableProxy(tableId)
 buffer <- reactiveVal()
+observers <- list()
 
 # render the table
 # will redraw anytime tableData invalidates; caller must control via isolate({}) in tableData
@@ -62,7 +63,7 @@ output[[tableId]] <- renderDT(
 # add the edit box observers that will interact with the buffer
 for(editId in names(editBoxes)){
     editBox <- editBoxes[[editId]]
-    observeEvent(parentInput[[editId]], {
+    observers[[editId]] <- observeEvent(parentInput[[editId]], {
 
         # process the new data
         d <- getTableEditBoxData(parentInput, editId)
@@ -90,19 +91,19 @@ for(editId in names(editBoxes)){
 
 # observe row selection and pass back to caller
 if(selection != 'none' && !is.null(selectionFn)){
-    observeEvent(input[[selectedId]], {
+    observers$rowSelection <- observeEvent(input[[selectedId]], {
         selectionFn(input[[selectedId]])
     })    
 }
 
 # update the row selection based on a caller's reactive
-if(!is.null(select)) observeEvent(select(), {
+if(!is.null(select)) observers$selectRows <- observeEvent(select(), {
     selectRows(proxy, select())
 })
 
 # update the table data without a complete redraw, i.e. updates "in place"
 # executed whenever the buffer changes
-observeEvent(buffer(), {
+observers$bufferChange <- observeEvent(buffer(), {
     req(server) # replaceData() is inconsistent with client-side processing
     buffer <- buffer()
     req(buffer)
@@ -154,7 +155,8 @@ list(
     selectionObserver = rowSelectionObserver(tableId, input),
     selectRows = function(rows) selectRows(proxy, rows), # for setting the row selection
     updateCell = updateCell,
-    buffer = buffer
+    buffer = buffer,
+    observers = observers
 )
 
 #----------------------------------------------------------------------

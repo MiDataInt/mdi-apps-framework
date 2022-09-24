@@ -35,14 +35,19 @@ getInstanceId <- function(parentId, i, j=0){ # i = row number, j = optional item
 # request is for a set of inputs, one per row
 tableUiInputs <- function(ShinyUiFun, parentId, nrow, ..., allow=NULL) { # ShinyUiFun = actionButton, etc.
     setUILoadCounter()
-    inputs <- character(nrow)
-    if(is.null(allow)) allow <- rep(TRUE, nrow)
-    for (i in seq_len(nrow)) {
-        instanceId <- getInstanceId(parentId, i)    
-        ui <- if(allow[i]) ShinyUiFun(instanceId, ...) else ""
-        inputs[i] <- as.character(tags$div(onmousedown = "event.stopPropagation();", ui))
+    if(is.null(allow) || all(allow)){ # much faster to only call ui function once if all are allowed
+        i <- "__ROW__I__"
+        instanceId <- getInstanceId(parentId, i)
+        ui <- ShinyUiFun(instanceId, ...)
+        div <- as.character(tags$div(onmousedown = "event.stopPropagation();", ui))
+        mapply(gsub, pattern = i, replacement = seq_len(nrow), div)
+    } else {
+        sapply(seq_len(nrow), function(i){
+            instanceId <- getInstanceId(parentId, i)    
+            ui <- if(allow[i]) ShinyUiFun(instanceId, ...) else ""
+            as.character(tags$div(onmousedown = "event.stopPropagation();", ui))
+        })        
     }
-    inputs 
 }
 # request is for a single input in a single numbered row
 tableUiInput <- function(ShinyUiFun, parentId, rowN, ..., allow=NULL, j=0) { # ShinyUiFun = actionButton, etc.
