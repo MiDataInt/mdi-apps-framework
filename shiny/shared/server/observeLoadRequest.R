@@ -50,6 +50,20 @@ executeLoadRequest <- function(loadRequest){
     #   global, then session, folders were previously sourced by initializeSession.R on page load
     updateSpinnerMessage(session, "loading scripts")
     sessionEnv$sourceLoadType <- "app"
+    loadedExternalSuites <- character()
+    for(appStep in app$config$appSteps){ # source external suite scripts first
+        if(is.null(appStep$module)) next
+        if(!grepl('//', appStep$module)) next 
+        suite <- strsplit(appStep$module, '//')[[1]][1]
+        if(suite %in% loadedExternalSuites) return(NULL)
+        dirs <- parseExternalSuiteDirs(suite)
+        if(is.null(dirs)) return(NULL)
+        loadSuccess <- loadAllRScripts(dirs$suiteGlobalDir, recursive = TRUE)
+        if(!loadSuccess) return(NULL)
+        loadSuccess <- loadAllRScripts(dirs$suiteSessionDir, recursive = TRUE)
+        if(!loadSuccess) return(NULL)
+        loadedExternalSuites <- c(loadedExternalSuites, suite)
+    }
     loadSuccess <- loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
     if(!loadSuccess) return(NULL)
     loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)
@@ -116,7 +130,7 @@ executeLoadRequest <- function(loadRequest){
             do.call(tabItems, unname(tabItemsList)) # do.call syntax necessitated shinydashboard limitation  
         })
     )
-    
+
     # initialize the record lock lists
     updateSpinnerMessage(session, "initializing bookmarks and locks")
     locks <<- intializeStepLocks()

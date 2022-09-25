@@ -6,7 +6,7 @@
 mdiInteractivePlotUI <- function(id){
     module <- 'mdiInteractivePlot'
     ns <- NS(id)    
-    moduleDir <- getWidgetDir(file.path("plots", module), shared = TRUE, framework = TRUE)
+    moduleDir <- getWidgetDir(file.path("plots", module), framework = TRUE)
     tags$div(
 
         # outer wrapper attributes

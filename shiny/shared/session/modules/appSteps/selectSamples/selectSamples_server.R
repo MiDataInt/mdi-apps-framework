@@ -10,7 +10,7 @@ selectSamplesServer <- function(id, options, bookmark, locks) {
 #----------------------------------------------------------------------
 module <- 'selectSamples'
 options <- setDefaultOptions(options, stepModuleInfo[[module]])
-appStepDir <- getAppStepDir(module, framework = TRUE)
+appStepDir <- getAppStepDir(module)
 if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
     session,
     url = getDocumentationUrl("shiny/shared/session/modules/appSteps/selectSamples/README", 

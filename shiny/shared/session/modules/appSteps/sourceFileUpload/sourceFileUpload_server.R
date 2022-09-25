@@ -14,7 +14,7 @@ if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
     session,
     url = getDocumentationUrl("shiny/shared/session/modules/appSteps/sourceFileUpload/README", 
                               framework = TRUE),
-    baseDirs = getAppStepDir(module, framework = TRUE),
+    baseDirs = getAppStepDir(module),
     envir = environment()
 )
 

@@ -154,3 +154,29 @@ parseAppDirectory <- function(appDir, extended = FALSE){
         coldStartable = extended$coldStartable
     )
 }
+
+# parse external suite directories
+parseExternalSuiteDirs <- function(suite){
+    getExternalSuiteDir <- function(fork, allow = TRUE){
+        if(!allow) return(NULL)
+        dir <- file.path(serverEnv$SUITES_DIR, fork, suite)
+        if(!dir.exists(dir)) return(NULL)
+        dir
+    }
+    suiteDir <- getExternalSuiteDir("developer-forks", serverEnv$IS_DEVELOPER)
+    if(is.null(suiteDir)) suiteDir <- getExternalSuiteDir("definitive")
+    if(is.null(suiteDir)) return(NULL)
+    suiteSharedDir  <- file.path(suiteDir, 'shiny', 'shared')
+    suiteGlobalDir  <- file.path(suiteSharedDir, 'global')
+    suiteSessionDir <- file.path(suiteSharedDir, 'session')
+    list(
+        suiteDir = suiteDir,
+        suiteSharedDir = suiteSharedDir,
+        suiteGlobalDir = suiteGlobalDir,
+        suiteSessionDir = suiteSessionDir,
+        suiteSharedClassesDir   = file.path(suiteGlobalDir,  'classes'),
+        suiteSharedModulesDir   = file.path(suiteSessionDir, 'modules'),
+        suiteSharedTypesDir     = file.path(suiteSessionDir, 'types'),
+        suiteSharedUtilitiesDir = file.path(suiteSessionDir, 'utilities')
+    )
+}

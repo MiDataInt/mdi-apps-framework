@@ -13,7 +13,7 @@ __MODULE_NAME__Server <- function(id, options, bookmark, locks) {
 # initialize module
 #----------------------------------------------------------------------
 module <- '__MODULE_NAME__'
-appStepDir <- getAppStepDir(module, shared = __IS_SHARED_MODULE__)
+appStepDir <- getAppStepDir(module)
 options <- setDefaultOptions(options, stepModuleInfo[[module]])
 settings <- activateMdiHeaderLinks( # uncomment as needed
     session,

@@ -151,8 +151,9 @@ initializeAppStepNamesByType <- function(){
         file.path(app$sources$suiteSharedModulesDir, 'appSteps'),
         file.path(serverEnv$SHARED_DIR, 'session',  'modules', 'appSteps')
     )    
-    getStepModuleDir <- function(moduleName){
-        for(dir in modulesDirs){ # return the first found module in modulesDirs search order
+    getStepModuleDir <- function(moduleName, modDirs = NULL){
+        if(is.null(modDirs)) modDirs <- modulesDirs
+        for(dir in modDirs){ # return the first found module in modulesDirs search order
             moduleDir <- file.path(dir, moduleName)
             if(dir.exists(moduleDir)) return(moduleDir)
         }
@@ -162,8 +163,20 @@ initializeAppStepNamesByType <- function(){
         appStep <- app$config$appSteps[[i]]
         stepName <- names(app$config$appSteps)[i] 
         if(is.null(appStep$module)) return(paste("missing module for app step:", stepName))
-        moduleDir <- getStepModuleDir(appStep$module)
+        moduleDir <- if(grepl('//', appStep$module)){ # an external, shared appStep
+            parts <- strsplit(appStep$module, '//')[[1]]
+            dirs <- parseExternalSuiteDirs(parts[1])
+            if(is.null(dirs)) return(NULL)
+            modDir <- getStepModuleDir(parts[2], file.path(dirs$suiteSharedModulesDir, 'appSteps'))
+            if(!is.null(modDir)) {
+                app$config$appSteps[[i]]$suite  <<- parts[1]
+                app$config$appSteps[[i]]$module <<- parts[2]
+                appStep$module <- parts[2]
+            }
+            modDir
+        } else getStepModuleDir(appStep$module) # a suite-specific or standard framework appStep
         if(is.null(moduleDir)) return(paste("unknown module:", appStep$module))
+        app$config$appSteps[[i]]$moduleDir <<- moduleDir
         moduleYml <- file.path(moduleDir, 'module.yml')       
         if(!file.exists(moduleYml)) return(paste("missing module.yml config file for module:", appStep$module))
         stepModuleInfo[[appStep$module]] <<- read_yaml(moduleYml)
