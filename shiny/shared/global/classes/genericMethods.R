@@ -15,6 +15,9 @@ click <- function(x, ...) {
 hover <- function(x, ...) {
     UseMethod("hover", x)
 }
+brush <- function(x, ...) {
+    UseMethod("brush", x)
+}
 
 # retrieve an XY table for plotting in a scatter plot, etc.
 # results expected be returned as a data.table(x=x,y=y)
