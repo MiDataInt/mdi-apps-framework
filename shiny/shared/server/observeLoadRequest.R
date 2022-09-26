@@ -46,24 +46,36 @@ executeLoadRequest <- function(loadRequest){
     # if bookmark being loaded, check bookmark versions against latest (and working if different)
     # if date file being loaded (i.e, without prior version info), check working against latest
 
+    # load dependency scripts first
+    # check and set versions of suite dependencies prior to script loading
+    sessionEnv$sourceLoadType <- "app"
+    updateSpinnerMessage(session, "loading dependencies")
+    gitStatusData$dependencies <- getSuiteDependencies(gitStatusData$suite$dir)
+    abortDependency <- function(repoDir){
+        releaseMdiGitLock(repoDir)
+        NULL
+    }
+    for(i in seq_along(gitStatusData$dependencies)){
+        x <- gitStatusData$dependencies[[i]]
+        if(!is.null(x$version)){
+            waitForRepoLock(repoDir = x$dir)
+            setMdiGitLock(x$dir)
+            git2r::checkout(x$dir, x$version, create = FALSE)            
+        }
+        dirs <- parseExternalSuiteDirs(x$name)
+        if(is.null(dirs)) return( abortDependency(x$dir) )
+        loadSuccess <- loadAllRScripts(dirs$suiteGlobalDir, recursive = TRUE)
+        if(!loadSuccess) return( abortDependency(x$dir) )
+        loadSuccess <- loadAllRScripts(dirs$suiteSessionDir, recursive = TRUE)
+        if(!loadSuccess) return( abortDependency(x$dir) )  
+        gitStatusData$dependencies[[i]]$versions <- getAllVersions(x$dir)
+        gitStatusData$dependencies[[i]]$head <- getGitHead(x)        
+        if(!is.null(x$version)) releaseMdiGitLock(x$dir)
+    }
+
     # load all relevant session scripts in reverse precedence order
     #   global, then session, folders were previously sourced by initializeSession.R on page load
-    updateSpinnerMessage(session, "loading scripts")
-    sessionEnv$sourceLoadType <- "app"
-    loadedExternalSuites <- character()
-    for(appStep in app$config$appSteps){ # source external suite scripts first
-        if(is.null(appStep$module)) next
-        if(!grepl('//', appStep$module)) next 
-        suite <- strsplit(appStep$module, '//')[[1]][1]
-        if(suite %in% loadedExternalSuites) return(NULL)
-        dirs <- parseExternalSuiteDirs(suite)
-        if(is.null(dirs)) return(NULL)
-        loadSuccess <- loadAllRScripts(dirs$suiteGlobalDir, recursive = TRUE)
-        if(!loadSuccess) return(NULL)
-        loadSuccess <- loadAllRScripts(dirs$suiteSessionDir, recursive = TRUE)
-        if(!loadSuccess) return(NULL)
-        loadedExternalSuites <- c(loadedExternalSuites, suite)
-    }
+    updateSpinnerMessage(session, "loading app scripts")
     loadSuccess <- loadAllRScripts(app$sources$suiteGlobalDir, recursive = TRUE)
     if(!loadSuccess) return(NULL)
     loadSuccess <- loadAppScriptDirectory(app$sources$suiteSessionDir)

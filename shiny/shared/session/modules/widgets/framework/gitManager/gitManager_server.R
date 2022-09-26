@@ -37,17 +37,28 @@ getRepoTable <- function(type, repo) data.table(
 output$statusTable <- renderDT(
     {
         dt <- getRepoTable("framework", gitFrameworkStatus)
-        if(!is.null(gitStatusData$suite$name)) dt <- rbind(
-            dt,
-            getRepoTable("suite", gitStatusData$suite),
-            data.table(
-                "Type" = "app",
-                "Name" =  gitStatusData$app$name,
-                "Fork" = "",
-                "Head / Version" = gitStatusData$app$version,
-                "Commit" = ""
+        if(!is.null(gitStatusData$suite$name)) {
+            dt <- rbind(
+                dt,
+                getRepoTable("suite", gitStatusData$suite)
             )
-        )
+            for(x in gitStatusData$dependencies){
+                dt <- rbind(
+                    dt,
+                    getRepoTable("dependency", x)
+                ) 
+            }
+            dt <- rbind(
+                dt,
+                data.table(
+                    "Type" = "app",
+                    "Name" =  gitStatusData$app$name,
+                    "Fork" = "",
+                    "Head / Version" = gitStatusData$app$version,
+                    "Commit" = ""
+                )
+            )
+        }
         buffer <<- dt
     },
     options = list( # just a barebones table
@@ -164,8 +175,9 @@ observers$repoSelected <- observeEvent(repoObserver(), {
     toggle(selector = ".isRepoSelected", condition = isRepoSelected)
     repo(switch(
         type,
-        framework = gitFrameworkStatus,
-        suite = gitStatusData$suite,
+        framework  = gitFrameworkStatus,
+        suite      = gitStatusData$suite,
+        dependency = gitStatusData$dependencies[[rowI - 2]],
         NULL
     )) 
 
