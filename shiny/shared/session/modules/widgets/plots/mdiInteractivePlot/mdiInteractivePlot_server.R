@@ -17,7 +17,7 @@ mdiInteractivePlotServer <- function(
     # contents = reactive({ list(
     #     pngFile = path, # OR plotArgs
     #     plotArgs = list(
-    #          ...
+    #          ... # first element must have a "plot.class" method and be named "x" or unnamed
     #     ),
     #     layout = list(
     #         width = pixels,

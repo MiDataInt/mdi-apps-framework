@@ -93,7 +93,7 @@ loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
 loadAppScriptDirectory <- function(dir, local=NULL){
     success <- loadAllRScripts(dir, recursive = FALSE, local = local)
     if(!success) return(FALSE)
-    for(subDir in c('modules', 'types', 'ui', 'utilities')) {
+    for(subDir in c('classes', 'modules', 'types', 'ui', 'utilities')) {
         success <- loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
         if(!success) return(FALSE)
     }

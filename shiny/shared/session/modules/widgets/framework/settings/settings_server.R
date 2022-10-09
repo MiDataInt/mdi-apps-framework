@@ -185,6 +185,7 @@ getTabInputs <- function(id, tab){
             inline = getInline()
         ),
         fileInput = fileInputPanel(fullId, t, x),
+        dataSource = dataSourceSelect(fullId, t, x),
         spacer = span(style = "visibility: hidden;", textInput(fullId, fullId, "")),
         get(x$type)(fullId, t$label, x$value)
     ), style = "margin-bottom: 5px;")    
@@ -228,6 +229,13 @@ fileInputPanel <- function(fullId, t, x){
         disabled(textInput(fullId, NULL, x$value)),
         actionLink(clearId, "Remove File")
     )
+}
+dataSourceSelect <- function(fullId, t, x){
+    upload <- app[[ appStepNamesByType$upload ]]
+    sources <- upload$outcomes$sources()
+    sourceIds <- names(sources)
+    names(sourceIds) <- sapply(sources, function(x) x$unique$Project)
+    selectInput(fullId, t$label, choices = sourceIds)
 }
 
 # update our cached setting values when user commits changes from the modal
