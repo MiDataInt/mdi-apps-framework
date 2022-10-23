@@ -26,3 +26,9 @@ expandImg <- function(img, h = 1, v = 1){
   }
   img
 }
+
+pngFileToBase64 <- function(pngFile){
+  if(is.null(pngFile) || !file.exists(pngFile)) return("")
+  png <- RCurl::base64Encode(readBin(pngFile, "raw", file.info(pngFile)[1, "size"]), "txt")
+  sprintf('data:image/png;base64,%s', png)
+}
