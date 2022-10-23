@@ -14,7 +14,7 @@ if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
     session,
     url = getDocumentationUrl("shiny/shared/session/modules/appSteps/sourceFileUpload/README", 
                               framework = TRUE),
-    baseDirs = getAppStepDir(module, framework = TRUE),
+    baseDirs = getAppStepDir(module),
     envir = environment()
 )
 
@@ -98,9 +98,9 @@ loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
     sourceId <- tools::md5sum(incomingFile$path) # treat md5 sums as "effectively unique" identifiers
     sourceType <- incomingFile$type
     sft <- CONSTANTS$sourceFileTypes
-    loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId, incomingFile$name) # nolint
-         else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId)
-         else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId) # nolint
+    loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId, incomingFile$name, suppressUnlink) # nolint
+         else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId, suppressUnlink)
+         else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId, suppressUnlink) # nolint
     if(is.null(suppressUnlink) || !suppressUnlink) unlink(incomingFile$path)    
     sources$list[[sourceId]] <- c(
         loaded,
@@ -120,8 +120,8 @@ observeEvent(sourceFileInput$file(), {
     req(type)
     loadSourceFile(x, suppressUnlink = x$suppressUnlink)
 })
-badSourceFile <- function(filePath, msg=""){
-    unlink(filePath)
+badSourceFile <- function(filePath, msg="", suppressUnlink = FALSE){
+    if(is.null(suppressUnlink) || !suppressUnlink) unlink(filePath)
     stopSpinner(session, '!!!! badSourceFile !!!!')    
     sourceFileInput$sendFeedback(paste("bad source file:", msg), isError = TRUE)    
 }
@@ -129,12 +129,12 @@ badSourceFile <- function(filePath, msg=""){
 #----------------------------------------------------------------------
 # load an incoming Stage 1 pipeline output package file
 #----------------------------------------------------------------------
-loadPackageFile <- function(packagePath, packageId, packageFileName){ # packagePath validated upstream as package usable by app
+loadPackageFile <- function(packagePath, packageId, packageFileName, suppressUnlink){ # packagePath validated upstream as package usable by app
     dataDir <- getPackageDir(packageId) # packageId is the package file md5sum
 
     # extract the contents declared to be in the package file
     packageConfig <- getPackageFileConfig(packagePath, sourceFileInput$sendFeedback) # i.e., package.yml
-    if(is.null(packageConfig$uploadType)) badSourceFile(packagePath, msg = "missing upload type in package file")
+    if(is.null(packageConfig$uploadType)) badSourceFile(packagePath, msg = "missing upload type in package file", suppressUnlink)
     contentFileTypes <- app$config$uploadTypes[[ packageConfig$uploadType ]]$contentFileTypes
     # contentFileTypes[[manifestFileType]] <- list(required = TRUE)
     contentFileTypeNames <- names(contentFileTypes)
@@ -145,7 +145,7 @@ loadPackageFile <- function(packagePath, packageId, packageFileName){ # packageP
         x <- contentFileTypes[[contentFileTypeName]]
         if(is.null(x$required) || !x$required) next # don't worry about optional files
         matchCount <- sum(contentFileTypeName == packageFileTypeNames)
-        if(matchCount == 0) badSourceFile(packagePath, paste("missing file type in package:", contentFileTypeName))
+        if(matchCount == 0) badSourceFile(packagePath, paste("missing file type in package:", contentFileTypeName), suppressUnlink)
     }
 
     # extract the files required by, or compatible with, the app
@@ -156,7 +156,7 @@ loadPackageFile <- function(packagePath, packageId, packageFileName){ # packageP
         fileName <- packageFile$file
         tryCatch({
             unzip(packagePath, files = fileName, exdir = dataDir)        
-        }, error = function(e) badSourceFile(packagePath, paste("could not extract file from package:", fileName)) )
+        }, error = function(e) badSourceFile(packagePath, paste("could not extract file from package:", fileName), suppressUnlink) )
     } 
 
     # load the sample manifest file, if present
@@ -165,9 +165,9 @@ loadPackageFile <- function(packagePath, packageId, packageFileName){ # packageP
         getNullManifest(packageFileName) # some pipeline outputs may not be sample-based
     } else {  
         if(is.null(manifestFile$manifestType))
-            badSourceFile(packagePath, 'missing manifest type in package')
+            badSourceFile(packagePath, 'missing manifest type in package', suppressUnlink)
         if(is.null(manifestTypes[[manifestFile$manifestType]])) 
-            badSourceFile(packagePath, 'unknown manifest type in package')
+            badSourceFile(packagePath, 'unknown manifest type in package', suppressUnlink)
         manifestPath <- getPackageFileByName(packageId, manifestFile$file)
         parseManifestFile(manifestPath, manifestFile$manifestType, packagePath)
     }
@@ -185,10 +185,10 @@ loadPackageFile <- function(packagePath, packageId, packageFileName){ # packageP
 #----------------------------------------------------------------------
 # load an incoming sample manifest
 #----------------------------------------------------------------------
-loadManifestFile <- function(manifestPath, manifestId){
+loadManifestFile <- function(manifestPath, manifestId, suppressUnlink){
     # manifestType <- 'IlluminaDefault' # TODO: smarter manifest type declaration, guessing, user input?
     manifestType <- 'simple'
-    manifest <- parseManifestFile(manifestPath, manifestType)
+    manifest <- parseManifestFile(manifestPath, manifestType, suppressUnlink = suppressUnlink)
     c(
         manifest,
         list(
@@ -196,14 +196,14 @@ loadManifestFile <- function(manifestPath, manifestId){
         )
     )
 }
-parseManifestFile <- function(manifestPath, manifestType, errorPath = NULL){
+parseManifestFile <- function(manifestPath, manifestType, errorPath = NULL, suppressUnlink = FALSE){
     manifest <- tryCatch({
         x <- manifestTypes[[manifestType]]$load(manifestPath)
         manifestTypes[[manifestType]]$parse(x)
     }, error = function(e){
         print(e)
         if(is.null(errorPath)) errorPath <- manifestPath
-        badSourceFile(errorPath, "could not parse manifest file")
+        badSourceFile(errorPath, "could not parse manifest file", suppressUnlink)
     })
     for(col in c('Yield', 'Quality')) if(is.null(manifest$unique[[col]])) manifest$unique[[col]] <- NA
     list(
@@ -233,8 +233,8 @@ getNullManifest <- function(fileName){
 # load an incoming user-constructed data table
 # TODO: implement this
 #----------------------------------------------------------------------
-loadDataTable <- function(dataTablePath, dataTableId){
-    badSourceFile(dataTablePath, "data table loading not implemented yet")
+loadDataTable <- function(dataTablePath, dataTableId, suppressUnlink){
+    badSourceFile(dataTablePath, "data table loading not implemented yet", suppressUnlink)
 }
 
 #----------------------------------------------------------------------

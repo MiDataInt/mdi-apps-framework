@@ -93,7 +93,7 @@ loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
 loadAppScriptDirectory <- function(dir, local=NULL){
     success <- loadAllRScripts(dir, recursive = FALSE, local = local)
     if(!success) return(FALSE)
-    for(subDir in c('modules', 'types', 'ui', 'utilities')) {
+    for(subDir in c('classes', 'modules', 'types', 'ui', 'utilities')) {
         success <- loadAllRScripts(paste(dir, subDir, sep = '/'), recursive = TRUE, local = local)
         if(!success) return(FALSE)
     }
@@ -107,7 +107,8 @@ sessionEnv$sourceLoadType <- ""
 # initialize git repository tracking
 gitStatusData <- reactiveValues(
     app   = list(name = NULL, version = NULL),
-    suite = list(name = NULL, dir = NULL, head = NULL)
+    suite = list(name = NULL, dir = NULL, head = NULL),
+    dependencies = list() # like suite, above, for each dependency suite
 )
 
 # activate our custom page reset action; reloads the page as is, to update all code

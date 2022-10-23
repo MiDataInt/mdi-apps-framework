@@ -1,6 +1,7 @@
 ---
 title: selectSamples
-parent: App Steps
+parent: Standard Step Modules
+grand_parent: App Steps
 has_children: false
 nav_order: 20
 ---

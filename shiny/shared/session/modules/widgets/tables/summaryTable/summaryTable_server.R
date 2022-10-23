@@ -60,7 +60,8 @@ dtOptions <- list(
     ),
     longList100 = list(
         lengthMenu = c(20, 100, 500),
-        pageLength = 100
+        pageLength = 100,
+        searchDelay = 0
     )
 )
 

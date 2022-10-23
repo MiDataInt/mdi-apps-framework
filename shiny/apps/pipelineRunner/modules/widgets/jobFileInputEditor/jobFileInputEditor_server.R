@@ -101,6 +101,7 @@ prInputNames <- list(
     option = ""
 )
 prInputFamilyNames <- list()
+tooltips <- list()
 getOptionInput <- function(value, option){
 
     # common components
@@ -144,10 +145,12 @@ getOptionInput <- function(value, option){
         mdiTextInput(ns(id), label, value, placeholder, onchangeFn = "prInputOnChange")
 
     # input with tooltip
+    tooltips[[helpId]] <<- c(helpId, option$description)
     tags$span(
         class = if(option$required) "" else "pr-optional-input",
-        x,
-        mdiTooltip(session, helpId, option$description),
+        x
+        #,
+        # mdiTooltip(session, helpId, option$description),
         # if(isDirectory) mdiTooltip(session, dirId_1, "click to search for a directory"),
         # mdiTooltip(session, addId, "add an array item"),
         # if(option$required) bsTooltip(requiredId, "required", placement = "top") else "",
@@ -195,6 +198,7 @@ output$optionFamilies <- renderUI({
     reloadInputs()
     startSpinner(session, "output$optionFamilies")
     tabActions <- if(length(config$actions) > 1) input$actions else config$actions
+    tooltips <<- list()
     tabs <- lapply(tabActions, function(actionName){
         prInputNames$action <<- actionName
         options <- config$options[action == actionName][order(universal, familyOrder, order, -required, optionName)]
@@ -210,6 +214,10 @@ output$optionFamilies <- renderUI({
     })
     tabs$id <- "pipelineRunnerOptionTabs"
     tabs$width <- 12
+    setTimeout(function(...) 
+        addMdiTooltips(session, tooltips, delay = list(show = 200, hide = 100)), 
+        delay = 500
+    )    
     stopSpinner(session, "output$optionFamilies")
     do.call(tabBox, tabs)
 })

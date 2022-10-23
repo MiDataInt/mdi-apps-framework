@@ -154,3 +154,58 @@ parseAppDirectory <- function(appDir, extended = FALSE){
         coldStartable = extended$coldStartable
     )
 }
+
+# parse external suite directories
+getExternalSuiteDir <- function(suite){
+    get_dir <- function(fork, allow = TRUE){
+        if(!allow) return(NULL)
+        dir <- file.path(serverEnv$SUITES_DIR, fork, suite)
+        if(!dir.exists(dir)) return(NULL)
+        dir
+    }    
+    suiteDir <- get_dir("developer-forks", serverEnv$IS_DEVELOPER)
+    if(is.null(suiteDir)) suiteDir <- get_dir("definitive")
+    suiteDir
+}
+parseExternalSuiteDirs <- function(suite){
+    suiteDir <- getExternalSuiteDir(suite)
+    if(is.null(suiteDir)) return(NULL)
+    suiteSharedDir  <- file.path(suiteDir, 'shiny', 'shared')
+    suiteGlobalDir  <- file.path(suiteSharedDir, 'global')
+    suiteSessionDir <- file.path(suiteSharedDir, 'session')
+    list(
+        suiteDir = suiteDir,
+        suiteSharedDir = suiteSharedDir,
+        suiteGlobalDir = suiteGlobalDir,
+        suiteSessionDir = suiteSessionDir,
+        suiteSharedClassesDir   = file.path(suiteGlobalDir,  'classes'),
+        suiteSharedModulesDir   = file.path(suiteSessionDir, 'modules'),
+        suiteSharedTypesDir     = file.path(suiteSessionDir, 'types'),
+        suiteSharedUtilitiesDir = file.path(suiteSessionDir, 'utilities')
+    )
+}
+
+# get the declared dependencies of a given suite
+getSuiteConfig <- function(suiteDir){
+    suiteConfigFile <- file.path(suiteDir, "_config.yml")
+    if(!file.exists(suiteConfigFile)) return(list())
+    read_yaml(suiteConfigFile)
+}
+getSuiteDependencies <- function(suiteDir){
+    suiteConfig <- getSuiteConfig(suiteDir)
+    if(is.null(suiteConfig$suite_dependencies)) return(list())
+    suiteVersions <- app$config$suiteVersions
+    if(is.null(suiteVersions)) suiteVersions <- list()
+    lapply(unique(suiteConfig$suite_dependencies), function(gitRepo){
+        repo <- strsplit(gitRepo, '/')[[1]]
+        suite <- repo[2]
+        list(
+            gitRepo  = gitRepo,
+            name     = suite,
+            dir      = getExternalSuiteDir(suite),
+            version  = suiteVersions[[suite]],             
+            versions = NA, # filled after version is checked out by executeLoadRequest()
+            head     = NA
+        )
+    })
+}
