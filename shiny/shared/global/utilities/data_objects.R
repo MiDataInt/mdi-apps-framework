@@ -42,6 +42,12 @@ collapseVector <- function(v, n) { # sum every n adjacent elements of a vector
     }
     cv
 }
+uncollapseVector <- function(v, n, len) { # reverse the actions of collapseVector
+    ucv <- as.vector(sapply(v, rep, n))
+    extra <- length(ucv) - len # user must remember how long the original vector was    
+    if(extra > 0) ucv <- ucv[1:len]    
+    ucv
+}
 
 #----------------------------------------------------------------
 # miscellaneous functions
