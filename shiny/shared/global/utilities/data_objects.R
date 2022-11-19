@@ -48,6 +48,9 @@ uncollapseVector <- function(v, n, len) { # reverse the actions of collapseVecto
     if(extra > 0) ucv <- ucv[1:len]    
     ucv
 }
+expandVector <- function(v, n){
+    as.vector(sapply(v, rep, n))
+}
 
 #----------------------------------------------------------------
 # miscellaneous functions

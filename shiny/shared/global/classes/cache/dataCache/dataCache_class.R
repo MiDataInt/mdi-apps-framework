@@ -161,7 +161,8 @@ structure(
         set = set,
         clear = clear,
         clearParentDir = clearParentDir,
-        getCacheKeys = getCacheKeys
+        getCacheKeys = getCacheKeys,
+        cacheKeys = function() names(cache)
     ),
     class = class
 ) 
