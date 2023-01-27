@@ -234,7 +234,7 @@ dataSourceSelect <- function(fullId, t, x){
     upload <- app[[ appStepNamesByType$upload ]]
     sources <- upload$outcomes$sources()
     sourceIds <- names(sources)
-    names(sourceIds) <- sapply(sources, function(x) x$unique$Project)
+    names(sourceIds) <- sapply(sources, function(x) x$unique$Project[1])
     selectInput(fullId, t$label, choices = sourceIds)
 }
 
