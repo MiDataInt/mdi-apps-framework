@@ -65,7 +65,7 @@ loadPersistentFile <- function(
     loadRdsFile <- function(){
         persistentCache[[file]] <<- readRDS(rdsFile)
         if(is.null(persistentCache[[file]]$ttl)) persistentCache[[file]] <<- list(
-            data = persistentCache[[file]],
+            data = if(!is.null(postProcess)) postProcess(persistentCache[[file]]) else persistentCache[[file]],
             ttl  = ttl
         )
         touchPersistentCache(file)
