@@ -75,7 +75,6 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
                     alt:   event.altKey,
                     shift: event.shiftKey
                 }  
-                
             };
             if(opt.brush) Shiny.setInputValue(opt.prefix + "brush", data, { priority: "event" });
             isBrushEvent = true; // suppress the ensuing click event
@@ -95,7 +94,8 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
                     shift: event.shiftKey
                 }
             };
-            if(opt.brush) Shiny.setInputValue(opt.prefix + "click", data, { priority: "event" });
+            // if(opt.brush) Shiny.setInputValue(opt.prefix + "click", data, { priority: "event" });
+            Shiny.setInputValue(opt.prefix + "click", data, { priority: "event" });
         }
         isBrushEvent = false;
     });

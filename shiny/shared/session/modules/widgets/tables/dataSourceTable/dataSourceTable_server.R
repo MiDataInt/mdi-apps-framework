@@ -8,7 +8,9 @@
 #----------------------------------------------------------------------
 dataSourceTableServer <- function(
     id, 
-    selection = "single"
+    selection = "single",
+    escape = TRUE,
+    extraColumns = NULL # function or reactive that returns extra display columns as a data.table
 ) {
     moduleServer(id, function(input, output, session) {
 #----------------------------------------------------------------------
@@ -35,14 +37,15 @@ selectedSourceIds <- reactive({
 output$table <- renderDT(
     {
         req(sourcesSummary)
-        sourcesSummary()[, c('FileName', 'Project')]
+        dt <- sourcesSummary()[, c('FileName', 'Project')]
+        if(is.null(extraColumns)) dt else cbind(dt, extraColumns()) 
     },
     options = list(
         paging = FALSE,
         searching = FALSE  
     ),
-    # class = "display table-compact-4",
-    escape = TRUE,
+    class = "display table-compact-4",
+    escape = escape,
     selection = selection,
     editable = FALSE, 
     rownames = FALSE # must be true for editing to work, not sure why (datatables peculiarity)

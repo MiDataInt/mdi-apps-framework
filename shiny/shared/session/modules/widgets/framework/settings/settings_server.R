@@ -234,7 +234,7 @@ dataSourceSelect <- function(fullId, t, x){
     upload <- app[[ appStepNamesByType$upload ]]
     sources <- upload$outcomes$sources()
     sourceIds <- names(sources)
-    names(sourceIds) <- sapply(sources, function(x) x$unique$Project)
+    names(sourceIds) <- sapply(sources, function(x) x$unique$Project[1])
     selectInput(fullId, t$label, choices = sourceIds)
 }
 
@@ -264,11 +264,11 @@ retval <- reactiveValuesToListOfReactives(settings) # the categorized settings r
 retval$all_ <- reactive({ allSettings() })
 retval$replace <- initializeSettings # called when a bookmark is loaded to replace settings en bloc
 retval$cache <- reactive({ cache })
-retval$get <- function(tab, id){
+retval$get <- function(tab, id, default = NULL){
     x <- settings[[tab]]
-    if(is.null(x)) return(NULL)
+    if(is.null(x)) return(default)
     x <- x[[id]]
-    if(is.null(x)) return(NULL)
+    if(is.null(x) || is.null(x$value)) return(default)
     x$value
 }
 retval$set <- function(tab, id, value){

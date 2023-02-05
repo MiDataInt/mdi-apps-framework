@@ -76,7 +76,11 @@ observe({
             type = "cairo"
         )
         par(mai = d$layout$mai)
-        do.call("plot", d$plotArgs)
+        if(is.null(d$plotArgs$xlim) && is.null(d$plotArgs$ylim)){
+            do.call("plot", c(d$plotArgs, list(xlim = d$layout$xlim, ylim = d$layout$ylim)))
+        } else {
+            do.call("plot", d$plotArgs)
+        }
         dev.off()
         d$pngFile <- pngFile
     }

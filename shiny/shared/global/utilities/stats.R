@@ -74,3 +74,11 @@ paddedRange <- function(v, paddingFrac = 0.05){
     padding <- width * paddingFrac
     c(range[1] - padding, range[2] + padding)
 }
+
+# get the peak of a distribution
+peakValue <- function(x){
+    x <- x[!is.na(x)]
+    if(length(x) == 0) return(NA)
+    d <- density(x)
+    d$x[which.max(d$y)]
+}
