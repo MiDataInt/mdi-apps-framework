@@ -345,6 +345,7 @@ observeEvent(input[[qcReportParentId]], {
 observe({
     bm <- getModuleBookmark(id, module, bookmark, locks)
     req(bm)
+    req(checkBookmarkPackageExistence(bm$outcomes$sources)) # abort load if bookmark packages are missing
     updateTextInput(session, 'analysisSetName', value = bm$outcomes$analysisSetName)
     sources$list  <- bm$outcomes$sources
     samples$list  <- bm$outcomes$samples
