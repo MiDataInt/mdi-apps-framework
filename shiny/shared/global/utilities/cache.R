@@ -13,11 +13,29 @@ touchPersistentCache <- function(key){
 }
 
 # clear all cached items that have exceed their time-to-live (TTL)
-cleanPersistentCache <- function(excludedKeys = "__NO_EXCLUSIONS__"){
-    for(key in names(persistentCache)){
-        if(key %in% excludedKeys) next
-        delta <- difftime(Sys.time(), persistentCache[[key]]$atime, units = "secs")
+cleanPersistentCache <- function(excludedKeys = "__NO_EXCLUSIONS__"){  
+    keys <- names(persistentCache)
+    keys <- keys[!(keys %in% excludedKeys)]
+    if(length(keys) == 0) return(NULL)
+    now <- Sys.time()
+    deltas <- sapply(keys, function(key){
+        delta <- difftime(now, persistentCache[[key]]$atime, units = "secs")
         if(delta > persistentCache[[key]]$ttl) persistentCache[[key]] <<- NULL
+        delta
+    })
+
+    # even if TTL not exceeded delete the oldest items until max cache size is honored
+    cacheSize <- object.size(persistentCache)
+    if(cacheSize < serverConfig$max_cache_bytes) return(NULL)
+    mostOutOfDate <- order(deltas)
+    i <- length(mostOutOfDate)
+    while(cacheSize > serverConfig$max_cache_bytes){       
+        j <- mostOutOfDate[i]
+        key <- keys[j]
+        persistentCache[[key]] <<- NULL
+        if(i == 1) return(NULL)
+        i <- i - 1
+        cacheSize <- object.size(persistentCache)
     }
 }
 
