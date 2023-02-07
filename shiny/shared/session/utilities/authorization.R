@@ -40,3 +40,11 @@ getAuthorizedRootVolume <- function(type){
         root
     }
 }
+
+# check if an authorization flag is set for a user
+getAuthorizationFlag <- function(flag){
+    if(!serverEnv$REQUIRES_AUTHENTICATION) return(TRUE)
+    auth <- authenticatedUserData$authorization
+    if(is.null(auth) || is.null(auth[[flag]]) || !is.logical(auth[[flag]])) return( FALSE )
+    auth[[flag]]
+}

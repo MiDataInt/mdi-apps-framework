@@ -50,9 +50,9 @@ headerStatusUI <- function(id) {
                     )                
                 } else "",
                 HTML("&nbsp;&nbsp;"),
-                # if(!serverEnv$IS_SERVER && !is.null(serverConfig$paths)){
-                    serverCleanupLink(ns('cleanDataDir'), class = "header-status-icon"),           
-                # } else "",
+                if(getAuthorizationFlag('serverCleanup')){
+                    serverCleanupLink(ns('cleanDataDir'), class = "header-status-icon")           
+                } else "",
                 HTML("&nbsp;&nbsp;"),
                 actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon") # nolint            
             )}
