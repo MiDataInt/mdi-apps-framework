@@ -22,7 +22,8 @@ CONSTANTS <- list(
         package   = 'package',   # the output of a Stage 1 pipeline suitable for loading into a Stage 2 app
         dataTable = 'dataTable', # a flat file of data to load directly into an app (bypassing any Stage 1 pipeline)
         bookmark  = 'bookmark',  # a file saved previously by a user working in an app, contains page states but no data
-        book      = 'book'       # a bookmark together with all package files required to run it (fully transportable)
+        book      = 'book',      # a bookmark together with all package files required to run it (fully transportable)
+        priorPackage = 'priorPackage' # a previously loaded data package, via it yml file
     ),
     fileSuffixes = list(
         jobFile   = c('.yml'),

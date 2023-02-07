@@ -95,12 +95,14 @@ loadSourceFile <- function(incomingFile, suppressUnlink = FALSE){
     reportProgress('loadSourceFile', module)
     reportProgress(incomingFile$path, module)
     startSpinner(session, 'loadSourceFile')
-    sourceId <- tools::md5sum(incomingFile$path) # treat md5 sums as "effectively unique" identifiers
     sourceType <- incomingFile$type
-    sft <- CONSTANTS$sourceFileTypes
-    loaded <- if(sourceType == sft$package)   loadPackageFile (incomingFile$path, sourceId, incomingFile$name, suppressUnlink) # nolint
-         else if(sourceType == sft$manifest)  loadManifestFile(incomingFile$path, sourceId, suppressUnlink)
-         else if(sourceType == sft$dataTable) loadDataTable   (incomingFile$path, sourceId, suppressUnlink) # nolint
+    sft <- CONSTANTS$sourceFileTypes        
+    sourceId <- if(sourceType == sft$priorPackage) incomingFile$sourceId
+                else tools::md5sum(incomingFile$path) # treat md5 sums as "effectively unique" identifiers
+    loaded <- if(sourceType == sft$package)      loadPackageFile (incomingFile$path, sourceId, incomingFile$name, suppressUnlink) # nolint
+         else if(sourceType == sft$manifest)     loadManifestFile(incomingFile$path, sourceId, suppressUnlink)
+         else if(sourceType == sft$dataTable)    loadDataTable   (incomingFile$path, sourceId, suppressUnlink) # nolint
+         else if(sourceType == sft$priorPackage) loadPriorPackage(incomingFile$path, sourceId, incomingFile$name, suppressUnlink)
     if(is.null(suppressUnlink) || !suppressUnlink) unlink(incomingFile$path)    
     sources$list[[sourceId]] <- c(
         loaded,
@@ -129,6 +131,19 @@ badSourceFile <- function(filePath, msg="", suppressUnlink = FALSE){
 #----------------------------------------------------------------------
 # load an incoming Stage 1 pipeline output package file
 #----------------------------------------------------------------------
+getPackageManifest <- function(packagePath, packageId, packageFileName, suppressUnlink, packageConfig){
+    manifestFile <- packageConfig$files[[manifestFileType]]
+    manifest <- if(is.null(manifestFile)) {
+        getNullManifest(packageFileName) # some pipeline outputs may not be sample-based
+    } else {  
+        if(is.null(manifestFile$manifestType))
+            badSourceFile(packagePath, 'missing manifest type in package', suppressUnlink)
+        if(is.null(manifestTypes[[manifestFile$manifestType]])) 
+            badSourceFile(packagePath, 'unknown manifest type in package', suppressUnlink)
+        manifestPath <- getPackageFileByName(packageId, manifestFile$file)
+        parseManifestFile(manifestPath, manifestFile$manifestType, packagePath)
+    }
+}
 loadPackageFile <- function(packagePath, packageId, packageFileName, suppressUnlink){ # packagePath validated upstream as package usable by app
     dataDir <- getPackageDir(packageId) # packageId is the package file md5sum
 
@@ -159,22 +174,9 @@ loadPackageFile <- function(packagePath, packageId, packageFileName, suppressUnl
         }, error = function(e) badSourceFile(packagePath, paste("could not extract file from package:", fileName), suppressUnlink) )
     } 
 
-    # load the sample manifest file, if present
-    manifestFile <- packageConfig$files[[manifestFileType]]
-    manifest <- if(is.null(manifestFile)) {
-        getNullManifest(packageFileName) # some pipeline outputs may not be sample-based
-    } else {  
-        if(is.null(manifestFile$manifestType))
-            badSourceFile(packagePath, 'missing manifest type in package', suppressUnlink)
-        if(is.null(manifestTypes[[manifestFile$manifestType]])) 
-            badSourceFile(packagePath, 'unknown manifest type in package', suppressUnlink)
-        manifestPath <- getPackageFileByName(packageId, manifestFile$file)
-        parseManifestFile(manifestPath, manifestFile$manifestType, packagePath)
-    }
-
     # return our results
     c(
-        manifest,
+        getPackageManifest(packagePath, packageId, packageFileName, suppressUnlink, packageConfig), # load the sample manifest file, if present
         list(
             dataDir = dataDir,
             config = packageConfig 
@@ -227,6 +229,20 @@ getNullManifest <- function(fileName){
         manifest = manifest,
         unique   = manifest
     ) 
+}
+
+#----------------------------------------------------------------------
+# load a previously loaded data package from priorPackages
+#----------------------------------------------------------------------
+loadPriorPackage <- function(packagePath, packageId, packageFileName, suppressUnlink){
+    packageConfig <- read_yaml(packagePath) 
+    c(
+        getPackageManifest(packagePath, packageId, packageFileName, suppressUnlink, packageConfig),
+        list(
+            dataDir = dirname(packagePath),
+            config = packageConfig
+        )
+    )
 }
 
 #----------------------------------------------------------------------

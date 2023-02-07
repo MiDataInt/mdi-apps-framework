@@ -40,6 +40,7 @@ headerStatusData <- reactiveValues( # for UI display
 aceEditorCache <- list()
 rConsoleCache <- list()
 commandTerminalCache <- list()
+dataPackagesCache <- list()
 
 # load support scripts required to run the framework and apps
 # note that scripts are loaded at the session, not the global, level

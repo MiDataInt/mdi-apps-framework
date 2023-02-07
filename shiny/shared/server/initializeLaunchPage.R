@@ -133,7 +133,9 @@ if(!restricted){
             c("headerStatus-rConsole",   "Open an R console"),
             c("headerStatus-commandTerminal", "Open a command terminal emulator"),
             c("headerStatus-changeDataDir",   "Change the working data directory"),
-            c("headerStatus-unlockAllRepos",  "Unlock all tool repositories")
+            c("headerStatus-cleanDataDir",    "Clean up files in data directory"),
+            c("headerStatus-unlockAllRepos",  "Unlock all tool repositories"),
+            c("headerStatus-logout", "Logout")
         ),
         placement = "bottom",
         asis = TRUE

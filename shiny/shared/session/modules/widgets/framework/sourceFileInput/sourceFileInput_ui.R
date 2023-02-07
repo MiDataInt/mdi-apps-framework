@@ -10,7 +10,8 @@ sourceFileInputUI <- function(
     appName=NULL, 
     externalSuffixes=c(), 
     width='100%', 
-    createButtonUI = NULL
+    createButtonUI = NULL,
+    priorPackages = TRUE
 ) {
     
     # initialize namespace
@@ -19,26 +20,31 @@ sourceFileInputUI <- function(
     # as needed, enable the Create New button ...
     localWidth <- 12
     buttonWidth <- 3
-    if(!is.null(createButtonUI)){
+    createNewButton <- if(!is.null(createButtonUI)){
         localWidth <- localWidth - buttonWidth
-        createNewButton <- column(
+        column(
             width = buttonWidth, 
             createButtonUI(ns('createNew'), width = "100%")
         )
-    } else {
-        createNewButton <- ""
-    }
+    } else ""
 
     # ... and the server-side file browser ...
-    if(exposeServerFiles()){
+    fileServerButton <- if(exposeServerFiles()){
         localWidth <- localWidth - buttonWidth
-        fileServerButton <- column(
+        column(
             width = buttonWidth, 
             serverSourceFilesButtonUI(ns('serverFileInput'))
         )
-    } else {   
-        fileServerButton <- ""
-    }
+    } else ""
+
+    # ... and access to previously loaded data packages ...
+    priorPackagesButton <- if(priorPackages){ # TODO: implement access security
+        localWidth <- localWidth - buttonWidth
+        column(
+            width = buttonWidth, 
+            priorPackagesButtonUI(ns('loadPriorDataPackage'))
+        )
+    } else ""
 
     # ... and always the local file upload input
     tags$div(
@@ -46,6 +52,7 @@ sourceFileInputUI <- function(
             class = "file-input-controls",  
             createNewButton,  
             fileServerButton,
+            priorPackagesButton,
             column(
                 width = localWidth, 
                 fileInput(

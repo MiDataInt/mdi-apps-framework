@@ -35,7 +35,7 @@ headerStatusUI <- function(id) {
                 actionLink(ns('logout'), label = NULL, icon = icon("sign-out-alt"), class = "header-status-icon")
             ) else "",
             
-            # dataDir display and switching
+            # dataDir display, cleanup, and switching
             if(!isAuthorizedUser()){
                 ""
             } else { tagList(
@@ -49,6 +49,10 @@ headerStatusUI <- function(id) {
                         title = "Select an MDI data directory (must end with 'mdi/data')"
                     )                
                 } else "",
+                HTML("&nbsp;&nbsp;"),
+                # if(!serverEnv$IS_SERVER && !is.null(serverConfig$paths)){
+                    serverCleanupLink(ns('cleanDataDir'), class = "header-status-icon"),           
+                # } else "",
                 HTML("&nbsp;&nbsp;"),
                 actionLink(ns('unlockAllRepos'), label = NULL, icon = icon("unlock"), class = "header-status-icon") # nolint            
             )}

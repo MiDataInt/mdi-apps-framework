@@ -122,6 +122,11 @@ serverChooseDirIconServer(
     }
 )
 
+# allow authorized users to clean up old files from the data directory
+observeEvent(input$cleanDataDir, {
+    showServerCleanup(session)  
+})
+
 # maintain a visual display of one or more asynchrous processes launched by user
 createAsyncIcon <- function(taskCounter, class, link, style = ""){
     icon <- tags$i(

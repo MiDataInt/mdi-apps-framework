@@ -11,7 +11,7 @@ bufferedTableServer <- function(
     parentId,
     parentInput,
     tableData, # reactive, or function with no arguments, that returns the table data
-    editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), handler=function(d), boxColumn=1, [rawColumn=2])) # nolint
+    editBoxes = list(), # e.g., list(editBoxId = list(type=c('checkbox','textbox'), session=session, handler=function(d) d, boxColumn=1, [rawColumn=2])) # nolint
     selection = 'single',
     selectionFn = function(selectedRows) NULL,
     select = NULL, # a reactive that will set the selected row(s)
@@ -73,12 +73,14 @@ for(editId in names(editBoxes)){
         } else { # text edit box
             newBoxFn <- getTableEditBox
         }        
-        d <- editBox$handler(d) # additional processing by caller; must return d even if not modified
+        if(!is.null(editBox$handler)) d <- editBox$handler(d) # additional processing by caller; must return d even if not modified
 
         # update the table proxy, via the buffer, to ensure continued proper display in UI
         buffer <- buffer()
-        buffer[d$selectedRow, editBox$boxColumn] <- newBoxFn(
-            parentNS(editId), # required column that carries the edit box for updating the value
+        col <- if(is.null(editBox$boxColumn)) 1 else editBox$boxColumn
+        inputId <- if(is.null(editBox$session)) parentNS(editId) else editBox$session$ns(editId)
+        buffer[d$selectedRow, col] <- newBoxFn(
+            inputId, # required column that carries the edit box for updating the value
             d$selectedRow,
             d$newValue
         )

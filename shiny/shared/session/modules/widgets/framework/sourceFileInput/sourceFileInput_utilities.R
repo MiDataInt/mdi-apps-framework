@@ -87,22 +87,30 @@ getPackageFileConfig <- function(packageFile, sendFeedback){
 
 # get all possible target apps for a given package file
 # might be more than one app for a more generic package data type
-getTargetAppsFromPackageFile <- function(packageFile, sendFeedback){
-    uploadType <- getPackageFileConfig(packageFile, sendFeedback)$uploadType
+getTargetAppsFromUploadType <- function(uploadType, sendFeedback){
     if(is.null(uploadType)) sendFeedback("missing tag 'uploadType' in pipeline package", isError = TRUE)
     apps <- appUploadTypes[[uploadType]]
     if(is.null(apps) || length(apps) == 0){
-        sendFeedback(paste0("upload type '", uploadType, "' is not supported by any current apps"), isError = TRUE) 
+        sendFeedback(paste0("upload type '", uploadType, "' is not supported by any installed apps"), isError = TRUE) 
     }
     apps
+}
+getTargetAppsFromPackageFile <- function(packageFile, sendFeedback){
+    uploadType <- getPackageFileConfig(packageFile, sendFeedback)$uploadType
+    getTargetAppsFromUploadType(uploadType, sendFeedback)
 }
 
 # get exactly one target app for a package file
 # query user if more than one app is possible for a package
-getTargetAppFromPackageFile <- function(packageFile, sendFeedback){
-    apps <- getTargetAppsFromPackageFile(packageFile, sendFeedback)
+parseTargetApps <- function(apps, sendFeedback){
     if(length(apps) == 1) return(apps)
     sendFeedback("PENDING: query user for app selection when multiple possibilities", isError = TRUE) 
+}
+getTargetAppFromPackageFile <- function(packageFile, sendFeedback){
+    parseTargetApps( getTargetAppsFromPackageFile(packageFile, sendFeedback) )
+}
+getTargetAppFromPackageYmlFile <- function(packageYmlFile, sendFeedback){
+    parseTargetApps( getTargetAppsFromUploadType(read_yaml(packageYmlFile)$uploadType, sendFeedback) )
 }
 
 #----------------------------------------------------------------------

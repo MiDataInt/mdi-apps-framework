@@ -11,7 +11,8 @@ sourceFileInputServer <- function(
     id, 
     appName = NULL, 
     externalSuffixes = c(), 
-    createButtonServer = NULL
+    createButtonServer = NULL,
+    priorPackages = TRUE
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id)
@@ -57,6 +58,15 @@ observeEvent(input$fileInput, {
     reportProgress('input$fileInput', module)
     handleIncomingSourceFile(file)
 })
+
+#----------------------------------------------------------------------
+# as needed, enable the priorPackages interface
+#----------------------------------------------------------------------
+if(priorPackages) {
+    observeEvent(input$loadPriorDataPackage, {
+        showPriorPackages(session, sendFeedback)
+    })
+}
 
 #----------------------------------------------------------------------
 # as needed, enable the server-side file browser

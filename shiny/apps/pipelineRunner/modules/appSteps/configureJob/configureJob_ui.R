@@ -34,7 +34,8 @@ configureJobUI <- function(id, options) {
             sourceFileInputUI(
                 ns('fileInput'), 
                 appName = 'pipelineRunner', 
-                createButtonUI = createJobFileUI
+                createButtonUI = createJobFileUI,
+                priorPackages = FALSE
             )
         ),
 
