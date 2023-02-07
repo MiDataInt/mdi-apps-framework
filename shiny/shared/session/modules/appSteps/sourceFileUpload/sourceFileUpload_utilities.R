@@ -98,3 +98,38 @@ getSourcePackageOption <- function(sourceId, optionFamily, option){
     req(options[[optionFamily]])
     options[[optionFamily]][[option]]
 }
+
+# check that a set of incoming sourceIds are still found in mdi/data/packages
+# input must match that of sourceFileUpload$outcomes$sources
+# where list names are sourceIds, and each source has a fileName key:value pair
+checkBookmarkPackageExistence <- function(sources){
+    present <- sapply(names(sources), function(sourceId){
+        dir <- getPackageDir(sourceId)
+        dir.exists(dir) && file.exists(file.path(dir, "package.yml"))
+    })
+    if(all(present)) return(TRUE)
+    missing <- sapply(sources[!present], function(x) x$fileName)
+    showUserDialog(
+        "Missing Data Packages", 
+        tags$p(
+            "The following data packages were not found on this MDI server."
+        ), 
+        tags$ul(
+            lapply(missing, tags$li)
+        ),
+        tags$p(
+            "Either this bookmark was constructed on another server or ",
+            "the prior data package uploads were subsequently deleted."
+        ),
+        tags$p(
+            "You need to (re)upload each missing data package to (re)activate this bookmark on this server."
+        ),
+        callback = function(parentInput) NULL,
+        size = "m", 
+        type = 'okOnly', 
+        footer = NULL, 
+        easyClose = FALSE, 
+        fade = TRUE
+    )
+    FALSE
+}

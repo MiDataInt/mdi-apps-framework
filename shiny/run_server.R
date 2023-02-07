@@ -140,8 +140,12 @@ options(shiny.maxRequestSize = serverConfig$max_upload_mb * 1024^2)
 # create the persistent cache object shared across all sessions
 # not for sensitive data in public server modes, etc.
 assign("persistentCache", list(), .GlobalEnv)
-if(is.null(serverConfig$default_ttl)) serverConfig$default_ttl <- 60 * 60 * 24 # i.e., 1 day
-if(is.null(serverConfig$max_ttl))     serverConfig$max_ttl     <- 60 * 60 * 24
+if(is.null(serverConfig$default_ttl))     serverConfig$default_ttl <- 60 * 60 * 24 # i.e., 1 day
+if(is.null(serverConfig$max_ttl))         serverConfig$max_ttl     <- 60 * 60 * 24
+if(is.null(serverConfig$max_cache_bytes)) serverConfig$max_cache_bytes <- 1e9
+serverConfig$default_ttl     <- eval(parse(text = serverConfig$default_ttl))
+serverConfig$max_ttl         <- eval(parse(text = serverConfig$max_ttl))
+serverConfig$max_cache_bytes <- eval(parse(text = serverConfig$max_cache_bytes))
 
 # ensure that we have required server-level information for user authentication
 serverEnv$IS_GLOBUS <- FALSE

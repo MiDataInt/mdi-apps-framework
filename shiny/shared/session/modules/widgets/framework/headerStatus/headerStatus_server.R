@@ -123,7 +123,7 @@ serverChooseDirIconServer(
 )
 
 # allow authorized users to clean up old files from the data directory
-observeEvent(input$cleanDataDir, {
+if(getAuthorizationFlag('serverCleanup')) observeEvent(input$cleanDataDir, {
     showServerCleanup(session)  
 })
 

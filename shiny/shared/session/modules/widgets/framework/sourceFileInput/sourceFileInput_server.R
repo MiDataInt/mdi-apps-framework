@@ -62,7 +62,7 @@ observeEvent(input$fileInput, {
 #----------------------------------------------------------------------
 # as needed, enable the priorPackages interface
 #----------------------------------------------------------------------
-if(priorPackages) {
+if(priorPackages && getAuthorizationFlag('priorPackages')) {
     observeEvent(input$loadPriorDataPackage, {
         showPriorPackages(session, sendFeedback)
     })

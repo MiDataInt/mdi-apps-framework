@@ -38,7 +38,7 @@ sourceFileInputUI <- function(
     } else ""
 
     # ... and access to previously loaded data packages ...
-    priorPackagesButton <- if(priorPackages){ # TODO: implement access security
+    priorPackagesButton <- if(priorPackages && getAuthorizationFlag('priorPackages')){ # TODO: implement access security
         localWidth <- localWidth - buttonWidth
         column(
             width = buttonWidth, 
