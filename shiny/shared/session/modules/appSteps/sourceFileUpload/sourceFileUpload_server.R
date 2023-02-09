@@ -267,7 +267,8 @@ observe({
     nSources <- length(sources$list)
     if(nSources > 0) for(i in 1:nSources){ # whenever the active sources change
         sourceId <- names(sources$list)[i]
-        reportProgress(sourceId)    
+        reportProgress(sourceId)  
+        startSpinner(session, message = "loading data sources")  
         source <- sources$list[[sourceId]]
         hasSamples <- source$nSamples > 0
 
@@ -316,6 +317,7 @@ observe({
         sources$ids <- names(sources$list)
         samples$ids <- apply(samples$list[, c('Project', 'Sample_ID')], 1, paste, collapse = ":") 
     })
+    stopSpinner(session)
 })
 
 #----------------------------------------------------------------------
