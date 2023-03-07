@@ -15,7 +15,8 @@ settingsServer <- function(
     fade = FALSE,
     title = "Set Parameters",
     immediate = FALSE, # if TRUE, setting changes are transmitted in real time
-    resettable = TRUE,  # if TRUE, a Reset All Setting link will be provided
+    resettable = TRUE, # if TRUE, a Reset All Setting link will be provided
+    presets = list(),  # a named list of available settings presets, applied on top of defaults
     s3Class = NULL # optional S3 class to assign to the settings object
 ) {
     moduleServer(id, function(input, output, session) {
@@ -109,6 +110,9 @@ initializeSettings(template)
 # react to user click of gear icon by opening a modal popup
 #----------------------------------------------------------------------
 resetAllSettingsId <- paste(parentId, id, "resetAllSettings", sep = "-")
+nPresets <- length(presets)
+isPresets <- nPresets > 0
+presetIds <- if(isPresets) paste(parentId, id, names(presets), sep = "-") else NULL
 observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent element
     req(hasValidSettings)
     req(nTabs > 0)
@@ -116,6 +120,10 @@ observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent eleme
         title,
         toInputs(),
         if(resettable) actionLink(resetAllSettingsId, "Reset All Settings") else "",
+        if(isPresets) tagList(
+            span("Presets: ", style = "margin-left: 5px;"),
+            lapply(1:nPresets, function(i) span(actionLink(presetIds[i], names(presets)[i]), style = "margin-left: 5px;") )
+        ) else "",
         size = workingSize,        
         callback = fromInputs,
         fade = fade,
@@ -123,10 +131,13 @@ observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent eleme
         observers = dialogObservers
     )
 })
-if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], {
+setAllSettings <- function(preset = NULL){
     lapply(names(template), function(tab){
         lapply(names(settings[[tab]]), function(id){
             t <- template[[tab]][[id]]
+            if(!is.null(preset) && !is.null(preset[[tab]][[id]])){
+                t$value <- if(is.list(preset[[tab]][[id]])) preset[[tab]][[id]]$value else preset[[tab]][[id]]
+            }
             fullId <- session$ns(id)
             switch(
                 t$type,
@@ -138,7 +149,13 @@ if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], {
                 checkboxInput = updateCheckboxInput(sessionSession, fullId, value = t$value)
             )
         })
-    })
+    })    
+}
+if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], { 
+    setAllSettings() 
+})
+if(isPresets) for(i in 1:nPresets) observeEvent(sessionInput[[presetIds[i]]], {
+    setAllSettings(presets[[i]]) 
 })
 
 #----------------------------------------------------------------------
