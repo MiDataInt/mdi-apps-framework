@@ -321,6 +321,7 @@ table.dataTable tbody tr.selected {
 }
 .DT-edit-box {
     background-color: #e3eae8;
+    color: #333;
 }
 .mdi-table-column-filter input {
     padding: 2px 6px;
