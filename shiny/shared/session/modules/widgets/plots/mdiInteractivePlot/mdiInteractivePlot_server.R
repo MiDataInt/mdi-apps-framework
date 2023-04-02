@@ -28,6 +28,7 @@ mdiInteractivePlotServer <- function(
     #         xlim = range, # OR can be read from plotArgs
     #         ylim = range
     #     ),
+    #     abline = list(), # optional named arguments passed to abline() after calling plot(plotArgs)
     #     parseLayout = function(x, y) list(x, y, layout) # to convert to plot space in a multi-plot layout
     # ) })
 ){ moduleServer(id, function(input, output, session) {   
@@ -81,6 +82,7 @@ observe({
         } else {
             do.call("plot", d$plotArgs)
         }
+        if(!is.null(d$abline)) do.call(abline, d$abline)
         dev.off()
         d$pngFile <- pngFile
     }
@@ -101,8 +103,9 @@ pixelToAxis <- function(x, layout, leftI, rightI, dim, lim, invert){
     dim <- layout[[dim]]
     lim <- layout[[lim]]
     if(invert) x <- dim - x
-    leftMargin  <- layout$mai[leftI]  * layout$dpi # or bottom...
-    rightMargin <- layout$mai[rightI] * layout$dpi
+    dpi <- if(is.null(layout$dpi)) 96 else layout$dpi
+    leftMargin  <- layout$mai[leftI]  * dpi # or bottom...
+    rightMargin <- layout$mai[rightI] * dpi
     totalMargin <- leftMargin + rightMargin
     min <- leftMargin
     max <- dim - rightMargin
