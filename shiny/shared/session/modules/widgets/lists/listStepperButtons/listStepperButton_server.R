@@ -56,9 +56,8 @@ observeEvent(input$last,     { setCurrent(total()) })
 output$name <- renderText({
     req(nameFn)    
     x <- dataReactive()
-    req(x)
     i <- current()
-    req(i)
+    req(x, i, nrow(x) >= i)
     nameFn(x[i])
 })
 
@@ -66,7 +65,10 @@ output$name <- renderText({
 # set return value
 #----------------------------------------------------------------------
 getCurrent <- function(){
-    dataReactive()[current()]
+    x <- dataReactive()
+    i <- current()
+    req(x, i, nrow(x) >= i)
+    x[i]
 }
 list(
     current = current,
