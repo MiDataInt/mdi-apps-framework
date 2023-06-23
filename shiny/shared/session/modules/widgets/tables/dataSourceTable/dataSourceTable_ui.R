@@ -4,20 +4,20 @@
 #----------------------------------------------------------------------
 
 # module ui function
-dataSourceTableUI <- function(id, title, width = 12, collapsible = FALSE) {
+dataSourceTableUI <- function(id, title, width = 12, collapsible = FALSE, inFluidRow = TRUE, 
+                              status = 'primary', solidHeader = TRUE) {
     
     # initialize namespace
     ns <- NS(id)
     
     # box with the table
-    fluidRow(
-        box(
-            width = width,
-            title = title,
-            status = 'primary',
-            solidHeader = TRUE,
-            collapsible = collapsible,
-            DTOutput(ns("table"))
-        )
+    box_ <- box(
+        width = width,
+        title = title,
+        status = status,
+        solidHeader = solidHeader,
+        collapsible = collapsible,
+        DTOutput(ns("table"))
     )
+    if(inFluidRow) fluidRow(box_) else box_
 }
