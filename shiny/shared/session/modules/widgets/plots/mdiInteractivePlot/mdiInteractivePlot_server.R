@@ -111,7 +111,7 @@ pixelToAxis <- function(x, layout, leftI, rightI, dim, lim, invert){
     max <- dim - rightMargin
     if(x < min) x <- min
     if(x > max) x <- max
-    (x - leftMargin) / (dim - totalMargin) * (lim[2] - lim[1]) + lim[1] 
+    (x - leftMargin) / (dim - totalMargin) * as.numeric(lim[2] - lim[1]) + lim[1] # as.numeric accounts for integer64 axes
 }
 pixelToAxes <- function(x, y){
     contents <- contents()
