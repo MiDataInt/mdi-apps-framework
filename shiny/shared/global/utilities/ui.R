@@ -30,7 +30,7 @@ createSpinner <- function(session){ # insertUI needed due to shinydashboard limi
 }
 startSpinner <- function(session, caller = NULL, message = NULL){
     if(is.null(caller)) caller <- ''
-    reportProgress(caller, '>>> startSpinner')
+    # reportProgress(caller, '>>> startSpinner')
     session$sendCustomMessage('toggleSpinner', list(
         visibility = 'visible',
         message = message
@@ -44,7 +44,7 @@ updateSpinnerMessage <- function(session, message){
 }
 stopSpinner <- function(session, caller = NULL){
     if(is.null(caller)) caller <- ''
-    reportProgress(caller, '<<< stopSpinner')
+    # reportProgress(caller, '<<< stopSpinner')
     session$sendCustomMessage('toggleSpinner', list(
         visibility = 'hidden',
         message = ""

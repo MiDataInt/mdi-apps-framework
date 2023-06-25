@@ -65,6 +65,16 @@ is.nonexistent <- function(x) is.null(x) | is.na(x)
 # determine which elements of a vector are, or can be converted, to numeric values
 check.numeric <- function(x) !is.na(suppressWarnings(as.numeric(x)))
 
+# extend shiny:isTruthy() to determine whether an object has data
+# thus, zero-length vectors and lists and data.frames without no rows return FALSE
+objectHasData <- function(x){
+    isTruthy(x) && {
+        if(is.vector(x)) length(x) > 0 # handles vectors and lists
+        else if(is.data.frame(x)) nrow(x) > 0 # handles data.frame, data.table, etc.
+        else TRUE
+    }
+}
+
 #----------------------------------------------------------------------
 # shared resource tools
 #----------------------------------------------------------------------
