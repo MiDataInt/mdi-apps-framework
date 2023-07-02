@@ -77,6 +77,7 @@ loadAllRScripts <- function(dir = ".", recursive = FALSE, local = NULL){
     sourceFailure <- FALSE
     for(script in scripts) {
         if(!endsWith(script, '/global.R') && 
+           !(dirname(script) %>% basename %>% startsWith("_")) &&
            !grepl('INLINE_ONLY', script, fixed = TRUE)) { # scripts intended to be sourced inline into other scripts
             # message(script)
             tryCatch({

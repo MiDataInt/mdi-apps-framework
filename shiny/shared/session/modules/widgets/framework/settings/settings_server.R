@@ -113,9 +113,8 @@ resetAllSettingsId <- paste(parentId, id, "resetAllSettings", sep = "-")
 nPresets <- length(presets)
 isPresets <- nPresets > 0
 presetIds <- if(isPresets) paste(parentId, id, names(presets), sep = "-") else NULL
-observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent element
-    req(hasValidSettings)
-    req(nTabs > 0)
+showSettingsModals <- function(){ # open the modal panel with all settings
+    req(hasValidSettings, nTabs > 0)
     showUserDialog(
         title,
         toInputs(),
@@ -129,8 +128,9 @@ observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent eleme
         fade = fade,
         type = if(immediate) "okOnly" else "okCancel",
         observers = dialogObservers
-    )
-})
+    )    
+}
+observeEvent(input[[gearId]], { showSettingsModals() }) # NOT a dialog observer, resides in parent element
 setAllSettings <- function(preset = NULL){
     lapply(names(template), function(tab){
         lapply(names(settings[[tab]]), function(id){
@@ -291,6 +291,7 @@ retval$get <- function(tab, id, default = NULL){
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
 }
+retval$open <- showSettingsModals
 structure(
     retval,
     class = c(s3Class, "mdiSettings")

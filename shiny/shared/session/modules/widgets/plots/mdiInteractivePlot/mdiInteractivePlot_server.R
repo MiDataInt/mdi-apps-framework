@@ -160,7 +160,7 @@ hover <- if(hover) reactive({
     parseEvent(input$hover)
 }) else NULL
 click <- if(click) reactive({
-    req(input$click)
+    req(input$click, input$click$coord, input$click$keys)
     parseEvent(input$click)
 }) else NULL
 brush <- if(brush) reactive({
