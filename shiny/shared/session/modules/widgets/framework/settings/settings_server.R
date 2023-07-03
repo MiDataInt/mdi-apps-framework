@@ -88,6 +88,7 @@ else reportProgress(paste("CONFIG ERROR:", parentId, id, "had no valid settings 
 # settings values
 settings <- reactiveValues()
 allSettings <- reactiveVal()
+previousState <- list() # the most recent settings state prior to the current one, to support "undo"
 initializeSettings <- function(init = NULL, newTemplate = NULL){ # executed as function to allow bookmark recovery
     if(is.null(init)) init <- getCachedValues()
     if(!is.null(newTemplate)) initializeTemplate(newTemplate)
@@ -101,6 +102,7 @@ initializeSettings <- function(init = NULL, newTemplate = NULL){ # executed as f
         y
     })
     names(x) <- names(template)
+    previousState <<- allSettings()
     allSettings(x)
     setCachedValues(x)
 }
@@ -259,6 +261,7 @@ dataSourceSelect <- function(fullId, t, x){
 setValue <- function(tab, id, fullId){ # in immediate mode
     settings[[tab]][[id]]$value <- sessionInput[[fullId]] 
     x <- reactiveValuesToList(settings)
+    previousState <<- allSettings()
     allSettings(x)
     setCachedValues(x)
 }
@@ -270,6 +273,7 @@ fromInputs <- function(input){ # same as from bookmark
         lapply(names(settings[[tab]]), setValues, tab, input)
     })
     x <- reactiveValuesToList(settings)
+    previousState <<- allSettings()
     allSettings(x)
     setCachedValues(x)
 }
@@ -292,6 +296,9 @@ retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
 }
 retval$open <- showSettingsModals
+retval$undo <- function(){
+    initializeSettings(previousState)
+}
 structure(
     retval,
     class = c(s3Class, "mdiSettings")

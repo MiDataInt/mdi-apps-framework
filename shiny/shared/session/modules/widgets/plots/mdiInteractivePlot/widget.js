@@ -24,14 +24,18 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
     let isHovered = false;
 
     // handle all requested interactions, listed here if rough order of occurrence
-    $(wrapperId).off("mouseenter").on("mouseenter", function() {
+    $(wrapperId).off("mouseenter").on("mouseenter", function(event) {
         $(mdiCrosshair).show();
+        event.stopPropagation();
+        event.preventDefault();
     });
     $(wrapperId).off("mousedown").on("mousedown", function(event) {
         const coord = relCoord(event, this);
         if(coord.y > 0 && coord.x > 0)
             $(mdiBrushBox).css({top: coord.y - 1, left: coord.x - 1});       
         mouseIsDown = true;
+        event.stopPropagation();
+        event.preventDefault();
     });
     $(wrapperId).off("mousemove").on("mousemove", function(event) {
         const coord = relCoord(event, this);
@@ -59,6 +63,8 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
                 isHovered = true;
             }, opt.delay);            
         }
+        event.stopPropagation();
+        event.preventDefault();
     });
     $(wrapperId).off("mouseup").on("mouseup", function(event) {
         if(isDrawingBox){
@@ -83,6 +89,8 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
         }
         mouseIsDown = false;
         $(mdiCrosshair).show();
+        event.stopPropagation();
+        event.preventDefault();
     });
     $(wrapperId).off("click").on("click", function(event){
         if(!isBrushEvent) {
@@ -98,6 +106,8 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
             Shiny.setInputValue(opt.prefix + "click", data, { priority: "event" });
         }
         isBrushEvent = false;
+        event.stopPropagation();
+        event.preventDefault();
     });
     $(wrapperId).off("mouseleave").on("mouseleave", function() {
         $(mdiCrosshair).hide();
