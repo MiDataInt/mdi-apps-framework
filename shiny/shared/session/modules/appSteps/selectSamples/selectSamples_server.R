@@ -58,10 +58,11 @@ cacheFileName <- paste(app$NAME, "availableSamples", sep = ".")
 cacheFile <- file.path(serverEnv$CACHE_DIR, paste(cacheFileName, "rds", sep = "."))
 cacheTtl <- 7 * 24 * 60 * 60 # TODO: expose as option?
 if(!file.exists(cacheFile)) get(options$cacheAvailableSamples)(cacheFile)
-invalidateAvailableSamples <- reactiveVal(0)
+invalidateAvailableSamples <- reactiveVal(list(entropy = sample(1e8, 1), force = FALSE))
 availableSamples <- reactive({
-    invalidateAvailableSamples()
-    x <- loadPersistentFile(file = cacheFile, ttl = cacheTtl, silent = TRUE)
+    action <- invalidateAvailableSamples()
+    req(action)
+    x <- loadPersistentFile(file = cacheFile, ttl = cacheTtl, silent = TRUE, force = action$force)
     req(x)
     as.data.table(persistentCache[[cacheFile]]$data)
 })
@@ -133,7 +134,7 @@ availableSamplesTable <- bufferedTableBoxServer(
     reload = function(){
         runjs(paste0('$("#', session$ns("availableSamples-reload"), '").blur()'))
         get(options$cacheAvailableSamples)(cacheFile)
-        invalidateAvailableSamples( invalidateAvailableSamples() + 1 )
+        invalidateAvailableSamples( list(entropy = sample(1e8, 1), force = TRUE) )
     },
     download = downloadHandler(
         filename = paste(cacheFileName, "csv", sep = "."),
