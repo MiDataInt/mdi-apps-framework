@@ -64,7 +64,8 @@ availableSamples <- reactive({
     req(action)
     x <- loadPersistentFile(file = cacheFile, ttl = cacheTtl, silent = TRUE, force = action$force)
     req(x)
-    as.data.table(persistentCache[[cacheFile]]$data)
+    x <- persistentCache[[cacheFile]]$data
+    as.data.table( if(is.data.frame(x)) x else x$samples ) # allow calling app to have a simple samples table, or named list with member 'samples'
 })
 
 #----------------------------------------------------------------------
@@ -150,7 +151,8 @@ availableSamplesTable <- bufferedTableBoxServer(
     options = list(
         searchDelay = 0
     ),
-    filterable = TRUE
+    filterable = TRUE,
+    rownames = FALSE # on this table, the rowname column can get very wide...
 )
 observeEvent(availableSamplesTable$table$selectionObserver(), {
     rowI <- availableSamplesTable$table$selectionObserver()

@@ -44,11 +44,18 @@ dataPackagesCache <- list()
 
 # load support scripts required to run the framework and apps
 # note that scripts are loaded at the session, not the global, level
-sourceExternalScript <- function(suite, shinyPath){
+getExternalSuiteFile <- function(suite, shinyPath){
     getPath <- function(fork) file.path(serverEnv$SUITES_DIR, fork, suite, "shiny", shinyPath)
     file <- if(serverEnv$IS_DEVELOPER) getPath("developer-forks") else "__XXX__"
-    if(!file.exists(file)) file <- getPath("definitive")
+    if(!file.exists(file)) file <- getPath("definitive")    
+}
+sourceExternalScript <- function(suite, shinyPath){
+    file <- getExternalSuiteFile(suite, shinyPath)
     if(file.exists(file)) source(file)
+}
+loadExternalYml <- function(suite, shinyPath){
+    file <- getExternalSuiteFile(suite, shinyPath)
+    if(file.exists(file)) read_yaml(file)
 }
 onScriptSourceError <- function(script, local, error){ # catch script source errors
     sapply(c( # load just what is need to handle the offending script in the code editor
