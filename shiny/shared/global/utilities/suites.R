@@ -193,10 +193,16 @@ getSuiteConfig <- function(suiteDir){
 }
 getSuiteDependencies <- function(suiteDir){
     suiteConfig <- getSuiteConfig(suiteDir)
-    if(is.null(suiteConfig$suite_dependencies)) return(list())
+    requiredSuites <- suiteConfig$suite_dependencies
+    if(is.null(requiredSuites)) requiredSuites <- character()
+    optionalSuites <- suiteConfig$optional_suite_dependencies
+    if(is.null(optionalSuites)) optionalSuites <- character()
+    optionalSuites <- optionalSuites[!(optionalSuites %in% requiredSuites)]
+    allSuites <- c(optionalSuites, requiredSuites) # optional first in install list, so has lowest precedence
+    if(length(allSuites) == 0) return(list())
     suiteVersions <- app$config$suiteVersions
     if(is.null(suiteVersions)) suiteVersions <- list()
-    lapply(unique(suiteConfig$suite_dependencies), function(gitRepo){
+    x <- lapply(unique(allSuites), function(gitRepo){
         repo <- strsplit(gitRepo, '/')[[1]]
         suite <- repo[2]
         list(
@@ -205,7 +211,10 @@ getSuiteDependencies <- function(suiteDir){
             dir      = getExternalSuiteDir(suite),
             version  = suiteVersions[[suite]],             
             versions = NA, # filled after version is checked out by executeLoadRequest()
-            head     = NA
+            head     = NA,
+            optional = !(gitRepo %in% requiredSuites)
         )
     })
+    names(x) <- sapply(x, function(xx) xx$name)
+    x
 }
