@@ -55,7 +55,7 @@ sourceExternalScript <- function(suite, shinyPath){
 }
 loadExternalYml <- function(suite, shinyPath){
     file <- getExternalSuiteFile(suite, shinyPath)
-    if(file.exists(file)) read_yaml(file)
+    if(file.exists(file)) read_yaml(file) else NULL
 }
 onScriptSourceError <- function(script, local, error){ # catch script source errors
     sapply(c( # load just what is need to handle the offending script in the code editor
