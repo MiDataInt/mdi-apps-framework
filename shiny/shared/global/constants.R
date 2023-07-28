@@ -85,6 +85,7 @@ CONSTANTS <- list(
     ), 
 
     # plotly default point colors, for use outside of plotly
+    # see below for more palettes, or app can add more
     plotlyColors = list(
         blue    = '#1f77b4',  # muted blue
         orange  = '#ff7f0e',  # safety orange
@@ -112,4 +113,7 @@ CONSTANTS <- list(
         hour   = 3600,
         minute = 60
     )
+)
+CONSTANTS$palettes <- list(
+    plotly = CONSTANTS$plotlyColors
 )

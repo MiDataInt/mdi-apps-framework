@@ -58,12 +58,14 @@ cacheFileName <- paste(app$NAME, "availableSamples", sep = ".")
 cacheFile <- file.path(serverEnv$CACHE_DIR, paste(cacheFileName, "rds", sep = "."))
 cacheTtl <- 7 * 24 * 60 * 60 # TODO: expose as option?
 if(!file.exists(cacheFile)) get(options$cacheAvailableSamples)(cacheFile)
-invalidateAvailableSamples <- reactiveVal(0)
+invalidateAvailableSamples <- reactiveVal(list(entropy = sample(1e8, 1), force = FALSE))
 availableSamples <- reactive({
-    invalidateAvailableSamples()
-    x <- loadPersistentFile(file = cacheFile, ttl = cacheTtl, silent = TRUE)
+    action <- invalidateAvailableSamples()
+    req(action)
+    x <- loadPersistentFile(file = cacheFile, ttl = cacheTtl, silent = TRUE, force = action$force)
     req(x)
-    as.data.table(persistentCache[[cacheFile]]$data)
+    x <- persistentCache[[cacheFile]]$data
+    as.data.table( if(is.data.frame(x)) x else x$samples ) # allow calling app to have a simple samples table, or named list with member 'samples'
 })
 
 #----------------------------------------------------------------------
@@ -133,7 +135,7 @@ availableSamplesTable <- bufferedTableBoxServer(
     reload = function(){
         runjs(paste0('$("#', session$ns("availableSamples-reload"), '").blur()'))
         get(options$cacheAvailableSamples)(cacheFile)
-        invalidateAvailableSamples( invalidateAvailableSamples() + 1 )
+        invalidateAvailableSamples( list(entropy = sample(1e8, 1), force = TRUE) )
     },
     download = downloadHandler(
         filename = paste(cacheFileName, "csv", sep = "."),
@@ -149,7 +151,8 @@ availableSamplesTable <- bufferedTableBoxServer(
     options = list(
         searchDelay = 0
     ),
-    filterable = TRUE
+    filterable = TRUE,
+    rownames = FALSE # on this table, the rowname column can get very wide...
 )
 observeEvent(availableSamplesTable$table$selectionObserver(), {
     rowI <- availableSamplesTable$table$selectionObserver()

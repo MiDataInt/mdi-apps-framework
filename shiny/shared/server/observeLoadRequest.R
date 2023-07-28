@@ -46,7 +46,7 @@ executeLoadRequest <- function(loadRequest){
     # if bookmark being loaded, check bookmark versions against latest (and working if different)
     # if date file being loaded (i.e, without prior version info), check working against latest
 
-    # load dependency scripts first
+    # load dependency scripts first, optional then required, so optional has lowest precedence
     # check and set versions of suite dependencies prior to script loading
     sessionEnv$sourceLoadType <- "app"
     updateSpinnerMessage(session, "loading dependencies")
@@ -57,13 +57,17 @@ executeLoadRequest <- function(loadRequest){
     }
     for(i in seq_along(gitStatusData$dependencies)){
         x <- gitStatusData$dependencies[[i]]
+        gitStatusData$dependencies[[i]]$loaded <- FALSE # a flag to check to see if an optional dependency was (not) found
         if(!is.null(x$version)){
             waitForRepoLock(repoDir = x$dir)
             setMdiGitLock(x$dir)
             git2r::checkout(x$dir, x$version, create = FALSE)            
         }
         dirs <- parseExternalSuiteDirs(x$name)
-        if(is.null(dirs)) return( abortDependency(x$dir) )
+        if(is.null(dirs)) {
+            if(x$optional) next
+            else return( abortDependency(x$dir) )
+        }
         loadSuccess <- loadAllRScripts(dirs$suiteGlobalDir, recursive = TRUE)
         if(!loadSuccess) return( abortDependency(x$dir) )
         loadSuccess <- loadAllRScripts(dirs$suiteSessionDir, recursive = TRUE)
@@ -71,6 +75,7 @@ executeLoadRequest <- function(loadRequest){
         gitStatusData$dependencies[[i]]$versions <- getAllVersions(x$dir)
         gitStatusData$dependencies[[i]]$head <- getGitHead(x)        
         if(!is.null(x$version)) releaseMdiGitLock(x$dir)
+        gitStatusData$dependencies[[i]]$loaded <- TRUE
     }
 
     # load all relevant session scripts in reverse precedence order

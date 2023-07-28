@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------
 
 # module ui function
-popupInputUI <- function(id, label, value = "Click Me") {
+popupInputUI <- function(id, label, value = "Click Me", buttonFn = actionButton, icon = NULL) {
     ns <- NS(id)
     buttonId <- ns("button")
     tags$div(
@@ -15,8 +15,10 @@ popupInputUI <- function(id, label, value = "Click Me") {
             label
         ),
         tags$div(
-            actionButton(
-                buttonId, value, 
+            buttonFn(
+                buttonId, 
+                label = value, 
+                icon = icon,
                 style = "width: 100%; text-overflow: ellipsis; overflow: hidden; direction: rtl;"
             )      
         )

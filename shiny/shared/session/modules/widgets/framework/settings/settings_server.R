@@ -16,7 +16,7 @@ settingsServer <- function(
     title = "Set Parameters",
     immediate = FALSE, # if TRUE, setting changes are transmitted in real time
     resettable = TRUE, # if TRUE, a Reset All Setting link will be provided
-    presets = list(),  # a named list of available settings presets, applied on top of defaults
+    presets = list(),  # a named list of available settings presets, applied on top of defaults, as list(Preset_Name = list(tab = list(option = x)))
     s3Class = NULL # optional S3 class to assign to the settings object
 ) {
     moduleServer(id, function(input, output, session) {
@@ -88,6 +88,7 @@ else reportProgress(paste("CONFIG ERROR:", parentId, id, "had no valid settings 
 # settings values
 settings <- reactiveValues()
 allSettings <- reactiveVal()
+previousState <- list() # the most recent settings state prior to the current one, to support "undo"
 initializeSettings <- function(init = NULL, newTemplate = NULL){ # executed as function to allow bookmark recovery
     if(is.null(init)) init <- getCachedValues()
     if(!is.null(newTemplate)) initializeTemplate(newTemplate)
@@ -101,6 +102,7 @@ initializeSettings <- function(init = NULL, newTemplate = NULL){ # executed as f
         y
     })
     names(x) <- names(template)
+    previousState <<- allSettings()
     allSettings(x)
     setCachedValues(x)
 }
@@ -113,9 +115,8 @@ resetAllSettingsId <- paste(parentId, id, "resetAllSettings", sep = "-")
 nPresets <- length(presets)
 isPresets <- nPresets > 0
 presetIds <- if(isPresets) paste(parentId, id, names(presets), sep = "-") else NULL
-observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent element
-    req(hasValidSettings)
-    req(nTabs > 0)
+showSettingsModals <- function(){ # open the modal panel with all settings
+    req(hasValidSettings, nTabs > 0)
     showUserDialog(
         title,
         toInputs(),
@@ -129,8 +130,9 @@ observeEvent(input[[gearId]], { # NOT a dialog observer, resides in parent eleme
         fade = fade,
         type = if(immediate) "okOnly" else "okCancel",
         observers = dialogObservers
-    )
-})
+    )    
+}
+observeEvent(input[[gearId]], { showSettingsModals() }) # NOT a dialog observer, resides in parent element
 setAllSettings <- function(preset = NULL){
     lapply(names(template), function(tab){
         lapply(names(settings[[tab]]), function(id){
@@ -259,6 +261,7 @@ dataSourceSelect <- function(fullId, t, x){
 setValue <- function(tab, id, fullId){ # in immediate mode
     settings[[tab]][[id]]$value <- sessionInput[[fullId]] 
     x <- reactiveValuesToList(settings)
+    previousState <<- allSettings()
     allSettings(x)
     setCachedValues(x)
 }
@@ -270,6 +273,7 @@ fromInputs <- function(input){ # same as from bookmark
         lapply(names(settings[[tab]]), setValues, tab, input)
     })
     x <- reactiveValuesToList(settings)
+    previousState <<- allSettings()
     allSettings(x)
     setCachedValues(x)
 }
@@ -290,6 +294,10 @@ retval$get <- function(tab, id, default = NULL){
 }
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
+}
+retval$open <- showSettingsModals
+retval$undo <- function(){
+    initializeSettings(previousState)
 }
 structure(
     retval,

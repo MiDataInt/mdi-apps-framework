@@ -13,7 +13,9 @@ popupInputServer <- function(
     active = NULL,    
     size = "l",
     type = 'okCancel', 
-    easyClose = TRUE
+    easyClose = TRUE,
+    updateLabel = TRUE,
+    labelCol = "label"
 ) { 
     moduleServer(id, function(input, output, session) {    
 #----------------------------------------------------------------------
@@ -42,11 +44,12 @@ observeEvent(input$button, {
 #----------------------------------------------------------------------
 # update the button label with the selected value
 #----------------------------------------------------------------------
-observeEvent(value(), {
+if(updateLabel) observeEvent(value(), {
     val <- value()
-    label <- if(is.null(val) || is.na(val)) "Click Me" 
-             else if(is.list(val)) val$label
-             else val
+    label <- if(is.list(val)) { # handles lists and data.frame/table
+                if(!objectHasData(val) || is.null(val[[labelCol]])) "Click Me" else val[[labelCol]]
+            } else if(is.null(val) || is.na(val) || length(val) == 0) "Click Me" 
+            else val
     updateActionButton(session, "button", label = label)
 })
 

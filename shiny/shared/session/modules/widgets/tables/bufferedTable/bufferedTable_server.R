@@ -18,7 +18,9 @@ bufferedTableServer <- function(
     options = list(), # passed as is to renderDT
     filterable = FALSE, # add MDI custom filters to all table columns
     server = !filterable, # TRUE for server-side processing; filtering requires client-side, editing requires server-side # nolint
-    async = NULL # for internal use only; set to mdi_async object by asyncTableServer
+    async = NULL, # for internal use only; set to mdi_async object by asyncTableServer
+    settings = NULL, # to add a header icon to the table that will call settings$open()
+    rownames = TRUE # some tables may be able to set this to FALSE, but note that doing so can disable proper editing, etc.
 ) {
     moduleServer(id, function(input, output, session) {
         ns <- NS(id) # in case we create inputs, e.g. via renderUI
@@ -45,7 +47,7 @@ output[[tableId]] <- renderDT(
             if(x$pending) NULL else x$value
         }
         buffer(d)
-        if(filterable) insertColumnFilters(session, tableId, d, rownames = TRUE)
+        if(filterable) insertColumnFilters(session, tableId, d, rownames = rownames)
         d        
     },
     server = server,
@@ -57,7 +59,7 @@ output[[tableId]] <- renderDT(
         selected = if(is.null(select)) NULL else select()
     ),
     editable = FALSE,
-    rownames = TRUE # must be true for editing to work, not sure why (datatables peculiarity)
+    rownames = rownames # must be true for editing to work, not sure why (datatables peculiarity)
 )
 
 # add the edit box observers that will interact with the buffer
@@ -148,6 +150,13 @@ output$download <- downloadHandler(
     },
     contentType = "text/csv"
 )
+
+#----------------------------------------------------------------------
+# support opening a settings modal, typically one that controls the table's contents
+#----------------------------------------------------------------------
+if(is.list(settings)) observers$openSettings <- observeEvent(input$openSettings, {
+    settings$open()
+})
 
 #----------------------------------------------------------------------
 # set return values

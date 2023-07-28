@@ -65,6 +65,37 @@ is.nonexistent <- function(x) is.null(x) | is.na(x)
 # determine which elements of a vector are, or can be converted, to numeric values
 check.numeric <- function(x) !is.na(suppressWarnings(as.numeric(x)))
 
+# extend shiny:isTruthy() to determine whether an object has data
+# thus, zero-length vectors and lists and data.frames without no rows return FALSE
+objectHasData <- function(x){
+    isTruthy(x) && {
+        if(is.vector(x)) length(x) > 0 # handles vectors and lists
+        else if(is.data.frame(x)) nrow(x) > 0 # handles data.frame, data.table, etc.
+        else TRUE
+    }
+}
+
+#----------------------------------------------------------------
+# bit64 helpers
+#----------------------------------------------------------------
+lapply64 <- function (X, FUN, ...) { # make sure lapply and sapply retain the integer64 class
+    FUN <- match.fun(FUN)
+    if (!is.vector(X) || is.object(X)){
+        X <- as.list(X)
+        class(X) <- "integer64" # <<- this line was added relative to lapply 
+    }
+    .Internal(lapply(X, FUN))
+}
+sapply64 <- function (X, FUN, ..., simplify = TRUE, USE.NAMES = TRUE) {
+    FUN <- match.fun(FUN)
+    answer <- lapply64(X = X, FUN = FUN, ...) # <<- this line was modified relative to sapply
+    if (USE.NAMES && is.character(X) && is.null(names(answer))) 
+        names(answer) <- X
+    if (!isFALSE(simplify) && length(answer)) 
+        simplify2array(answer, higher = (simplify == "array"))
+    else answer
+}
+
 #----------------------------------------------------------------------
 # shared resource tools
 #----------------------------------------------------------------------
