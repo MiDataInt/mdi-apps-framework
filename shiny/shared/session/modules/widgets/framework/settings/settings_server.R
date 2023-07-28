@@ -16,7 +16,7 @@ settingsServer <- function(
     title = "Set Parameters",
     immediate = FALSE, # if TRUE, setting changes are transmitted in real time
     resettable = TRUE, # if TRUE, a Reset All Setting link will be provided
-    presets = list(),  # a named list of available settings presets, applied on top of defaults
+    presets = list(),  # a named list of available settings presets, applied on top of defaults, as list(Preset_Name = list(tab = list(option = x)))
     s3Class = NULL # optional S3 class to assign to the settings object
 ) {
     moduleServer(id, function(input, output, session) {
