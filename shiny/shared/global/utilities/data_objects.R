@@ -74,6 +74,13 @@ objectHasData <- function(x){
         else TRUE
     }
 }
+# and further to determine the truthiness or hadData-ness of multiple objects, similar to "req()" usage
+allAreTruthy <- function(...){
+    all(sapply(list(...), function(x) isTruthy(x)))
+}
+allHaveData <- function(...){
+    all(sapply(list(...), function(x) objectHasData(x)))
+}
 
 #----------------------------------------------------------------
 # bit64 helpers
