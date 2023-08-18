@@ -47,7 +47,8 @@ dataPackagesCache <- list()
 getExternalSuiteFile <- function(suite, shinyPath){
     getPath <- function(fork) file.path(serverEnv$SUITES_DIR, fork, suite, "shiny", shinyPath)
     file <- if(serverEnv$IS_DEVELOPER) getPath("developer-forks") else "__XXX__"
-    if(!file.exists(file)) file <- getPath("definitive")    
+    if(!file.exists(file)) file <- getPath("definitive")  
+    file  
 }
 sourceExternalScript <- function(suite, shinyPath){
     file <- getExternalSuiteFile(suite, shinyPath)

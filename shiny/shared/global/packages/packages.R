@@ -62,8 +62,8 @@ loadAsyncPackages <- function(session = NULL){
     if(!is.null(session)) startSpinner(session, 'loadAsyncPackages')
     loadFrameworkPackages(frameworkPackages$R$async)
 
-    # switch to effectively synchronous execution if only 1 core available (syntax per 'future' package author)
-    if(availableCores() == 1) plan(cluster, workers = "localhost") 
+    # switch to synchronous execution if only 1 core available
+    if(availableCores() == 1) plan(sequential) # plan(cluster, workers = "localhost") 
 
     # otherwise use multicore on Linux, fall back to multisession on Windows
     else if(.Platform$OS.type == "unix") plan(multicore)
