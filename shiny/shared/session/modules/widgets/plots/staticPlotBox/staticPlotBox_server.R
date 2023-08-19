@@ -112,10 +112,15 @@ output$plot <- renderImage({
     )
 
     # let caller create the plot
-    create()
+    tryCatch({
+        create()
+        graphics.off()
+    }, error = function(e){
+        graphics.off()
+        req(FALSE)
+    })
 
     # finish plot and return as image
-    graphics.off()
     list(
         src = pngFile,
         width = "100%",
