@@ -76,14 +76,19 @@ observe({
             res = if(is.null(d$layout$dpi)) 96 else d$layout$dpi,
             type = "cairo"
         )
-        par(mai = d$layout$mai)
-        if(is.null(d$plotArgs$xlim) && is.null(d$plotArgs$ylim)){
-            do.call("plot", c(d$plotArgs, list(xlim = d$layout$xlim, ylim = d$layout$ylim)))
-        } else {
-            do.call("plot", d$plotArgs)
-        }
-        if(!is.null(d$abline)) do.call(abline, d$abline)
-        dev.off()
+        tryCatch({
+            par(mai = d$layout$mai)
+            if(is.null(d$plotArgs$xlim) && is.null(d$plotArgs$ylim)){
+                do.call("plot", c(d$plotArgs, list(xlim = d$layout$xlim, ylim = d$layout$ylim)))
+            } else {
+                do.call("plot", d$plotArgs)
+            }
+            if(!is.null(d$abline)) do.call(abline, d$abline)
+            dev.off()
+        }, error = function(e){
+            dev.off() # close device if use plot function throws error, e.g., via req(FALSE)
+            req(FALSE)
+        })
         d$pngFile <- pngFile
     }
     png <- RCurl::base64Encode(readBin(d$pngFile, "raw", file.info(d$pngFile)[1, "size"]), "txt")
