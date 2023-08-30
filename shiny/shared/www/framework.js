@@ -237,10 +237,20 @@ Shiny.addCustomMessageHandler('terminateAceSession', function(options) {
 /*  ------------------------------------------------------------------------
     DT table actions
     ------------------------------------------------------------------------*/
-let handleActionClick = function(parentId, instanceId, confirmMessage){
+let handleActionClick = function(parentId, instanceId, confirmMessage){ // used by standard table action links
     if(confirmMessage === "NO_CONFIRM" || confirm(confirmMessage) === true){
-        Shiny.setInputValue(parentId, instanceId + '__' + Math.floor(Math.random() * 1e6)); // random allows repeat clicks
+        let val = instanceId + '__' + Math.floor(Math.random() * 1e6);
+        Shiny.setInputValue(parentId, val, {priority: "event"});
     }
+};
+let handleActionClick2 = function(parentId, instanceId, confirmMessage){ // used by mdiSharedEventHandler, from table action links
+    if(confirmMessage === "NO_CONFIRM" || confirm(confirmMessage) === true){
+        let val = instanceId + '__' + Math.floor(Math.random() * 1e6);
+        Shiny.setInputValue("mdiSharedEventHandler", {key: parentId, val: val}, {priority: "event"});
+    }
+};
+let handleActionClick3 = function(eventKey, eventData){ // used by mdiSharedEventHandler, from standard action links
+    Shiny.setInputValue("mdiSharedEventHandler", {key: eventKey, val: eventData}, {priority: "event"});
 };
 let dtNumericFilters = [];
 let setDTColumnFilter = function(tableId, columnI, type, filter){
