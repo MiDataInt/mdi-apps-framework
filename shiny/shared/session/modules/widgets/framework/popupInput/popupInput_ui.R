@@ -8,7 +8,7 @@ popupInputUI <- function(id, label, value = "Click Me", buttonFn = actionButton,
     buttonId <- ns("button")
     tags$div(
         class = "form-group shiny-input-container",
-        tags$label(
+        if(is.null(label)) "" else tags$label(
             id = ns("label"),
             class = "control-label",
             "for" = buttonId,
