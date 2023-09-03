@@ -42,13 +42,19 @@ output$currentPath <- renderUI({
     cp <- currentPath()
     req(cp, cp$basePathName)
     nSubDirs <- length(cp$subDirs) 
-    elements <- list(tags$span(cp$basePathName))
+    elements <- list(tags$span(
+        tags$a(
+            onclick = paste0('handleActionClick3("serverFileSelectorCurrentDirBasepathClick", ', 0, ')'),
+            style = "cursor: pointer;",
+            cp$basePathName
+        ) 
+    ))
     if(nSubDirs > 0) for(i in 1:nSubDirs) elements <- c(
         elements,
         list(
             tags$span(" / "),
             tags$a(
-                onclick = paste0('handleActionClick3("serverFileSelectorCurrentDirClick", ', i, ')'),
+                onclick = paste0('handleActionClick3("serverFileSelectorCurrentDirSubfolderClick", ', i, ')'),
                 style = "cursor: pointer;",
                 cp$subDirs[i]
             ) 
@@ -56,7 +62,14 @@ output$currentPath <- renderUI({
     )
     tagList(elements)
 })
-addMdiSharedEventHandler("serverFileSelectorCurrentDirClick", function(i){
+addMdiSharedEventHandler("serverFileSelectorCurrentDirBasepathClick", function(...){
+    cp <- currentPath()
+    req(cp)
+    cp$relativePath <- ""
+    cp$subDirs <- character()
+    currentPath(cp)
+})
+addMdiSharedEventHandler("serverFileSelectorCurrentDirSubfolderClick", function(i){
     cp <- currentPath()
     req(cp, length(cp$subDirs) > i)
     cp$subDirs <- cp$subDirs[1:i]  

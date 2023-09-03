@@ -80,7 +80,7 @@ setTimeout <- function(action, ..., delay = 5000){
 #   loadSequence is the set of functions yet to execute
 #   loadData is whatever object/list is needed by loadSequence functions
 # each function in loadSequence should recall doNextLoadSequenceItem()
-doNextLoadSequenceItem <- function(loadData, loadSequence, delay = 50){
+doNextLoadSequenceItem <- function(loadData, loadSequence, delay = 100){
     if(!isTruthy(loadSequence)) return() # self-terminate when no more functions to call
     nNext <- length(loadSequence)
     if(nNext > 1){
