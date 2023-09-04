@@ -116,3 +116,15 @@ getInches <- function(value, unit, linesPerInch){
         "li" = value / linesPerInch
     )
 }
+
+#----------------------------------------------------------------
+# color manipulation
+#----------------------------------------------------------------
+addAlphaToColor <- function(color, alpha) { # expects a single color and a vector of alphas[0:1]
+    rgb_ <- col2rgb(color)
+    rgb(
+        rgb_[1], rgb_[2], rgb_[3],
+        max = 255,
+        alpha = pmin(1, pmax(0, alpha)) * 255
+    )
+}
