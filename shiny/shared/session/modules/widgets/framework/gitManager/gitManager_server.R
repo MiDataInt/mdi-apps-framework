@@ -43,7 +43,7 @@ output$statusTable <- renderDT(
                 getRepoTable("suite", gitStatusData$suite)
             )
             for(x in gitStatusData$dependencies){
-                dt <- rbind(
+                if(!is.null(x$dir)) dt <- rbind(
                     dt,
                     getRepoTable("dependency", x)
                 ) 
@@ -58,7 +58,7 @@ output$statusTable <- renderDT(
                     "Commit" = ""
                 )
             )
-        }
+        }       
         buffer <<- dt
     },
     options = list( # just a barebones table
@@ -81,11 +81,16 @@ setRepoStatus <- function(showStatus = TRUE){
     dir <- repo()$dir
 
     # collect various bits of status and other metadata on the selected repo
-    git2r::fetch(dir, origin)
+    git2r::fetch(
+        repo = dir, 
+        name = origin,
+        credentials = git2r::cred_token()
+    )
     x <- list(
         type = "repository",
         local = git2r::status(dir)
     )
+
     x$unstaged <- length(x$local$unstaged) + length(x$local$untracked) > 0     
     x$head <- git2r::repository_head(dir)
     x$localBranches  <- names(git2r::branches(dir, "local"))
@@ -177,7 +182,7 @@ observers$repoSelected <- observeEvent(repoObserver(), {
         type,
         framework  = gitFrameworkStatus,
         suite      = gitStatusData$suite,
-        dependency = gitStatusData$dependencies[[rowI - 2]],
+        # dependency = gitStatusData$dependencies[[rowI - 2]],
         NULL
     )) 
 
