@@ -7,16 +7,17 @@
 #----------------------------------------------------------------------
 # a button to find a source file to load, used by sourceFileUpload
 #----------------------------------------------------------------------
-serverSourceFilesButtonUI <- function(id){
+serverSourceFilesButtonUI <- function(id, multiple = FALSE, buttonType = "default",
+                                      class = NULL, icon = NULL, style = "width: 100%;"){
     shinyFilesButton(
         id,
         "Load from Server",
         "Select data package, bookmark, or other source file to import",
-        multiple = FALSE,
-        buttonType = "default",
-        class = NULL,
-        icon = NULL,
-        style = "width: 100%",
+        multiple = multiple,
+        buttonType = buttonType,
+        class = class,
+        icon = icon,
+        style = style,
         viewtype = "detail"
     )
 }

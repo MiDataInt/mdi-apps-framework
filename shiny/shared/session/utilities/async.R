@@ -75,3 +75,17 @@ setTimeout <- function(action, ..., delay = 5000){
     })
     jobId
 }
+
+# use setTimeout to step through a sequence of asynchronous load functions
+#   loadSequence is the set of functions yet to execute
+#   loadData is whatever object/list is needed by loadSequence functions
+# each function in loadSequence should recall doNextLoadSequenceItem()
+doNextLoadSequenceItem <- function(loadData, loadSequence, delay = 100){
+    if(!isTruthy(loadSequence)) return() # self-terminate when no more functions to call
+    nNext <- length(loadSequence)
+    if(nNext > 1){
+        setTimeout(loadSequence[[1]], loadData, loadSequence[2:nNext], delay = delay)
+    } else{
+        setTimeout(loadSequence[[1]], loadData, NA, delay = delay)
+    }
+}

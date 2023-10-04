@@ -131,3 +131,20 @@ observeEvent(input$resetPage, {
     )
     refresh()
 })
+
+# activate the mdiSharedEventHandler
+# a way of receiving events from javascript when standard observe(input$x) fails, e.g., in some modals
+mdiSharedEventHandlers <- list()
+observeEvent(input$mdiSharedEventHandler, {
+    x <- input$mdiSharedEventHandler
+    req(x, is.list(x), x$key)
+    fn <- mdiSharedEventHandlers[[x$key]]
+    req(is.function(fn))
+    fn(x$val)
+}, ignoreInit = TRUE)
+addMdiSharedEventHandler <- function(key, fn){
+    mdiSharedEventHandlers[[key]] <<- fn
+}
+removeMdiSharedEventHandler <- function(key){
+    mdiSharedEventHandlers[[key]] <<- NULL
+}

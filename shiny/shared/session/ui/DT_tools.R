@@ -64,17 +64,20 @@ tableUiInput <- function(ShinyUiFun, parentId, rowN, ..., allow=NULL, j=0) { # S
   
 # put one identical action link in every table row ...
 # javascript triggers a _single_ event for all links, which carries the row information
-tableActionLinks <- function(parentId, nrow, label, ..., confirmMessage=NULL, allow=NULL) {
+tableActionLinks <- function(parentId, nrow, label, ..., confirmMessage=NULL, allow=NULL, useMdiSharedHandler = FALSE) {
     if(is.null(confirmMessage)) confirmMessage <- "NO_CONFIRM"
-    onclick <- getTableActionOnClick(parentId, confirmMessage)
+    onclick <- getTableActionOnClick(parentId, confirmMessage, useMdiSharedHandler)
     tableUiInputs(actionLink, parentId, nrow, label, ..., onclick = onclick, allow = allow)
 }
-getTableActionOnClick <- function(parentId, confirmMessage){
-    paste0('handleActionClick("', parentId, '", this.id, "', confirmMessage, '")')
+getTableActionOnClick <- function(parentId, confirmMessage, useMdiSharedHandler = FALSE){
+    paste0('handleActionClick', if(useMdiSharedHandler) "2" else "", '("', parentId, '", this.id, "', confirmMessage, '")')
 }
 # ... and recover the row index when the action is clicked
 getTableActionLinkRow <- function(input, parentId){
     as.numeric(strsplit(input[[parentId]], tableUiInputSeparator)[[1]][2])
+}
+getTableActionLinkRow2 <- function(sharedInputVal){
+    as.numeric(strsplit(sharedInputVal, tableUiInputSeparator)[[1]][2])
 }
 
 # or get potentially multiple action links to fill just one cell

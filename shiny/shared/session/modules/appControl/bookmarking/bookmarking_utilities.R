@@ -94,8 +94,9 @@ loadBookmarkFromString <- function(bookmark){
 }
 
 # helper function for step modules to react to bookmark
-getModuleBookmark <- function(stepName, module, bookmark, locks){
-    req(bookmark$step)
+getModuleBookmark <- function(stepName, module, bookmark, locks, fail = TRUE){
+    if(fail) req(bookmark$step)
+    else if(!isTruthy(bookmark$step)) return(NULL)
     reportProgress('load bookmark', module)
     if(bookmark$step == stepName) stopSpinner(session)
     isolate({
