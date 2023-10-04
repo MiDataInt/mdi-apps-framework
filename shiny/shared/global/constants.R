@@ -100,7 +100,7 @@ CONSTANTS <- list(
         black   = 'black',
         grey    = '#7f7f7f'
     ),
-
+    
     # graphical conversions
     cmPerInch = 2.54,
 
@@ -115,5 +115,6 @@ CONSTANTS <- list(
     )
 )
 CONSTANTS$palettes <- list(
-    plotly = CONSTANTS$plotlyColors
+    plotly = CONSTANTS$plotlyColors,
+    greyscale = "#000000" # caller must handle variable grey shading as needed for app
 )
