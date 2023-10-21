@@ -69,3 +69,13 @@ commonSplitElementGroups <- function(x, split, position, ignore.case = FALSE, re
         nUniquePrefixes = length(uniquePrefixes)
     )
 }
+
+# replace dashes (minus signs) with en dashes in a character vector
+enDash <- function(x) { 
+    x[x == "-"] <- "\u2013"
+    x
+}
+# replace all underscores with spaces in a character vector
+underscoresToSpaces <- function(x) { 
+    sapply(x, function(xx) gsub("_", " ", xx))
+} 

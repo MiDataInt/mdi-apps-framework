@@ -25,6 +25,7 @@ staticPlotBoxServer <- function(
     dir = NULL,
     settings = NULL, # an additional settings template as a list()
     template = settings, # for legacy support
+    Plot_Frame = NULL, # a reactive that provides overrides that take precedence over settings$Plot_Frame, e.g., reactive(list(Width_Inches = 7))
     ... # additional arguments passed to settingsServer
 ){ moduleServer(id, function(input, output, session) {   
 #----------------------------------------------------------------------
@@ -64,6 +65,17 @@ if(!margins){
 if(!legend) template$Plot_Frame$Legend_Placement <- NULL
 if(!title) template$Plot_Frame$Title <- NULL
 if(!is.null(callerTemplate)) template <- c(template, callerTemplate)
+if(!is.null(Plot_Frame)){ # mask overrides from settings inputs
+    tmp <- Plot_Frame()
+    for(x in names(tmp)) template$Plot_Frame[[x]] <- NULL
+}
+getPlotFrameOverrides <- function(){ # get the current value of masked overrides
+    if(is.null(Plot_Frame)) return(NULL)
+    tmp <- Plot_Frame()
+    pf <- list()
+    for(x in names(tmp)) pf[[x]] <- list(value = tmp[[x]])
+    pf
+}
 
 #----------------------------------------------------------------------
 # activate all requested/required header links
@@ -98,7 +110,7 @@ settings <- activateMdiHeaderLinks(
 invalidatePlot <- reactiveVal(NULL)
 output$plot <- renderImage({
     invalidatePlot()
-    ps <- settings$Plot_Frame()
+    ps <- c(settings$Plot_Frame(), getPlotFrameOverrides())
     
     # initialize plot
     png(
@@ -117,6 +129,7 @@ output$plot <- renderImage({
         graphics.off()
     }, error = function(e){
         graphics.off()
+        print(e)
         req(FALSE)
     })
 
@@ -138,7 +151,7 @@ setMargins <- function() par(mar = c(
     settings$get("Plot_Frame", "Right_Margin")
 ))
 initializeFrame <- function(title = NULL, ...){
-    ps <- settings$Plot_Frame()
+    ps <- c(settings$Plot_Frame(), getPlotFrameOverrides())
     if(margins) setMargins()
     plot(
         NA, 
@@ -165,14 +178,27 @@ addLines <- function(lty = NULL, lwd = NULL, ...){
 }
 addLegend <- function(pch = NULL, pt.cex = NULL, lty = NULL, lwd = NULL, ...){
     placement <- if(legend) settings$get('Plot_Frame', 'Legend_Placement') else "topleft"
-    if(placement != "none") legend(
+    tryCatch(if(placement != "none") legend(
         placement,
         pch    = if(!is.null(pch))    pch    else if(points) settings$get("Points_and_Lines", "Point_Type") else NA,
         pt.cex = if(!is.null(pt.cex)) pt.cex else if(points) settings$get("Points_and_Lines", "Point_Size") else NA,
         lty    = if(!is.null(lty))    lty    else if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NA,
         lwd    = if(!is.null(lwd))    lwd    else if(lines)  settings$get("Points_and_Lines", "Line_Width") else NA,
         ...
-    )
+    ), error = function(e) print(e))
+}
+addMarginLegend <- function(x, y, pch = NULL, pt.cex = NULL, lty = NULL, lwd = NULL, ...){
+    par(xpd = TRUE)
+    tryCatch(legend(
+        x = x,
+        y= y,
+        pch    = if(!is.null(pch))    pch    else if(points) settings$get("Points_and_Lines", "Point_Type") else NA,
+        pt.cex = if(!is.null(pt.cex)) pt.cex else if(points) settings$get("Points_and_Lines", "Point_Size") else NA,
+        lty    = if(!is.null(lty))    lty    else if(lines)  settings$get("Points_and_Lines", "Line_Type")  else NA,
+        lwd    = if(!is.null(lwd))    lwd    else if(lines)  settings$get("Points_and_Lines", "Line_Width") else NA,
+        ...
+    ), error = function(e) print(e))
+    par(xpd = FALSE)
 }
 
 #----------------------------------------------------------------------
@@ -185,7 +211,8 @@ list(
     initializeFrame = initializeFrame,
     addPoints       = addPoints,
     addLines        = addLines,
-    addLegend       = addLegend
+    addLegend       = addLegend,
+    addMarginLegend = addMarginLegend
 )
 
 #----------------------------------------------------------------------

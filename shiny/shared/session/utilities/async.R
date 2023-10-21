@@ -64,8 +64,6 @@ mdi_async <- function(
 setTimeout <- function(action, ..., delay = 500){
     timeHasElapsed <- FALSE
     jobId <- sample(1e8, 1)
-
-    dmsg("setTimeout")
     selfDestruct <- observe({
         if(timeHasElapsed){
             action(jobId, ...)
@@ -82,9 +80,6 @@ waitFor <- function(triggers, action, ..., delay = 100){ # triggers is a list of
     initialValues <- sapply(triggers, function(x) x()) # should always be truthy, i.e., not NULL or NA
     timeHasElapsed <- FALSE
     jobId <- sample(1e8, 1)
-
-    dmsg("waitFor")
-    dprint(initialValues)
     selfDestruct <- observe({
         if(timeHasElapsed && !any(sapply(triggers, function(x) x()) == initialValues)){
             action(jobId, ...)
@@ -105,9 +100,6 @@ waitFor <- function(triggers, action, ..., delay = 100){ # triggers is a list of
 doNextLoadSequenceItem <- function(loadData, loadSequence, delay = 100, loadTriggers = NULL){
     if(!isTruthy(loadSequence)) return() # self-terminate when no more functions to call
     nNext <- length(loadSequence)
-    dmsg("doNextLoadSequenceItem")
-    dmsg(is.null(loadTriggers))
-    dmsg(!isTruthy(loadTriggers[[1]]))
     if(nNext > 1){
         if(is.null(loadTriggers)){
             setTimeout(loadSequence[[1]], loadData, loadSequence[2:nNext], delay = delay)

@@ -128,3 +128,19 @@ addAlphaToColor <- function(color, alpha) { # expects a single color and a vecto
         alpha = pmin(1, pmax(0, alpha)) * 255
     )
 }
+
+#----------------------------------------------------------------
+# plotting helpers
+#----------------------------------------------------------------
+# jitter a vector of points for plotting, a bit more intelligently than just random placement
+jitter2 <- function(v, min, max){
+    N <- length(v)
+    width <- max - min
+    if(N == 1) return(min + width / 2) # place single points at center
+    if(N <= 4) { # place only a few points closer around the center
+        min <- min + width / 4
+        max <- max - width / 4
+    } 
+    x <- seq(min, max, length.out = N)
+    x[sample(N)]
+}
