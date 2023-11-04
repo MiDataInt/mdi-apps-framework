@@ -213,10 +213,11 @@ toInputs <- function(){
     if(isTabbed){
         fluidRow(do.call(tabBox, c(
             lapply(names(template), function(tab){
-                tabPanel(
+                nSettings <- length(settings[[tab]])
+                if(nSettings > 0) tabPanel(
                     fluidRow(lapply(names(settings[[tab]]), getTabInputs, tab)),
                     title = gsub('_', ' ', tab)
-                )
+                ) else NULL
             }),
             width = 12               
         )))        

@@ -61,7 +61,7 @@ mdi_async <- function(
 }
 
 # using an observer with invalidateLater
-setTimeout <- function(action, ..., delay = 5000){
+setTimeout <- function(action, ..., delay = 500){
     timeHasElapsed <- FALSE
     jobId <- sample(1e8, 1)
     selfDestruct <- observe({
@@ -75,17 +75,46 @@ setTimeout <- function(action, ..., delay = 5000){
     })
     jobId
 }
+waitFor <- function(triggers, action, ..., delay = 100){ # triggers is a list of one or more reactives whose value must change for event to be fired
+    if(!is.list(triggers)) triggers <- list(triggers)    
+    initialValues <- sapply(triggers, function(x) x()) # should always be truthy, i.e., not NULL or NA
+    timeHasElapsed <- FALSE
+    jobId <- sample(1e8, 1)
+    selfDestruct <- observe({
+        if(timeHasElapsed && !any(sapply(triggers, function(x) x()) == initialValues)){
+            action(jobId, ...)
+            selfDestruct$destroy()
+        } else {
+            timeHasElapsed <<- TRUE
+            invalidateLater(delay)
+        }
+    })
+    jobId
+}
 
 # use setTimeout to step through a sequence of asynchronous load functions
-#   loadSequence is the set of functions yet to execute
 #   loadData is whatever object/list is needed by loadSequence functions
+#   loadSequence is the list of functions yet to execute
+#   loadTriggers is an optional list of reactives of same length as loadSequence that provides triggers for waitFor, instead of setTimeout
 # each function in loadSequence should recall doNextLoadSequenceItem()
-doNextLoadSequenceItem <- function(loadData, loadSequence, delay = 100){
+doNextLoadSequenceItem <- function(loadData, loadSequence, delay = 100, loadTriggers = NULL){
     if(!isTruthy(loadSequence)) return() # self-terminate when no more functions to call
     nNext <- length(loadSequence)
     if(nNext > 1){
-        setTimeout(loadSequence[[1]], loadData, loadSequence[2:nNext], delay = delay)
+        if(is.null(loadTriggers)){
+            setTimeout(loadSequence[[1]], loadData, loadSequence[2:nNext], delay = delay)
+        } else if(!isTruthy(loadTriggers[[1]])) { # allow mixing of triggered and timed load events in one call
+            setTimeout(loadSequence[[1]], loadData, loadSequence[2:nNext], loadTriggers[2:nNext], delay = delay)
+        } else {
+            waitFor(loadTriggers[[1]], loadSequence[[1]], loadData, loadSequence[2:nNext], loadTriggers[2:nNext], delay = delay)
+        }
     } else{
-        setTimeout(loadSequence[[1]], loadData, NA, delay = delay)
+        if(is.null(loadTriggers)){
+            setTimeout(loadSequence[[1]], loadData, NA, delay = delay)
+        } else if(!isTruthy(loadTriggers[[1]])) {
+            setTimeout(loadSequence[[1]], loadData, NA, NA, delay = delay)
+        } else {
+            waitFor(loadTriggers[[1]], loadSequence[[1]], loadData, NA, NA, delay = delay)
+        }
     }
 }
