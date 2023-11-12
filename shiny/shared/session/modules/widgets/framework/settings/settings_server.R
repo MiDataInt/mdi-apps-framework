@@ -296,6 +296,9 @@ retval$get <- function(tab, id, default = NULL){
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
 }
+retval$setChoices <- function(tab, id, choices){
+    template[[tab]][[id]]$choices <<- choices
+}
 retval$open <- showSettingsModals
 retval$undo <- function(){
     initializeSettings(previousState)
