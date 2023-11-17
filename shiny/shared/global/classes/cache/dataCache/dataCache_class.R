@@ -69,7 +69,7 @@ get <- function(
     permanent = TRUE, # permanent means we copy to disk; permanent==FALSE is incompatible with from=='disk'
     from = c('ram', 'disk'), # from determines where we are allowed to get data; disk disables the RAM cache
     #----------------------------------------------------------------------
-    create = c('asNeeded', 'once', 'always'), # create determines when we are obliged to call createFn
+    create = c('asNeeded', 'once', 'always', 'never'), # create determines when we are obliged to call createFn
     createFn = NULL, # for missing/potentially stale objects, we call createFn to create them anew
     ...  # optional named additional arguments passed to createFn, along with cacheKey, keyObject, key, cacheObject
     #----------------------------------------------------------------------
@@ -152,6 +152,29 @@ clearParentDir <- function(){ # remove all contents from parentDir from disk ent
     dir.create(parentDir)
 }
 
+# #----------------------------------------------------------------------
+# # create a new cache object directly from a provided data object, without having to get it first or call createFn
+# # always forcibly replaces any existing data under the same key
+# #----------------------------------------------------------------------
+# create <- function(
+#     type,             # a human readable name for the kind of object this is within its parentType
+#     keyObject = NULL, # either keyObject or key is required
+#     key = NULL,       # should encompass all parameters that define the object's contents
+#     permanent = TRUE, # permanent means we copy to disk; permanent==FALSE is incompatible with from=='disk'
+#     from = c('ram', 'disk'), # from determines where we are allowed to get data; disk disables the RAM cache
+#     value             # the data object to place into the cache
+# ){
+#     keys <- getCacheKeys(type, keyObject, key) # see get for details
+#     if(is.null(keys)) return(NULL)
+#     cacheObject <- getStructuredObject(keyObject, keys, value, permanent)
+#     if(from[1] == 'ram' && is.null(cache[[keys$cacheKey]])) cache[[keys$cacheKey]] <<- cacheObject
+#     if(permanent) { # refuse to overwrite new values with stale ones
+#         file <- getObjectFile(keys$cacheKey, create = TRUE)
+#         saveRDS(cacheObject, file)
+#     }
+#     cacheObject
+# }
+
 #----------------------------------------------------------------------
 # set return value
 #----------------------------------------------------------------------
@@ -160,6 +183,7 @@ structure(
         get = get,
         set = set,
         clear = clear,
+        # create = create,
         clearParentDir = clearParentDir,
         getCacheKeys = getCacheKeys,
         cacheKeys = function() names(cache)

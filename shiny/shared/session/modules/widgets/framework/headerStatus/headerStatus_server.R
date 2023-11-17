@@ -177,10 +177,10 @@ observeEvent(input$asyncClick, {
         )
     )
 })
-closeAsyncDialog <- function(clear){
+closeAsyncDialog <- function(clear, taskId = NULL){
     removeModal()
     if(clear){ # eventually, the user clears the icon from their header and from the server log
-        taskId <- workingAsyncId()
+        if(is.null(taskId)) taskId <- workingAsyncId()
         asyncTasks[[taskId]] <<- NULL      
         updateAsyncMonitor(updateAsyncMonitor() + 1)
     }
@@ -192,13 +192,18 @@ observeEvent(input$clearAsync,   { closeAsyncDialog(TRUE) })
 # return value
 #----------------------------------------------------------------------
 list(
-    initalizeAsyncTask = function(name, reactiveVal){
+    initalizeAsyncTask = function(name, reactiveVal, autoClear = NULL){
         asyncTaskCounter <<- asyncTaskCounter + 1
         taskObserver <- observeEvent(reactiveVal(), {
             task <- reactiveVal()
             req(task)
             updateAsyncMonitor(updateAsyncMonitor() + 1)
-            if(!task$pending) taskObserver$destroy()
+            if(!task$pending) {
+                if(!is.null(autoClear) && task$success) setTimeout(function(...){
+                    closeAsyncDialog(TRUE, as.character(asyncTaskCounter)) 
+                }, delay = autoClear)               
+                taskObserver$destroy()
+            }
         })
         asyncTasks[[as.character(asyncTaskCounter)]] <<- list(
             user = headerStatusData$userDisplayName,

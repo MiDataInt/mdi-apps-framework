@@ -5,16 +5,17 @@
 # as a wrapper around future_promise
 mdi_async <- function(
     taskFn,             # a function that executes the asynchronous task; must not call reactives
-    reactiveVal,        # reactiveVal (or a function with one argument) to monitor the task's progress and results
+    reactiveVal,        # reactiveVal to monitor the task's progress and results
     name = "anonymous", # a string name for the task, used in error reporting and the results object
     default = NULL,     # the value passed to reactiveVal when taskFn fails
     promise = FALSE,    # if TRUE, return the task's promise, otherwise return NULL
     header = FALSE,     # if TRUE, feedback on the task progress and success is provided in the main page header
     async = TRUE,       # in select circumstances, caller may wish to force synchronous execution of the same task
+    autoClear = NULL,   # if not NULL, successful (but not error) header status icon is cleared after autoClear milliseconds
     ...                 # additional arguments passed to taskFn
 ){
     # communicate the initiation of the intent to perform the task    
-    if(header) headerStatus$initalizeAsyncTask(name, reactiveVal)
+    if(header) headerStatus$initalizeAsyncTask(name, reactiveVal, autoClear)
     reportTaskProgress <- function(pending, success = NULL, message = NULL, value = NULL){
         reactiveVal(list(
             name = name,     
