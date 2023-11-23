@@ -17,7 +17,7 @@ interactiveScatterplotServer <- function(
 #----------------------------------------------------------------------
     mode = "markers", # how to plot; markers, lines, etc.
     color = NA,  # NA is auto (not NULL)
-    symbol = NA, # symbol and pointSize can also be provided as columns in plotData()    
+    symbol = NA, # color, symbol and pointSize can also be provided as columns in plotData()    
     pointSize = 3,
     lineWidth = 2,
 #----------------------------------------------------------------------
@@ -102,8 +102,9 @@ if(is.null(overplotMode)) overplotMode <- mode
 # styling helper functions
 #----------------------------------------------------------------------
 getStyle <- function(d, type, default) if(type %in% names(d)) d[[type]] else default
-getPointSize <- function(d, default) getStyle(d, 'pointSize', default)
-getSymbol    <- function(d, default) getStyle(d, 'symbol',    default)
+getPointColor <- function(d, default) getStyle(d, 'color',      default)
+getPointSize  <- function(d, default) getStyle(d, 'pointSize',  default)
+getSymbol     <- function(d, default) getStyle(d, 'symbol',     default)
 setHoverText <- function(d) {
     if(is.data.frame(d)) d$hoverText_ <-
         if(is.null(hoverText)) NA
@@ -221,7 +222,7 @@ getBasePlot <- function(name, d, overplot, isMultiPlot, shareX = NULL, shareY = 
         name = name,
         marker = if(grepl('markers', mode)) list(
             size = getPointSize(d, pointSize),
-            color = color,
+            color = getPointColor(d, color),
             symbol = getSymbol(d, symbol)
         ) else NULL,
         line = if(grepl('lines', mode)) list(
@@ -461,8 +462,10 @@ getFit <- function(d){
 if(selectable) observe({
     req(plotData()) # suppress a warning before data exist, see: https://github.com/ropensci/plotly/issues/1538#issuecomment-495312022 # nolint
     d <- event_data("plotly_selected", source = plotId)
-    req(d)
-    req(nrow(d) > 0)
+    if(!isTruthy(d) || nrow(d) == 0){
+        selected(NULL)
+        return(NULL)
+    }
     d <- d[d$curveNumber == 0, ] # to avoiding including a prior fit/trendline in the next fit
     selected(d)
     fit( getFit(d) )

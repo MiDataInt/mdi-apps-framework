@@ -207,7 +207,7 @@ getTabInputs <- function(id, tab){
         dataSource = dataSourceSelect(fullId, t, x),
         spacer = span(style = "visibility: hidden;", textInput(fullId, fullId, "")),
         get(x$type)(fullId, t$label, x$value)
-    ), style = "margin-bottom: 5px;")    
+    ), style = "margin-bottom: 5px; min-height: 60px;")    
 }
 toInputs <- function(){
     if(isTabbed){
@@ -295,6 +295,9 @@ retval$get <- function(tab, id, default = NULL){
 }
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
+}
+retval$setChoices <- function(tab, id, choices){
+    template[[tab]][[id]]$choices <<- choices
 }
 retval$open <- showSettingsModals
 retval$undo <- function(){
