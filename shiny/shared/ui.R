@@ -43,7 +43,8 @@ userLoginTabItem <- tabItem(tabName = "loginTab", tags$div(class = "text-block",
         id = CONSTANTS$apps$loginPage,
         includeMarkdown( uiLaunchHeader ),
         if(serverEnv$IS_GLOBUS) 
-            loginControls('oauth2LoginButton', 'Globus', 'globus-help.md')
+            "DSFASDFASDFA"
+            # loginControls('oauth2LoginButton', 'Globus', 'globus-help.md')
         else if(serverEnv$IS_GOOGLE)
             loginControls('oauth2LoginButton', 'Google', 'google-help.md')
         else if(serverEnv$IS_KEYED) 
