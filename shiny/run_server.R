@@ -64,7 +64,6 @@ serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_O
 
 # set properties based on whether server is publicly accessible or restricted access
 if(serverEnv$IS_SERVER) { # public web server mode
-    serverEnv$IS_DEVELOPER <- FALSE # !! never expose developer tools on a public server !!
     serverEnv$LAUNCH_BROWSER <- FALSE
     setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
     setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
