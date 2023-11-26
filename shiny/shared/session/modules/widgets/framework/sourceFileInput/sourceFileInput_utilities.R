@@ -102,15 +102,44 @@ getTargetAppsFromPackageFile <- function(packageFile, sendFeedback){
 
 # get exactly one target app for a package file
 # query user if more than one app is possible for a package
-parseTargetApps <- function(apps, sendFeedback){
-    if(length(apps) == 1) return(apps)
-    sendFeedback("PENDING: query user for app selection when multiple possibilities", isError = TRUE) 
+parseTargetApps <- function(apps, launchApp, ...){
+    if(length(apps) == 0) {
+        FALSE 
+    } else if(length(apps) == 1) {
+        launchApp(apps, ...)
+        TRUE
+     } else {
+        showUserDialog(
+            "Select an App", 
+            tags$p("The data package being loaded is compatible with multiple apps."),
+            tags$p("Please choose the app you wish to use."),
+            tags$div(
+                style = "margin-left: 20px; padding-top: 10px;",
+                radioButtons(session$ns("incomingAppChoice"), NULL, choices = apps)
+            ) ,
+            callback = function(parentInput) {
+                launchApp(parentInput$incomingAppChoice, ...)
+            },
+            size = "s", 
+            type = 'okOnly', 
+            easyClose = FALSE
+        )
+        FALSE
+     }
 }
-getTargetAppFromPackageFile <- function(packageFile, sendFeedback){
-    parseTargetApps( getTargetAppsFromPackageFile(packageFile, sendFeedback) )
+getTargetAppFromPackageFile <- function(packageFile, sendFeedback, launchApp, ...){
+    parseTargetApps( 
+        getTargetAppsFromPackageFile(packageFile, sendFeedback), 
+        launchApp, 
+        ... 
+    )
 }
-getTargetAppFromPackageYmlFile <- function(packageYmlFile, sendFeedback){
-    parseTargetApps( getTargetAppsFromUploadType(read_yaml(packageYmlFile)$uploadType, sendFeedback) )
+getTargetAppFromPackageYmlFile <- function(packageYmlFile, sendFeedback, launchApp, ...){
+    parseTargetApps( 
+        getTargetAppsFromUploadType(read_yaml(packageYmlFile)$uploadType, sendFeedback), 
+        launchApp, 
+        ... 
+    )
 }
 
 #----------------------------------------------------------------------
@@ -130,7 +159,7 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
     
     # initialize common values and actions
     sft <- CONSTANTS$sourceFileTypes
-    launchApp <- function(type, appName){
+    launchApp <- function(appName, type){
         nocache <- if('nocache' %in% names(file)) file$nocache else NULL # suppress shinyFiles tibble warning
         loadRequest(list(
             app = appName, 
@@ -147,14 +176,13 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
     # bookmark files (only allowed from launch page, always loads target app)
     if(type == sft$bookmark || type == sft$book){
         appName <- getTargetAppFromBookmarkFile(file$datapath, sendFeedback)$app
-        launchApp(type, appName)
+        launchApp(appName, type)
     
     # pipeline package files; the output from a Stage 1 pipeline
     } else if(type == sft$package){
         if(isLaunchPage){ # first file upload on launch page
-            appName <- getTargetAppFromPackageFile(file$datapath, sendFeedback)
-            if(is.null(appName)) return()
-            launchApp(type, appName)
+            success <- getTargetAppFromPackageFile(file$datapath, sendFeedback, launchApp, type)
+            if(!success) return() # fails when awaiting user selection from multiple apps
         } else { # additional file upload from within an app
             apps <- getTargetAppsFromPackageFile(file$datapath, sendFeedback)
             if(!(app$NAME %in% apps)) {
@@ -167,7 +195,7 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
     # job configuration files (or sample manifests, deprecated) for execution by a Stage 1 pipeline 
     } else if(type == sft$jobFile || type == sft$manifest){
         if(isLaunchPage){ # first file upload on launch page
-            launchApp(type, CONSTANTS$apps$pipelineRunner)
+            launchApp(CONSTANTS$apps$pipelineRunner, type)
         } else { # additional file upload from within an app
             addDataSource(type)
         }
@@ -186,7 +214,7 @@ loadIncomingFile <- function(file, allowedFileTypes, sendFeedback,
                 error <- paste0('unknown app: ', appName, fileUsage)
                 sendFeedback(error, isError = TRUE)
             }
-            launchApp(type, appName)
+            launchApp(appName, type)
         } else { # additional file upload from within an app; assume table is relevant to the app
             addDataSource(type)
         }

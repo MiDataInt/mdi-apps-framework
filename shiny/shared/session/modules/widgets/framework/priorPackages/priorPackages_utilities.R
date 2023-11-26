@@ -18,9 +18,15 @@ showPriorPackages <- function(
     onExit <- function(...){
         removeMatchingInputValues(session, id)
         dataPackagesCache <<- destroyModuleObservers(dataPackagesCache)
+        launchApp <- function(appToLoad, file){
+            loadRequest(list(
+                app = appToLoad,
+                file = file,
+                suppressUnlink = TRUE
+            ))                
+        }
         if(isTruthy(dataPackagesCache$selectedRow)){
             package <- dataPackagesCache$dataPackages[dataPackagesCache$selectedRow]
-            appToLoad <- getTargetAppFromPackageYmlFile(package$packageYmlFile, sendFeedback)
             file <- list(
                 type = "priorPackage",
                 path = package$packageYmlFile,
@@ -28,11 +34,7 @@ showPriorPackages <- function(
                 sourceId = package$sourceId
             )
             if(is.null(app$NAME) || app$NAME == "launch-page"){
-                loadRequest(list(
-                    app = appToLoad,
-                    file = file,
-                    suppressUnlink = TRUE
-                ))                
+                getTargetAppFromPackageYmlFile(package$packageYmlFile, sendFeedback, launchApp, file)               
             } else {
                 firstStep <- app[[ names(app$config$appSteps)[1] ]]
                 firstStep$loadSourceFile(file, suppressUnlink = TRUE)               
@@ -47,6 +49,6 @@ showPriorPackages <- function(
         type = 'okCancel', 
         easyClose = FALSE,
         fade = FALSE,
-        callback = onExit
+        callback = function(...) setTimeout(onExit)
     )
 }
