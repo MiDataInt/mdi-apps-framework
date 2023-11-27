@@ -92,7 +92,7 @@ getSourceFilePackageName <- Vectorize(function(sourceId){
 getSourcePackageOption <- function(sourceId, optionFamily, option){
     source <- getSourceFromId(sourceId)
     req(source)
-    req(source$sourceType == "package")
+    req(source$sourceType == "package" || source$sourceType == "priorPackage")
     action <- source$config$action
     options <- source$config$task[[action]]
     req(options[[optionFamily]])
