@@ -62,7 +62,7 @@ if(!margins){
     template$Plot_Frame$Left_Margin <- NULL
     template$Plot_Frame$Right_Margin <- NULL
 }
-if(!legend) template$Plot_Frame$Legend_Placement <- NULL
+if(!legend) template$Plot_Frame$Legend_Placement$type <- "spacer"
 if(!title) template$Plot_Frame$Title <- NULL
 if(!is.null(callerTemplate)) template <- c(template, callerTemplate)
 if(!is.null(Plot_Frame)){ # mask overrides from settings inputs
