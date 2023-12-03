@@ -1,6 +1,6 @@
 ---
 title: mdiXYPlot
-parent: Plots
+parent: Specific Plots
 grand_parent: Display Widgets
 has_children: false
 nav_order: 20

@@ -1,6 +1,6 @@
 ---
 title: staticPlotBox
-parent: Plots
+parent: General Plots
 grand_parent: Display Widgets
 has_children: false
 nav_order: 10
