@@ -24,7 +24,9 @@ A link allows for immediate download of the rendered plot,
 with no guessing as to what it will look like in the png file.
 
 The drawback is that plots are not interactive. 
-If this is important for your app, try the
+If this is important for your app, try 
+[mdiInteractivePlot](/mdi-apps-framework/shiny/shared/session/modules/widgets/plots/mdiInteractivePlot/README.html)
+or the
 [interactivePlots](/mdi-apps-framework/shiny/shared/session/modules/widgets/plots/interactivePlots/README.html)
 family of widgets. Be aware that `staticPlotBox` is an easier
 interface to master as compared to `interactivePlots`.
