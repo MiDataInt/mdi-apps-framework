@@ -144,7 +144,7 @@ your click and other actions will not return correct values.
  
 For more detailed views of the module's code, see:
 
-- [mdi-apps-framework : mdiInteractivePlot](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/mdiInteractivePlot)
+- [mdi-apps-framework : mdiInteractivePlot](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/general/mdiInteractivePlot)
 
 For a complete working example, see:
 

@@ -41,7 +41,7 @@ pngFile <- file.path(sessionDirectory, pngFileName)
 #----------------------------------------------------------------------
 # parse requested plot options
 #----------------------------------------------------------------------
-settingsFile <- file.path(serverEnv$SHARED_DIR, 'session', 'modules', 'widgets', 'plots', 'staticPlotBox', 'settings.yml') # nolint
+settingsFile <- file.path(serverEnv$SHARED_DIR, 'session', 'modules', 'widgets', 'plots', 'general', 'staticPlotBox', 'settings.yml') # nolint
 callerTemplate <- template
 template <- read_yaml(settingsFile)
 if(points || lines){
@@ -87,7 +87,7 @@ settings <- activateMdiHeaderLinks(
     reload = function() invalidatePlot( sample(1e8, 1) ), # reload
     baseDirs = unique(c( # code editor
         baseDirs,
-        getWidgetDir("plots/staticPlotBox", framework = TRUE)
+        getWidgetDir("plots/general/staticPlotBox", framework = TRUE)
     )),
     envir = envir, # R console
     dir = dir, # terminal emulator
@@ -176,6 +176,23 @@ addLines <- function(lty = NULL, lwd = NULL, ...){
         ...
     )
 }
+addBoth <- function(pch = NULL, cex = NULL, lty = NULL, lwd = NULL, ...){
+    points(
+        pch = if(!is.null(pch)) pch else if(points) settings$get("Points_and_Lines", "Point_Type") else 19,
+        cex = if(!is.null(cex)) cex else if(points) settings$get("Points_and_Lines", "Point_Size") else 1,
+        lty = if(!is.null(lty)) lty else if(lines) settings$get("Points_and_Lines", "Line_Type")  else 1,        
+        lwd = if(!is.null(lwd)) lwd else if(lines) settings$get("Points_and_Lines", "Line_Width") else 1,
+        typ = "b",
+        ...
+    )
+}
+addArea <- function(x, y, ...){
+    polygon(
+        c(x[1], x, x[length(x)]), 
+        c(0, y, 0), 
+        ...
+    )
+}
 addLegend <- function(pch = NULL, pt.cex = NULL, lty = NULL, lwd = NULL, ...){
     placement <- if(legend) settings$get('Plot_Frame', 'Legend_Placement') else "topleft"
     tryCatch(if(placement != "none") legend(
@@ -211,6 +228,8 @@ list(
     initializeFrame = initializeFrame,
     addPoints       = addPoints,
     addLines        = addLines,
+    addBoth         = addBoth,
+    addArea         = addArea,
     addLegend       = addLegend,
     addMarginLegend = addMarginLegend
 )

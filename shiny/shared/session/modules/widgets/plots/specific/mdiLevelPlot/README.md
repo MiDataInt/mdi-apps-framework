@@ -3,21 +3,21 @@ title: mdiLevelPlot
 parent: Plots
 grand_parent: Display Widgets
 has_children: false
-nav_order: 50
+nav_order: 30
 ---
 
 ## {{page.title}}
 
 The **mdiLevelPlot** widget creates a level plot 
 in a pre-existing plot frame
-from an input `data.table`
-and returns a function to add an appropriate color legend. 
+from an input `data.table` 
+with an appropriate color legend. 
 
 A level plot
 is similar to a heat map in that it displays three-dimenional
 data as a grid of rectangles, where a rectangle's color denotes its
 Z-axis value. However, unlike heat maps, a level plot itself
-does not perform any clustering of rows and columns, it 
+does not perform any clustering of rows and columns. It 
 plots data on two numeric, not categorical, axes. 
 
 The plot and legend
@@ -89,7 +89,6 @@ get the lightest colors according to the palette, highest values
 get the darkest colors. Any grid position value beyond `Level_Plot$Max_Z_Value`
 get the darkest color.
 
-
 When a `seq` 'sequential' type palette is selected, e.g., the default Blues palette,
 data are coerced to range from 0 to positive values. Any negative values in the data are made positive by `abs()`. Thus, colors report on the non-directional deviation from zero.
 
@@ -132,4 +131,4 @@ myPlot <- staticPlotBoxServer(
  
 For more detailed views of the module's code, see:
 
-- [mdi-apps-framework : mdiLevelPlot](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/mdiLevelPlot)
+- [mdi-apps-framework : mdiLevelPlot](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/specific/mdiLevelPlot)

@@ -426,7 +426,7 @@ be to update the plot itself or another plot or table that depends on user selec
 
 For more detailed views of the modules' code, see:
 
-- [mdi-apps-framework : interactivePlots](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/interactivePlots)
+- [mdi-apps-framework : interactivePlots](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/general/interactivePlots)
 
 The following appStep server has several complete working examples:
 

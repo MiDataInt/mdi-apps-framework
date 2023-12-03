@@ -20,4 +20,4 @@ of many research applications.
 
 You do not need to use our widgets - feel free to use whatever 
 methods for data display you know and like - but consider them
-as they are proven to be useful in well-tested code.
+as they are proven useful in well-tested code.
