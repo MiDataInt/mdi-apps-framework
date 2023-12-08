@@ -1,46 +1,5 @@
 #----------------------------------------------------------------------
-# render a non-interactive level plot with MDI formatting
-#----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
-# offer settings to the wrapper box
-#----------------------------------------------------------------------
-mdiXYPlotSettings <- list(
-    XY_Plot = list(
-        Point_Order = list(
-            type = "radioButtons",
-            choices = c("random","group"),
-            value = "random"
-        ),
-        Color_Alpha = list(
-            type = "numericInput",
-            value = 1,
-            min = 0,
-            max = 1,
-            step = 0.05
-        ),
-        X_Jitter_Amount = list(
-            type = "textInput",
-            value = ""
-        ),
-        Group_Order = list(
-            type = "selectInput",
-            choices = c("alphabetical","as encountered"),
-            value = "alphabetical"
-        ),
-        Y_Jitter_Amount = list(
-            type = "textInput",
-            value = ""
-        ),
-        Reverse_Group_Order = list(
-            type = "checkboxInput",
-            value = FALSE
-        )
-    )
-)
-
-#----------------------------------------------------------------------
-# render the plot
+# render a non-interactive XY plot with MDI formatting
 #----------------------------------------------------------------------
 mdiXYPlot <- function(
     plot, # the staticPlotBox we are populating, must include mdiXYPlotSettings
@@ -61,7 +20,7 @@ mdiXYPlot <- function(
 ){ 
 #----------------------------------------------------------------------
 # parse the settings
-plotSettings <- plot$settings
+plotSettings <- plot$settings # must follow the template of mdiXYPlotSettings
 xySettings <- plotSettings$XY_Plot()
 xJitter <- trimws(xySettings$X_Jitter_Amount$value)
 yJitter <- trimws(xySettings$Y_Jitter_Amount$value)

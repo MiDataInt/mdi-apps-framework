@@ -1,8 +1,6 @@
 #----------------------------------------------------------------------
 # server components for plotting one or more frequency distributions
 #----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
 mdiDensityPlotBoxServer <- function(
     id,
     #----------------------------------------------------------------------  
@@ -10,6 +8,7 @@ mdiDensityPlotBoxServer <- function(
     groupingCols, # column(s) that define the groups to summarize as distinct distributions, or a reactive that returns it; can be NULL
     xlab, # x axis label, or a reactive that returns it 
     #----------------------------------------------------------------------   
+    defaultSettings = mdiDensityPlotSettings, # settings, possibly with updated default values and ranges
     defaultBinSize = 1, # starting bin resolution on the X axis
     eventTypePlural = "Events", # name of the thing being counted for the plot title
     ... # additional options passed to mdiXYPlot()
@@ -96,43 +95,13 @@ plotData <- reactive({
     )
 })
 #----------------------------------------------------------------------
+defaultSettings$Density_Plot$X_Bin_Size$value <- defaultBinSize
 plot <- staticPlotBoxServer(
     id,
     margins = TRUE,
     title = TRUE,
     lines = TRUE,
-    settings = c(list(
-        Density_Plot = list(
-            Min_X_Value = list(
-                type = "numericInput",
-                value = -10,
-                min = -50, 
-                max = 0,
-                step = 5
-            ),
-            Max_X_Value = list(
-                type = "numericInput",
-                value = 15,
-                min = 0, 
-                max = 50,
-                step = 5
-            ),
-            X_Bin_Size = list(
-                type = "numericInput",
-                value = defaultBinSize
-            ),
-            Y_Axis_Value = list(
-                type = "radioButtons",
-                choices = c("Frequency","Count"),
-                value = "Frequency"
-            ),
-            Plot_As = list(
-                type = "radioButtons",
-                choices = c("lines","area","histogram"),
-                value = "lines"
-            )
-        )
-    ), mdiXYPlotSettings), 
+    settings = defaultSettings, 
     size = "m",
     create = function() {
         d <- plotData()

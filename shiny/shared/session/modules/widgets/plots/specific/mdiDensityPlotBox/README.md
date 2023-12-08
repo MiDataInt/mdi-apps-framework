@@ -31,13 +31,13 @@ where:
 
 - **title** = the title of the plot box
 
-### mdiDensityPlotServer options
+### mdiDensityPlotBoxServer options
 
-The `mdiDensityPlotServer` function takes the following arguments in addition to 'id':
+The `mdiDensityPlotBoxServer` function takes the following arguments in addition to 'id':
 
 ```r
 # staticPlotBox_server.R
-mdiDensityPlotServer <- function(
+mdiDensityPlotBoxServer <- function(
     id,
     data,
     groupingCols,
@@ -57,7 +57,7 @@ where:
 - **eventTypePlural** = name of the thing being counted for the plot title
 - **...** = additional options passed to mdiXYPlot()
 
-### mdiDensityPlotServer return value
+### mdiDensityPlotBoxServer return value
 
 The module returns, as is, the value from `staticPlotBoxServer()` for 
 the staticPlotBox it generates.

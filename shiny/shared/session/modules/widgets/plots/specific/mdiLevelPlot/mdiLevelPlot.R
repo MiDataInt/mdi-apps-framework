@@ -1,42 +1,6 @@
 #----------------------------------------------------------------------
 # render a non-interactive level plot with MDI formatting
 #----------------------------------------------------------------------
-
-#----------------------------------------------------------------------
-# offer settings to the wrapper box
-#----------------------------------------------------------------------
-mdiLevelPalettes <- function(){
-    palettes <- brewer.pal.info
-    palettes$paletteName <- row.names(palettes)
-    #          maxcolors category colorblind
-    # BrBG            11      div       TRUE
-    # Blues            9      seq       TRUE
-    as.data.table(palettes)[category != "qual"]
-}
-mdiLevelPlotSettings <- list(
-    Level_Plot = list(
-        Max_Z_Value = list(
-            type = "textInput",
-            value = "auto"
-        ),
-        Level_Palette = list(
-            type = "selectInput",
-            choices = mdiLevelPalettes()[, paste(category, paletteName)],
-            value = "seq Blues"
-        ),
-        Legend_Digits = list(
-            type = "numericInput",
-            value = 1,
-            min = 0,
-            max = 10,
-            step = 1
-        )
-    )
-)
-
-#----------------------------------------------------------------------
-# render the plot
-#----------------------------------------------------------------------
 mdiLevelPlot <- function(
     dt,     # a data.table with at least columns x, y, and the column named by z.columnumn
     xlim,   # the plot X-axis limits
