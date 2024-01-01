@@ -109,9 +109,9 @@ assemblyPlotsUI <- function(id, options) {
                     tags$div(
                         width = 3,
                         bsButton(
-                            ns("suspendDataProcessing"),
+                            ns("processingIsSuspended"),
                             "Allow Data Processing",
-                            style = "warning",
+                            style = "success",
                             block = TRUE,
                             type = "toggle",
                             value = TRUE

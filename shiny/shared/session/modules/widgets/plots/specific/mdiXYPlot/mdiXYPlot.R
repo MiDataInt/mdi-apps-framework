@@ -9,9 +9,17 @@ mdiXYPlot <- function(
     groupingCols = NULL, # if provided, columns in dt used to define the plotting groups
     groupColors = NULL, # if provided, a named list of colors per group
     plotAs = c("points","lines","both","area","histogram"), # how to render the XY data series
+    legend_ = NULL, # optional reactive to override the automated legend
     legendTitle = "", # header for the color legend
+    legendSide = c(4, 3), # side on which to plot the legend
+    showLegend = TRUE, # set to FALSE to suppress the legend
+    showSingleGroupLegend = FALSE, # set to TRUE to show the legend even if there is only one group plotted
+    underscoresToSpaces_ = TRUE,
+    hShade = NULL, # vector of two Y-axis values between which to shade the plot background
+    vShade = NULL, # vector of two X-axis values between which to shade the plot background
     h = NULL, # Y-axis values at which to place line rules
     v = NULL, # X-axis values at which to place line rules
+    shadeColor = "grey90", # the color used to shade the plot background
     hColor = "grey60", # the color(s) used to draw h rules
     vColor = "grey60", # the color(s) used to draw v rules
     x0Line = FALSE, # add a vertical black line at x = 0
@@ -53,6 +61,8 @@ plotGroups <- if(isReversedGroups) rev(groups) else groups # reverse the plot or
 hasGroups <- length(plotGroups) > 1
 #----------------------------------------------------------------------
 # add rule lines behind plot points/traces
+if(!is.null(hShade)) rect(xlim[1], hShade[1], xlim[2], hShade[2], col = shadeColor, border = NA)
+if(!is.null(vShade)) rect(vShade[1], ylim[1], vShade[2], ylim[2] * 0.975, col = shadeColor, border = NA)
 if(!is.null(h)) abline(h = h, col = hColor)
 if(!is.null(v)) abline(v = v, col = vColor)
 if(!is.null(x0Line)) abline(v = 0, col = "black")
@@ -94,17 +104,32 @@ addArea <- function(dt, col) plot$addArea(
 #----------------------------------------------------------------------
 # initialize the legend
 addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
-    if(!hasGroups) return()
+    if(!showLegend) return()
+    if(!hasGroups && !showSingleGroupLegend) return()
     par(xpd = TRUE)
     colors <- unlist(unname(groupColors[groups]))
+    if(legendSide[1] == 3){
+        x <- mean(xlim)
+        y <- ylim[2]
+        xjust <- 0.5
+        yjust <- 0
+    } else { # only support top and right-side legends
+        x <- xlim[2] * 1.1
+        y <- ylim[2]
+        xjust <- 0
+        yjust <- 1
+    }
+    legend_ <- if(is.null(legend_)) groups else legend_()
     args <- list(
-        xlim[2] * 1.1, 
-        ylim[2],         
-        legend = groups,
+        x, 
+        y,
+        xjust = xjust,
+        yjust = yjust,
+        legend = if(underscoresToSpaces_) underscoresToSpaces(legend_) else legend_,
         col = colors,
         bty = "n",
         cex = 0.85,
-        title = legendTitle    
+        title = legendTitle
     )
     if(points) args <- c(args, list(
         pch    = plotSettings$get("Points_and_Lines", "Point_Type"),  

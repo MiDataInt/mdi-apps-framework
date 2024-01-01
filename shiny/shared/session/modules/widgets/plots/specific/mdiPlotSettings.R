@@ -77,18 +77,12 @@ mdiXYPlotSettings <- list(
 mdiDensityPlotSettings <- c(list(
     Density_Plot = list(
         Min_X_Value = list(
-            type = "numericInput",
-            value = -10,
-            min = -50, 
-            max = 0,
-            step = 5
+            type = "textInput",
+            value = "auto"
         ),
         Max_X_Value = list(
-            type = "numericInput",
-            value = 15,
-            min = 0, 
-            max = 50,
-            step = 5
+            type = "textInput",
+            value = "auto"
         ),
         X_Bin_Size = list(
             type = "numericInput",
