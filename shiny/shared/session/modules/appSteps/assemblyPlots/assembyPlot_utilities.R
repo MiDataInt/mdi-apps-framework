@@ -83,7 +83,7 @@ setAssemblyGroupLabels <- function(x, groupingCols, includeCols = NULL, dropCols
         lapply(.SD, enDash), 
         .SDcols = workingCols
     ][, 
-        lapply(workingCols, function(col) rightPadStrings(paste(col, .SD[[col]], sep = " = ")))
+        lapply(workingCols, function(col) paste(col, .SD[[col]], sep = " = "))
     ], 1, paste, collapse = " | ")
     x[, 
         groupLabel := groupLabels
@@ -299,12 +299,12 @@ assemblyPlotLines <- function(plot, dt, lwd = 1, scale = 1){
     }
 }
 # automated assembly plot titles, with potential user override
-stripGroupConditionNames <- function(x, showConditionNames = TRUE){
-    if(showConditionNames) return(x)
+prettifyGroupConditions <- function(x, showConditionNames = TRUE){ # optionally strip conditions names from labels and right pad for alignment
     n <- length(x)
     if(n == 0) return(x)
     x <- sapply(strsplit(x, " \\| "), function(groupConditions){
-        sapply(groupConditions, function(groupCondition) strsplit(groupCondition, " = ")[[1]][2])
+        if(showConditionNames) groupConditions
+        else sapply(groupConditions, function(groupCondition) strsplit(groupCondition, " = ")[[1]][2])
     }) %>%
     matrix(ncol = n) %>%
     apply(1, rightPadStrings) %>%
@@ -316,7 +316,7 @@ getAssemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNam
     title <- trimws(plot$settings$get("Plot","Title"))
     if(length(title) == 0 || title == "") title <- {
         x <- getAssemblyPackageName(sourceId())
-        if(!is.null(suffix)) x <- paste(x, stripGroupConditionNames(suffix, showConditionNames), sep = ", ")
+        if(!is.null(suffix)) x <- paste(x, prettifyGroupConditions(suffix, showConditionNames), sep = ", ")
         gsub(" \\| ", ", ", x)
     }
     underscoresToSpaces(title)
@@ -331,7 +331,7 @@ assemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNames 
 }
 # a legend describing the plotted groups below the title and above the plot
 getAssemblyPlotGroupsLegend <- function(groupLabels, groupCounts, eventPlural, showConditionNames = TRUE){
-    legend <- gsub(" \\| ", "  ", stripGroupConditionNames(groupLabels, showConditionNames)) %>% underscoresToSpaces
+    legend <- gsub(" \\| ", "  ", prettifyGroupConditions(groupLabels, showConditionNames)) %>% underscoresToSpaces
     if(!is.null(groupCounts)) {
         if(!is.null(eventPlural)) eventPlural <- paste0(" ", eventPlural)
         if(length(groupLabels) == 1) return(paste(sum(groupCounts$N), eventPlural))
@@ -541,7 +541,6 @@ assemblyDensityPlotServer <- function(
             plotFrameReactive = plotFrameReactive,
             data = reactive({ dataReactive()$data$dt }),
             groupingCols = "groupLabel",
-            # groupLabels = reactive({}),
             plotTitle = reactive({ 
                 d <- dataReactive()$data
                 getAssemblyPlotTitle(
