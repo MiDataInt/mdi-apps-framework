@@ -77,14 +77,17 @@ aggegrateGroupSampleValues <- function(groupedProjectSamples, groupingCols, valu
 # used in legends, yielding "groupingCol1 = value1, groupingCol2 = value2" for each plotted group
 # caller/user may decide to drop some columns, e.g., those with constant values, by setting includeCols or dropCols
 setAssemblyGroupLabels <- function(x, groupingCols, includeCols = NULL, dropCols = NULL){ # x is a data.table
-    workingCols <- if(is.null(includeCols)) groupingCols else groupingCols[groupingCols %in% includeCols]
+    workingCols <- if(is.null(includeCols)) groupingCols else intersect(includeCols, groupingCols) # keep all usable columns in order provided in includeCols
     workingCols <- if(is.null(dropCols)) workingCols else workingCols[!(workingCols %in% dropCols)]
-    x[, groupLabel := if(length(workingCols) == 0) "all" else sapply(1:nrow(x), function(i) {
-        paste(sapply(1:length(workingCols), function(j) {
-            groupValues <- enDash(x[i][[workingCols[j]]])
-            paste(workingCols[j], groupValues, sep = " = ")
-        }), collapse = ", ")
-    })]
+    groupLabels <- if(length(workingCols) == 0) "all" else apply(x[, 
+        lapply(.SD, enDash), 
+        .SDcols = workingCols
+    ][, 
+        lapply(workingCols, function(col) rightPadStrings(paste(col, .SD[[col]], sep = " = ")))
+    ], 1, paste, collapse = " | ")
+    x[, 
+        groupLabel := groupLabels
+    ]
 }
 # combine columns names and values into a single display string
 # used in plot titles to show shared values, yielding similar format to setAssemblyGroupLabels
@@ -93,9 +96,9 @@ getDroppedAssemblyGroupLabels <- function(x, groupingCols, includeCols = NULL, d
     if(length(dropCols) == 0) return("")
     paste(sapply(dropCols, function(col){
         values <- enDash(unique(x[[col]]))
-        if(length(values) > 1) values <- paste(values, collapse = ",")
+        if(length(values) > 1) values <- paste(sort(values), collapse = "|")
         paste(col, values, sep = " = ")
-    }), collapse = ", ")
+    }), collapse = " | ")
 }
 # assemble one set of drag and drop lists for interactive plot configuration
 getAssemblyBucketList <- function(session, rankListId, labels){
@@ -160,10 +163,10 @@ regroupToUserConditions <- function(dt, groupingCols, conditions, groupLabels){
     if(is.function(conditions)) conditions <- conditions()
     if(is.function(groupLabels)) groupLabels <- groupLabels()
     titleSuffix <- NULL
-    if(length(conditions) < length(groupingCols)) {
+    if(!identical(groupingCols, conditions)){
         dt <- setAssemblyGroupLabels(dt, groupingCols, includeCols = conditions) 
-        titleSuffix <- getDroppedAssemblyGroupLabels(dt, groupingCols, includeCols = conditions)
         groupLabels <- unique(dt$groupLabel)
+        if(length(conditions) < length(groupingCols)) titleSuffix <- getDroppedAssemblyGroupLabels(dt, groupingCols, includeCols = conditions)
     }
     list(
         titleSuffix = titleSuffix,
@@ -297,20 +300,24 @@ assemblyPlotLines <- function(plot, dt, lwd = 1, scale = 1){
 }
 # automated assembly plot titles, with potential user override
 stripGroupConditionNames <- function(x, showConditionNames = TRUE){
-    if(showConditionNames) x else sapply(x, function(group){
-        paste(
-            sapply(strsplit(group, ", ")[[1]], function(x) strsplit(x, " = ")[[1]][2]),
-            collapse = ", "
-        )
-    })
+    if(showConditionNames) return(x)
+    n <- length(x)
+    if(n == 0) return(x)
+    x <- sapply(strsplit(x, " \\| "), function(groupConditions){
+        sapply(groupConditions, function(groupCondition) strsplit(groupCondition, " = ")[[1]][2])
+    }) %>%
+    matrix(ncol = n) %>%
+    apply(1, rightPadStrings) %>%
+    matrix(nrow = n) %>%
+    apply(1, paste, collapse = " | ")
 } 
-getAssemblyPackageName <- function(sourceId) strsplit(getSourceFilePackageName(sourceId), ".")[[1]][1]
+getAssemblyPackageName <- function(sourceId) strsplit(getSourceFilePackageName(sourceId), "\\.")[[1]][1]
 getAssemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNames = TRUE){
     title <- trimws(plot$settings$get("Plot","Title"))
     if(length(title) == 0 || title == "") title <- {
         x <- getAssemblyPackageName(sourceId())
         if(!is.null(suffix)) x <- paste(x, stripGroupConditionNames(suffix, showConditionNames), sep = ", ")
-        x
+        gsub(" \\| ", ", ", x)
     }
     underscoresToSpaces(title)
 }
@@ -323,11 +330,12 @@ assemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNames 
     )
 }
 # a legend describing the plotted groups below the title and above the plot
-getAssemblyPlotGroupsLegend <- function(groupLabels_, groupCounts, eventPlural, showConditionNames = TRUE){
-    legend <- underscoresToSpaces(groupLabels_) %>% stripGroupConditionNames(showConditionNames)
+getAssemblyPlotGroupsLegend <- function(groupLabels, groupCounts, eventPlural, showConditionNames = TRUE){
+    legend <- gsub(" \\| ", "  ", stripGroupConditionNames(groupLabels, showConditionNames)) %>% underscoresToSpaces
     if(!is.null(groupCounts)) {
         if(!is.null(eventPlural)) eventPlural <- paste0(" ", eventPlural)
-        counts <- paste0("(", sapply(groupLabels_, function(x) groupCounts[groupLabel == x, N]), eventPlural, ")")
+        if(length(groupLabels) == 1) return(paste(sum(groupCounts$N), eventPlural))
+        counts <- paste0("(", sapply(groupLabels, function(x) groupCounts[groupLabel == x, N]), eventPlural, ")")
         legend <- paste(legend, counts)
     }    
     legend
@@ -505,7 +513,7 @@ assemblyDensityPlotServer <- function(
         dataFn = dataFn, 
         plotFrameFn = function(data) {
             mar <- mar 
-            mar[3] <- mar[3] + length(data$data$groupLabels) - 1
+            mar[3] <- mar[3] + length(data$data$groupLabels)
             trackLabels <- data$data$trackLabels
             nTrackLabels <- max(1, if(is.null(trackLabels)) 1 else length(trackLabels))
             apc <- CONSTANTS$assemblyPlots
@@ -533,6 +541,7 @@ assemblyDensityPlotServer <- function(
             plotFrameReactive = plotFrameReactive,
             data = reactive({ dataReactive()$data$dt }),
             groupingCols = "groupLabel",
+            # groupLabels = reactive({}),
             plotTitle = reactive({ 
                 d <- dataReactive()$data
                 getAssemblyPlotTitle(
@@ -542,15 +551,15 @@ assemblyDensityPlotServer <- function(
                     assemblyPlot$plot$settings$get("Plot","Show_Condition_Names")
                 )
             }),
-            legend = reactive({
+            legend_ = function(groupLabels){
                 d <- dataReactive()$data
                 getAssemblyPlotGroupsLegend(
-                    d$groupLabels, 
+                    groupLabels, 
                     d$groupCounts, 
                     eventPlural, 
                     assemblyPlot$plot$settings$get("Plot","Show_Condition_Names")
                 )
-            }),
+            },
             legendSide = 3,
             xlab = xlab,
             eventPlural = eventPlural,

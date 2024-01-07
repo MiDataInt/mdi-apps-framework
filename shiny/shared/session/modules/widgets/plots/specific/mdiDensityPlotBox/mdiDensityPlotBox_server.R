@@ -8,7 +8,7 @@ mdiDensityPlotBoxServer <- function(
     groupingCols, # column(s) that define the groups to summarize as distinct distributions, or a reactive that returns it; can be NULL
     xlab, # x axis label, or a reactive that returns it 
     #----------------------------------------------------------------------  
-    groupLabels = NULL, # set to force these, and only these, groups, regardless of the values in data[[groupingCols]]    
+    groupLabels = NULL, # set to force these, and only these, groups, regardless of the values in data[[groupingCols]]
     trackCols = NULL,   # optional columns used to group data into tracks, or a reactive that returns it; can be NULL and usually is
     trackLabels = NULL, # set to force these, and only these, tracks, regardless of the values in data[[trackCols]]
     trackSameXLim = TRUE, # logical or reactive to force all tracks to use the same X axis values
@@ -67,13 +67,13 @@ parseGroupingCols <- function(pd){
         trackCols = NA,
         nTrackCols = 0,
         tracks = "singleTrack",
-        # trackLabels = "singleTrack",
+        trackLabels = "singleTrack",
         nTracks = 1,
         hasTracks = hasTracks,
         groupingCols = NA,
         nGroupingCols = 0,
         groups = "singleGroup",
-        # groupLabels = "singleGroup",
+        groupLabels = NULL,
         nGroups = 1,
         hasGroups = hasGroups,
         groupCounts = data.table(trackGroup = "singleTrack", N = nrow(pd$dt)),
@@ -95,13 +95,13 @@ parseGroupingCols <- function(pd){
         trackCols = trackCols,
         nTrackCols = nTrackCols,
         tracks = tracks,
-        # trackLabels = , 
+        trackLabels = if(hasTracks && !is.null(pd$trackLabels)) pd$trackLabels else tracks, 
         nTracks = nTracks,
         hasTracks = nTracks > 1,
         groupingCols = groupingCols,
         nGroupingCols = nGroupingCols,
         groups = groups,
-        # groupLabels = ,
+        groupLabels = if(hasGroups && !is.null(pd$groupLabels)) pd$groupLabels else NULL,
         nGroups = nGroups,
         hasGroups = nGroups > 1,
         trackGroups = trackGroups,
@@ -144,7 +144,11 @@ fillTrackGroups <- function(dt, pd){
         variable.name = "trackGroup", 
         value.name = "y",
         variable.factor = FALSE
-    )[, x := x * pd$X_Bin_Size] # expand back to the proper numeric scale
+    )[, ":="(
+        track = sapply(trackGroup, function(x) strsplit(x, "::")[[1]][1]),
+        group = sapply(trackGroup, function(x) strsplit(x, "::")[[1]][2]),
+        x = x * pd$X_Bin_Size # expand back to the proper numeric scale
+    )] 
 }
 fillAllTrackGroups <- function(pd, grouping){ # ensure that all groups have a value, even if 0, for all X axis bins
     grouping$dt[, x := as.integer(floor(
@@ -205,7 +209,7 @@ plot <- staticPlotBoxServer(
             pft <- trimws(plot$settings$get("Plot_Frame", "Title", NULL))
             pt  <- trimws(plot$settings$get("Plot",       "Title", NULL))
             if(!isTruthy(pft)) pft <- NULL
-            if(!isTruthy(pt))  pt  <- NULL            
+            if(!isTruthy(pt))  pt  <- NULL
             paste(c(
                 pft,
                 pt,
@@ -245,9 +249,17 @@ plot <- staticPlotBoxServer(
         vShade <- if(is.function(vShade)) vShade() else vShade
         v      <- if(is.function(v))      v()      else v
 
-        for(i in 1:d$grouping$nTracks){
-            trackLabel <- d$grouping$tracks[i]
-            dt <- d$dt[startsWith(trackGroup, paste0(trackLabel, "::"))]
+        for(i in seq_along(d$grouping$trackLabels)){
+            trackLabel <- d$grouping$trackLabels[i]
+            dt <- d$dt[track == trackLabel]
+            if(!is.null(d$grouping$groupLabels)){
+                dt <- dt[
+                    group %in% d$grouping$groupLabels
+                ][
+                    order(match(group, d$grouping$groupLabels))
+                ]
+            }
+            if(nrow(dt) == 0) next
             xlim_ <- if(is.null(xlim)) getUserXLim(dt$x, trackLabel) else xlim
             ylim_ <- c(0, if(is.null(ymax)) dt[, max(y) * 1.05] else ymax)
             par(mar = trackMar[[i]], cex = 1)
@@ -264,7 +276,7 @@ plot <- staticPlotBoxServer(
             mdiXYPlot(
                 plot,
                 dt,
-                groupingCols = "trackGroup",
+                groupingCols = "group",
                 # groupColors = groupColors,
                 xlim = xlim_,
                 ylim = ylim_,

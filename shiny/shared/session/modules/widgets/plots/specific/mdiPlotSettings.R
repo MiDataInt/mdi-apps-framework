@@ -67,6 +67,15 @@ mdiXYPlotSettings <- list(
         Reverse_Group_Order = list(
             type = "checkboxInput",
             value = FALSE
+        ),
+        LegendFont = list(
+            type = "selectInput",
+            choices = c("mono","mono large","sans","sans large"),
+            value = "mono"
+        ),
+        Reverse_Plot_Order = list(
+            type = "checkboxInput",
+            value = FALSE
         )
     )
 )

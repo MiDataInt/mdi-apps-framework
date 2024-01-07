@@ -9,7 +9,7 @@ mdiXYPlot <- function(
     groupingCols = NULL, # if provided, columns in dt used to define the plotting groups
     groupColors = NULL, # if provided, a named list of colors per group
     plotAs = c("points","lines","both","area","histogram"), # how to render the XY data series
-    legend_ = NULL, # optional reactive to override the automated legend
+    legend_ = NULL, # optional function(groups) to modify the automated legend text
     legendTitle = "", # header for the color legend
     legendSide = c(4, 3), # side on which to plot the legend
     showLegend = TRUE, # set to FALSE to suppress the legend
@@ -36,17 +36,20 @@ xJitter <- if(xJitter == "") NULL else as.numeric(xJitter)
 yJitter <- if(yJitter == "") NULL else as.numeric(yJitter)
 isRandomPoints <- xySettings$Point_Order$value == "random"
 isAlphabeticalGroups <- xySettings$Group_Order$value == "alphabetical"
-isReversedGroups <- xySettings$Reverse_Group_Order$value
+isReversedGroups    <- xySettings$Reverse_Group_Order$value
+isReversedPlotOrder <- xySettings$Reverse_Plot_Order$value
+legendFont <- strsplit(xySettings$LegendFont$value, " ")[[1]]
 alpha <- xySettings$Color_Alpha$value
 plotAs <- plotAs[1]
 #----------------------------------------------------------------------
 # prepare the data groups
 hasGroupingCols <- !is.null(groupingCols)
 if(hasGroupingCols){
-    groups <- apply(dt[, .SD, .SDcols = groupingCols], 1, paste, collapse = ", ")
+    groups <- apply(dt[, .SD, .SDcols = groupingCols], 1, paste, collapse = ", ") # establish groupLabels
     dt[, group__ := groups]
     groups <- unique(dt$group__)
     if(isAlphabeticalGroups) groups <- sort(groups)
+    if(isReversedGroups) groups <- rev(groups)
     if(is.null(groupColors)) {
         groupColors <- CONSTANTS$plotlyColors[1:length(groups)]
         names(groupColors) <- groups
@@ -57,7 +60,7 @@ if(hasGroupingCols){
     groups <- "X"
 }
 dt[, color__ := unlist(unname(groupColors[group__]))]
-plotGroups <- if(isReversedGroups) rev(groups) else groups # reverse the plot order, not the colors
+plotGroups <- if(isReversedPlotOrder) rev(groups) else groups # reverse the plot stack order, not the colors
 hasGroups <- length(plotGroups) > 1
 #----------------------------------------------------------------------
 # add rule lines behind plot points/traces
@@ -106,7 +109,6 @@ addArea <- function(dt, col) plot$addArea(
 addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
     if(!showLegend) return()
     if(!hasGroups && !showSingleGroupLegend) return()
-    par(xpd = TRUE)
     colors <- unlist(unname(groupColors[groups]))
     if(legendSide[1] == 3){
         x <- mean(xlim)
@@ -119,7 +121,7 @@ addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
         xjust <- 0
         yjust <- 1
     }
-    legend_ <- if(is.null(legend_)) groups else legend_()
+    legend_ <- if(is.function(legend_)) legend_(groups) else groups
     args <- list(
         x, 
         y,
@@ -128,8 +130,9 @@ addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
         legend = if(underscoresToSpaces_) underscoresToSpaces(legend_) else legend_,
         col = colors,
         bty = "n",
-        cex = 0.85,
-        title = legendTitle
+        cex = if(is.na(legendFont[2])) 0.85 else 0.95,
+        title = legendTitle,
+        text.font = if(legendFont[1] == "mono") 2 else 1
     )
     if(points) args <- c(args, list(
         pch    = plotSettings$get("Points_and_Lines", "Point_Type"),  
@@ -143,8 +146,9 @@ addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
         fill = colors,
         border = "grey20"
     ))
+    par_ <- par(xpd = TRUE, family = legendFont[1])
     do.call(legend, args)
-    par(xpd = FALSE)
+    par(par_)
 }
 #----------------------------------------------------------------------
 # add points ...

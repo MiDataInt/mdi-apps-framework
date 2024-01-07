@@ -124,7 +124,7 @@ addDataListObserver(module, savedPlotSetsTemplate, savedPlotSets, function(r, id
     dt <- data.table(
         Remove = '', 
         Name   = '',
-        Source = strsplit(r$Source, ".")[[1]][1]
+        Source = strsplit(r$Source, "\\.")[[1]][1]
     )
     for(x in c("Group_By","Required","Prohibited","Data_Types","Projects")) dt[[x]] <- paste(r[[x]], collapse = "<br>")
     dt
@@ -213,7 +213,7 @@ updateColumnSelectors <- function(choices, selected = NULL){
             choices
         )
         updateCheckboxGroupInput(
-            session = session,
+            session = session, 
             inputId = x,
             choices = choices_,
             selected = selected[[x]][selected[[x]] %in% choices_],
