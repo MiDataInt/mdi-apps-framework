@@ -17,7 +17,7 @@ appStepDir <- getAppStepDir(module)
 APC <- CONSTANTS$assemblyPlots
 options <- setDefaultOptions(options, stepModuleInfo[[module]])
 assemblyOptions <- getAssemblyTypeOptions(options)
-assemblyOptions$internalUseSampleColumns <- c("project", "sample", "sample_id", assemblyOptions$internalUseSampleColumns)
+assemblyOptions$internalUseSampleColumns <- c("project", "sample", "sample_id", "sampleKey", assemblyOptions$internalUseSampleColumns)
 #----------------------------------------------------------------------
 settings <- activateMdiHeaderLinks( # uncomment as needed
     session,
@@ -182,10 +182,11 @@ assembly <- reactive({
     assembly <- doAssemblyAction("loadAssembly", options, assemblyOptions, settings, rdsFile)
     req(assembly$samples)
     cols <- names(assembly$samples)
-    req("sample_id" %in% cols || "sample" %in% cols)
-    if(!("project" %in% cols)) assembly$samples[, project := getAssemblyPackageName(sourceId)]
-    if(!("sample" %in% cols))  assembly$samples[, sample := "sample_id"]
+    req("sample_id"  %in% cols || "sample" %in% cols)
+    if(!("project"   %in% cols)) assembly$samples[, project := getAssemblyPackageName(sourceId)]
+    if(!("sample"    %in% cols))  assembly$samples[, sample := "sample_id"]
     if(!("sample_id" %in% cols)) assembly$samples[, sample_id := "sample"]
+    if(!("sampleKey" %in% cols)) assembly$samples[, sampleKey := paste(project, sample_id, sep = "::")]
     assembly
 })
 

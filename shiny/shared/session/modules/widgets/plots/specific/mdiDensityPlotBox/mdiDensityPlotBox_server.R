@@ -8,6 +8,8 @@ mdiDensityPlotBoxServer <- function(
     groupingCols, # column(s) that define the groups to summarize as distinct distributions, or a reactive that returns it; can be NULL
     xlab, # x axis label, or a reactive that returns it 
     #----------------------------------------------------------------------  
+    aggFn  = NULL, # the aggregate function used to establish density counts, passed to dcast, defaults to length
+    aggCol = NULL, # the column to which fun.aggregate is applied
     groupLabels = NULL, # set to force these, and only these, groups, regardless of the values in data[[groupingCols]]
     trackCols = NULL,   # optional columns used to group data into tracks, or a reactive that returns it; can be NULL and usually is
     trackLabels = NULL, # set to force these, and only these, tracks, regardless of the values in data[[trackCols]]
@@ -25,6 +27,7 @@ mdiDensityPlotBoxServer <- function(
     underscoresToSpaces_ = TRUE,
     vShade = NULL, # vector of two X-axis values between which to shade the plot background, or a list named with trackLabels, or a reactive that returns it
     v = NULL, # X-axis values at which to place line rules, or a list named with trackLabels, or a reactive that returns it
+    h = NULL, # Y-axis values at which to place line rules, or a list named with trackLabels, or a reactive that returns it
     innerMar = c(2.1, 0.1), # the bottom and top plot margins applied between multiple tracks
     linesPerInch = 8.571429, # plotting lines per inch for converting mar to mai
     justification = c("center","left","right"), # where data points are positioned within the span of each bin
@@ -56,6 +59,10 @@ collapseGroupingCols <- function(dt, cols){
         cols[!(cols %in% droppedCols)]
     } else character()
 }
+addValueVar <- function(x, pd){
+    if(!is.null(aggCol)) x$dt[[aggCol]] <- pd$dt[[aggCol]]
+    x
+}
 parseGroupingCols <- function(pd){
     trackCols     <- collapseGroupingCols(pd$dt, pd$trackCols)
     groupingCols  <- collapseGroupingCols(pd$dt, pd$groupingCols)
@@ -63,22 +70,24 @@ parseGroupingCols <- function(pd){
     nGroupingCols <- length(groupingCols)
     hasTracks <- nTrackCols > 0
     hasGroups <- nGroupingCols > 0
-    if(!hasTracks && !hasGroups) return(list(
-        trackCols = NA,
-        nTrackCols = 0,
-        tracks = "singleTrack",
-        trackLabels = "singleTrack",
-        nTracks = 1,
-        hasTracks = hasTracks,
-        groupingCols = NA,
-        nGroupingCols = 0,
-        groups = "singleGroup",
-        groupLabels = NULL,
-        nGroups = 1,
-        hasGroups = hasGroups,
-        groupCounts = data.table(trackGroup = "singleTrack", N = nrow(pd$dt)),
-        dt = pd$dt[, .(x = x, track = "singleTrack", group = "singleGroup", trackGroup = "singleTrack::singleGroup")]
-    ))
+    if(!hasTracks && !hasGroups) {
+        return(list(
+            trackCols = NA,
+            nTrackCols = 0,
+            tracks = "singleTrack",
+            trackLabels = "singleTrack",
+            nTracks = 1,
+            hasTracks = hasTracks,
+            groupingCols = NA,
+            nGroupingCols = 0,
+            groups = "singleGroup",
+            groupLabels = NULL,
+            nGroups = 1,
+            hasGroups = hasGroups,
+            groupCounts = data.table(trackGroup = "singleTrack", N = nrow(pd$dt)),
+            dt = pd$dt[, .(x = x, track = "singleTrack", group = "singleGroup", trackGroup = "singleTrack::singleGroup")]
+        ) %>% addValueVar(pd))
+    }
     pd$dt[, ":="(
         track = if(hasTracks) .SD[, apply(.SD, 1, paste, collapse = ", "), .SDcols = trackCols]    else "singleTrack",
         group = if(hasGroups) .SD[, apply(.SD, 1, paste, collapse = ", "), .SDcols = groupingCols] else "singleGroup"
@@ -107,15 +116,15 @@ parseGroupingCols <- function(pd){
         trackGroups = trackGroups,
         groupCounts = groupCounts,
         dt = pd$dt[, .SD, .SDcols = c("x", "track", "group", "trackGroup")]
-    )
+    ) %>% addValueVar(pd)
 }
 fillTrackGroups <- function(dt, pd){
     # dcast trackGroups to columns, counting the number of matching bin occurrences
     dt <- dcast(
         dt,
         "x ~ trackGroup", 
-        value.var = "trackGroup", 
-        fun.aggregate = length, 
+        fun.aggregate = if(is.null(aggFn)) length       else aggFn,
+        value.var     = if(is.null(aggFn)) "trackGroup" else aggCol, 
         fill = 0
     )
 
@@ -248,6 +257,7 @@ plot <- staticPlotBoxServer(
 
         vShade <- if(is.function(vShade)) vShade() else vShade
         v      <- if(is.function(v))      v()      else v
+        h      <- if(is.function(h))      h()      else h
 
         for(i in seq_along(d$grouping$trackLabels)){
             trackLabel <- d$grouping$trackLabels[i]
@@ -289,6 +299,7 @@ plot <- staticPlotBoxServer(
                 showSingleGroupLegend = TRUE,
                 vShade = if(is.list(vShade)) vShade[[trackLabel]] else vShade,
                 v      = if(is.list(v))      v[[trackLabel]]      else v,
+                h      = if(is.list(v))      v[[trackLabel]]      else h,
                 ...
             )
             if(d$grouping$hasTracks) text(

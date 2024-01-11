@@ -2,12 +2,12 @@
 # render a non-interactive level plot with MDI formatting
 #----------------------------------------------------------------------
 mdiLevelPlot <- function(
-    dt,     # a data.table with at least columns x, y, and the column named by z.columnumn
+    dt,     # a data.table with at least columns x, y, and the column named by z.column
     xlim,   # the plot X-axis limits
     xinc,   # the regular increment of the X-axis grid
     ylim,   # the plot Y-axis limits 
     yinc,   # the regular increment of the Y-axis grid 
-    z.fn,   # function applied to z.columnumn, per grid spot, to generate the output color
+    z.fn,   # function applied to z.column, per grid spot, to generate the output color
     z.column, # the column in dt passed to z.fn, per grid spot
     settings, # a settings object from the enclosing staticPlotBox, or any list compatible with mdiLevelPlotSettings
     legendTitle, # header for the color legend

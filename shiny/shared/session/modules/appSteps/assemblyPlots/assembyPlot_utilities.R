@@ -496,7 +496,10 @@ assemblyDensityPlotServer <- function(
     dataFn, xlab, eventPlural,
     insideWidth = 1.5, insideHeightPerBlock = 1,
     trackCols = NULL, trackSameXLim = TRUE, trackSameYLim = TRUE,
-    defaultSettingValues = list(),
+    extraSettings = list(), # a list of additional settings families
+    defaultSettingValues = list(), # values overrides for assemblyPlotFrameSettings, mdiDensityPlotSettings
+    aggFn = length,
+    aggCol = "x",
     ... # additional arguments passed to mdiDensityPlotBoxServer, 
         # especially defaultBinSize, v, x0Line
 ){
@@ -532,7 +535,7 @@ assemblyDensityPlotServer <- function(
         plotFn = function(plotId, dataReactive, plotFrameReactive) mdiDensityPlotBoxServer(
             id = plotId,
             defaultSettings = {
-                ds <- c(assemblyPlotFrameSettings, mdiDensityPlotSettings) 
+                ds <- c(assemblyPlotFrameSettings, mdiDensityPlotSettings, extraSettings) 
                 for(family in names(defaultSettingValues)) for(option in names(defaultSettingValues[[family]])){
                     ds[[family]][[option]]$value = defaultSettingValues[[family]][[option]]
                 }
@@ -566,6 +569,8 @@ assemblyDensityPlotServer <- function(
             trackLabels = reactive({ dataReactive()$data$trackLabels }),
             trackSameXLim = trackSameXLim,
             trackSameYLim = trackSameYLim,
+            aggFn  = aggFn,
+            aggCol = aggCol,
             ...
         )
     )
