@@ -82,3 +82,8 @@ peakValue <- function(x){
     d <- density(x)
     d$x[which.max(d$y)]
 }
+# and the mode
+mode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}

@@ -575,3 +575,52 @@ assemblyDensityPlotServer <- function(
         )
     )
 }
+
+#----------------------------------------------------------------------
+# general XY plot
+#----------------------------------------------------------------------
+assemblyXYPlotServer <- function(
+    id, session, input, output, 
+    isProcessingData, assemblyOptions,
+    sourceId, assembly, groupedProjectSamples, groupingCols, groups,
+    dataFn, plotFn,
+    dims = list(width = 1.5, height = 1.5),
+    mar = c(4.1, 4.1, 0.1, 0.1),
+    extraSettings = NULL
+){
+    getDim <- function(key, option){
+        dim <- trimws(assemblyPlot$plot$settings$get("Plot",option))
+        if(!isTruthy(dim) || dim == "" || dim == "auto") dims[[key]]
+        else dim
+    }
+    assemblyPlot <- assemblyPlotBoxServer( 
+        id, session, input, output, 
+        isProcessingData,
+        groupingCols, groups,
+        dataFn = function(conditions, groupLabels) dataFn(assemblyPlot$plot, conditions, groupLabels),
+        plotFrameFn = function(data) {
+            list(
+                frame = getAssemblyPlotFrame(
+                    plot = assemblyPlot$plot, 
+                    insideWidth  = getDim("width",  "Width_Inches"), 
+                    insideHeight = getDim("height", "Height_Inches"), 
+                    mar = mar
+                ),
+                mar = mar
+            )
+        },
+        plotFn = function(plotId, dataReactive, plotFrameReactive) staticPlotBoxServer(
+            plotId,
+            settings = c(assemblyPlotFrameSettings, extraSettings), 
+            size = "m",
+            Plot_Frame = reactive({ plotFrameReactive()$frame }),
+            create = function() {
+                d <- dataReactive()
+                par(mar = plotFrameReactive()$mar)
+                plotFn(assemblyPlot$plot, d)
+                stopSpinner(session)
+            }
+        )
+    )
+    assemblyPlot
+}
