@@ -345,7 +345,7 @@ groups <- reactive({
     req(isProcessingData())
     groupedProjectSamples <- groupedProjectSamples()
     groupingCols <- groupingCols()
-    req(groupedProjectSamples, groupingCols)
+    req(groupedProjectSamples)
     doAssemblyAction("getGroups", options, assemblyOptions,
                      groupedProjectSamples, groupingCols, input)
 })

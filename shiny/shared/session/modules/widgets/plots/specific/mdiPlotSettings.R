@@ -104,8 +104,12 @@ mdiDensityPlotSettings <- c(list(
         ),
         Plot_As = list(
             type = "radioButtons",
-            choices = c("lines","area","histogram"),
+            choices = c("lines","points","area","histogram"),
             value = "lines"
+        ),
+        Missing_Bins_To_Zero = list(
+            type = "checkboxInput",
+            value = TRUE
         )
     )
 ), mdiXYPlotSettings)

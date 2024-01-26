@@ -61,10 +61,11 @@ assemblyClonesToTargets <- function(x, col){ # x is a vector or data.frame
 # helpers for parsing and displaying assembly groups and conditions
 #----------------------------------------------------------------------
 # aggregate the individual sample data points that comprise a group
-aggegrateGroupSampleValues <- function(groupedProjectSamples, groupingCols, valueColumn, nSigDigits = 4){
+aggegrateGroupSampleValues <- function(groupedProjectSamples, groupingCols, valueColumn, input, nSigDigits = 4){
     if(is.function(groupedProjectSamples)) groupedProjectSamples <- groupedProjectSamples()
     if(is.function(groupingCols)) groupingCols <- groupingCols()
-    groupedProjectSamples[, .(
+    if(length(groupingCols) == 0) groupingCols <- NULL # support a single group over all data
+    x <- groupedProjectSamples[, .( # aggregate sample values over all filtered data_types
         nProjects = length(unique(project)),
         nSamples = .N,
         meanSampleValue = round(mean(.SD[[valueColumn]]), nSigDigits),
@@ -72,6 +73,13 @@ aggegrateGroupSampleValues <- function(groupedProjectSamples, groupingCols, valu
         sampleValues = list(.SD[[valueColumn]]), # plural, since can be more than one value per sample
         projects = list(project)
     ), by = groupingCols]
+    if(!is.null(input$Data_Types) && length(input$Data_Types) > 0) for(dataType in input$Data_Types){
+        dtvc <- paste(valueColumn, dataType, sep = "__") # aggregate each data type individual for splittin in barplots, etc.
+        if(is.null(groupedProjectSamples[[dtvc]])) next
+        x[[paste("meanSampleValue", dataType, sep = "__")]] <- groupedProjectSamples[, .(VAL_ = round(mean(.SD[[dtvc]]), nSigDigits)), by = groupingCols]$VAL_
+        x[[paste("sdSampleValue",   dataType, sep = "__")]] <- groupedProjectSamples[, .(VAL_ = round(sd(.SD[[dtvc]]),   nSigDigits)), by = groupingCols]$VAL_
+    }
+    x
 }
 # combine grouping columns names and values into a single display string
 # used in legends, yielding "groupingCol1 = value1, groupingCol2 = value2" for each plotted group
@@ -214,9 +222,10 @@ CONSTANTS$assemblyPlots <- list(
     untitledAxisMar = 2.1,
     noMar = 0.1
 )
-getAssemblyPlotFrame <- function(plot, insideWidth, insideHeight, mar){
-    maiHorizonatal <- sum(mar[c(2, 4)]) / CONSTANTS$assemblyPlots$linesPerInch
-    maiVertical    <- sum(mar[c(1, 3)]) / CONSTANTS$assemblyPlots$linesPerInch
+getAssemblyPlotFrame <- function(plot, insideWidth, insideHeight, mar, fontSize = CONSTANTS$assemblyPlots$fontSize){
+    linesPerInch <- CONSTANTS$assemblyPlots$linesPerInch * CONSTANTS$assemblyPlots$fontSize / fontSize
+    maiHorizonatal <- sum(mar[c(2, 4)]) / linesPerInch
+    maiVertical    <- sum(mar[c(1, 3)]) / linesPerInch
     userWidth  <- trimws(plot$settings$get("Plot","Width_Inches")) # enable  user overrides of automated plot dimensions
     userHeight <- trimws(plot$settings$get("Plot","Height_Inches"))
     width  <- if(userWidth  == "" || userWidth  == "auto") insideWidth + maiHorizonatal else as.numeric(userWidth)
@@ -224,7 +233,7 @@ getAssemblyPlotFrame <- function(plot, insideWidth, insideHeight, mar){
     list(
         Width_Inches  = width, 
         Height_Inches = height,
-        Font_Size     = CONSTANTS$assemblyPlots$fontSize
+        Font_Size     = fontSize
     )
 }
 
@@ -357,10 +366,11 @@ assemblyPlotGroupsLegend <- function(plot, xlim, maxY, groupLabels_, lwd = 1,  #
 }
 # a table of conditions underneath the X axis of a bar chart, etc.
 assemblyPlotConditionsGrid <- function(groupingCols, groups, conditionsI){
+    if(is.null(groupingCols)|| length(groupingCols) == 0) return(NULL)
     nConditions <- length(conditionsI)
     nGroups <- nrow(groups)
     mtext( # labels for the condition grid rows
-        gsub("_", " ", groupingCols[conditionsI]), 
+        gsub("^\\.\\.", "", gsub("_", " ", groupingCols[conditionsI])), 
         side = 1, 
         line = 1:nConditions, 
         at = 0,
@@ -387,7 +397,10 @@ assemblyBarplotServer <- function(
     sourceId, assembly, groupedProjectSamples, groupingCols, groups,
     ylab, 
     groupWidthInches = 0.3, insideHeight = 1,
-    nSD = 2, barHalfWidth = 0.35, jitterHalfWidth = 0.25
+    nSD = 2, barHalfWidth = 0.35, jitterHalfWidth = 0.25,
+    extraSettings = list(), # settings families, as a list
+    splitDataTypes = FALSE,
+    fontSize = CONSTANTS$assemblyPlots$fontSize
 ){
     settings <- c(assemblyPlotFrameSettings, list(
         Groups = list(
@@ -397,9 +410,21 @@ assemblyBarplotServer <- function(
                 min = 0.05,
                 max = 1,
                 step = 0.05
+            ),
+            Right_Margin_Inches = list(
+                type = "numericInput",
+                value = 0.5
+            ),
+            Plot_Sample_Points = list(
+                type = "checkboxInput",
+                value = TRUE
+            ),
+            Split_By_Data_Type = list(
+                type = "checkboxInput",
+                value = FALSE
             )
         )
-    ))
+    ), extraSettings)
     mar <- c(
         CONSTANTS$assemblyPlots$titleLegendMar, 
         8.1, 
@@ -413,18 +438,22 @@ assemblyBarplotServer <- function(
         dataFn = function(conditions, groupLabels) {
             list(
                 groups = groups(),
-                groupingCols = groupingCols()
+                groupingCols = groupingCols(),
+                dataTypes = input$Data_Types
             )
         },  
         plotFrameFn = function(data) {
             mar <- mar 
             mar[1] <- mar[1] + data$nConditions
+            splitDataTypes <- assemblyPlot$plot$settings$get("Groups","Split_By_Data_Type")
+            if(splitDataTypes) mar[4] <- assemblyPlot$plot$settings$get("Groups","Right_Margin_Inches") * CONSTANTS$assemblyPlots$linesPerInch
             list(
                 frame = getAssemblyPlotFrame(
                     plot = assemblyPlot$plot, 
                     insideWidth = assemblyPlot$plot$settings$get("Groups","Group_Width_Inches") * data$nGroups, 
                     insideHeight = insideHeight, 
-                    mar = mar
+                    mar = mar,
+                    fontSize = fontSize
                 ),
                 mar = mar
             )
@@ -445,10 +474,17 @@ assemblyBarplotServer <- function(
                 uniqueProjects <- unique(unlist(groups$projects))
                 colors <- CONSTANTS$plotlyColors[1:length(uniqueProjects)]
                 names(colors) = uniqueProjects
-                maxY <- max(
-                    unlist(groups$sampleValues), 
-                    groups[, meanSampleValue + sdSampleValue * nSD],
-                    na.rm = TRUE
+                plotPoints <- assemblyPlot$plot$settings$get("Groups","Plot_Sample_Points")
+                splitDataTypes <- assemblyPlot$plot$settings$get("Groups","Split_By_Data_Type")
+                if(splitDataTypes) plotPoints <- FALSE
+                maxY <- (
+                    if(splitDataTypes) max(sapply(d$data$dataTypes, function(dataType){
+                        groups[[paste("meanSampleValue", dataType, sep = "__")]] + groups[[paste("sdSampleValue", dataType, sep = "__")]] * nSD
+                    }), na.rm = TRUE) else max(
+                        unlist(groups$sampleValues), 
+                        groups[, meanSampleValue + sdSampleValue * nSD],
+                        na.rm = TRUE
+                    )
                 ) * 1.05
                 par(mar = plotFrameReactive()$mar)
                 assemblyPlot$plot$initializeFrame(
@@ -459,7 +495,21 @@ assemblyBarplotServer <- function(
                     yaxs = "i",
                     xaxt = "n"
                 )
-                rect( # make the bar plot
+                if(splitDataTypes) {
+                    groupStarts <- 1:nGroups - barHalfWidth
+                    barWidth <- 2 * barHalfWidth / length(d$data$dataTypes)
+                    for(j in seq_along(d$data$dataTypes)){
+                        rect( # make the bar plot
+                            groupStarts + (j - 1) * barWidth,
+                            0, 
+                            groupStarts + j * barWidth, 
+                            groups[[paste("meanSampleValue", d$data$dataTypes[j], sep = "__")]], 
+                            lty = 1, 
+                            lwd = 1,
+                            col = CONSTANTS$plotlyColors[[j]]
+                        )
+                    }
+                } else rect( # make the bar plot
                     1:nGroups - barHalfWidth, 
                     0, 
                     1:nGroups + barHalfWidth, 
@@ -469,7 +519,21 @@ assemblyBarplotServer <- function(
                     col = "grey80" # TODO: expose argument for bar coloring
                 )
                 for(i in 1:nGroups){ # overplot individual data points on the bar plot
-                    lines(rep(i, 2), groups[i, meanSampleValue + sdSampleValue * c(-nSD, nSD)])
+                    if(splitDataTypes) {
+                        groupStart <- i - barHalfWidth
+                        barWidth <- 2 * barHalfWidth / length(d$data$dataTypes)
+                        for(j in seq_along(d$data$dataTypes)){
+                            m  <- groups[i][[paste("meanSampleValue", d$data$dataTypes[j], sep = "__")]]
+                            sd <- groups[i][[paste("sdSampleValue",   d$data$dataTypes[j], sep = "__")]]
+                            lines(
+                                rep(groupStart + (j - 1) * barWidth + barWidth / 2, 2), 
+                                m + sd * c(-nSD, nSD)
+                            )
+                        }
+                    } else {
+                        lines(rep(i, 2), groups[i, meanSampleValue + sdSampleValue * c(-nSD, nSD)])
+                    }
+                    if (!plotPoints) next
                     sampleValues <- unlist(groups[i, sampleValues])
                     projects <- unlist(groups[i, projects])
                     assemblyPlot$plot$addPoints(
@@ -480,6 +544,14 @@ assemblyBarplotServer <- function(
                 }
                 assemblyPlotConditionsGrid(d$data$groupingCols, groups, conditionsI)
                 assemblyPlotTitle(assemblyPlot$plot, sourceId)
+                if(splitDataTypes) assemblyPlot$plot$addMarginLegend(
+                    x = nGroups + 0.6, 
+                    y = maxY, 
+                    legend = trimws(input$Data_Types),
+                    fill = unlist(CONSTANTS$plotlyColors[1:length(d$data$dataTypes)]),
+                    bty = "n",
+                    x.intersp = 0
+                )
                 stopSpinner(session)
             }
         )
@@ -500,6 +572,8 @@ assemblyDensityPlotServer <- function(
     defaultSettingValues = list(), # values overrides for assemblyPlotFrameSettings, mdiDensityPlotSettings
     aggFn = length,
     aggCol = "x",
+    fontSize = CONSTANTS$assemblyPlots$fontSize,
+    groupV = NULL, groupH = NULL, # or optional function(data) to return group-specific demarcation lines
     ... # additional arguments passed to mdiDensityPlotBoxServer, 
         # especially defaultBinSize, v, x0Line
 ){
@@ -526,7 +600,8 @@ assemblyDensityPlotServer <- function(
                     insideWidth = insideWidth, 
                     insideHeight = insideHeightPerBlock * nTrackLabels + 
                                    (apc$untitledAxisMar + apc$noMar) * (nTrackLabels - 1) / apc$linesPerInch,
-                    mar = mar
+                    mar = mar,
+                    fontSize = fontSize
                 ), 
                 insideHeightPerTrack = insideHeightPerBlock,
                 mar = mar
@@ -571,6 +646,8 @@ assemblyDensityPlotServer <- function(
             trackSameYLim = trackSameYLim,
             aggFn  = aggFn,
             aggCol = aggCol,
+            groupV = if(is.function(groupV)) reactive({ groupV(dataReactive()$data) }) else NULL,
+            groupH = if(is.function(groupH)) reactive({ groupH(dataReactive()$data) }) else NULL,
             ...
         )
     )
@@ -584,13 +661,16 @@ assemblyXYPlotServer <- function(
     isProcessingData, assemblyOptions,
     sourceId, assembly, groupedProjectSamples, groupingCols, groups,
     dataFn, plotFn,
-    dims = list(width = 1.5, height = 1.5),
-    mar = c(4.1, 4.1, 0.1, 0.1),
-    extraSettings = NULL
+    dims = list(width = 1.5, height = 1.5), # or a reactive that returns it
+    mar = c(4.1, 4.1, 0.1, 0.1), # or a reactive that returns it
+    extraSettings = NULL,
+    fontSize = CONSTANTS$assemblyPlots$fontSize
 ){
     getDim <- function(key, option){
         dim <- trimws(assemblyPlot$plot$settings$get("Plot",option))
-        if(!isTruthy(dim) || dim == "" || dim == "auto") dims[[key]]
+        if(!isTruthy(dim) || dim == "" || dim == "auto") {
+            if(is.reactive(dims)) dims()[[key]] else dims[[key]]
+        }
         else dim
     }
     assemblyPlot <- assemblyPlotBoxServer( 
@@ -599,14 +679,16 @@ assemblyXYPlotServer <- function(
         groupingCols, groups,
         dataFn = function(conditions, groupLabels) dataFn(assemblyPlot$plot, conditions, groupLabels),
         plotFrameFn = function(data) {
+            mar_ <- if(is.reactive(mar)) mar() else mar
             list(
                 frame = getAssemblyPlotFrame(
                     plot = assemblyPlot$plot, 
                     insideWidth  = getDim("width",  "Width_Inches"), 
                     insideHeight = getDim("height", "Height_Inches"), 
-                    mar = mar
+                    mar = mar_,
+                    fontSize = fontSize
                 ),
-                mar = mar
+                mar = mar_
             )
         },
         plotFn = function(plotId, dataReactive, plotFrameReactive) staticPlotBoxServer(

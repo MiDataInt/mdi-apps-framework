@@ -19,6 +19,8 @@ mdiXYPlot <- function(
     vShade = NULL, # vector of two X-axis values between which to shade the plot background
     h = NULL, # Y-axis values at which to place line rules
     v = NULL, # X-axis values at which to place line rules
+    groupH = NULL, # a list named with group names of Y-axis values at which to place group-specific line rules
+    groupV = NULL, # a list named with group names of X-axis values at which to place group-specific line rules
     shadeColor = "grey90", # the color used to shade the plot background
     hColor = "grey60", # the color(s) used to draw h rules
     vColor = "grey60", # the color(s) used to draw v rules
@@ -41,6 +43,7 @@ isReversedPlotOrder <- xySettings$Reverse_Plot_Order$value
 legendFont <- strsplit(xySettings$LegendFont$value, " ")[[1]]
 alpha <- xySettings$Color_Alpha$value
 plotAs <- plotAs[1]
+lwd <- plotSettings$get("Points_and_Lines", "Line_Width")
 #----------------------------------------------------------------------
 # prepare the data groups
 hasGroupingCols <- !is.null(groupingCols)
@@ -70,6 +73,20 @@ if(!is.null(h)) abline(h = h, col = hColor)
 if(!is.null(v)) abline(v = v, col = vColor)
 if(!is.null(x0Line)) abline(v = 0, col = "black")
 if(!is.null(y0Line)) abline(h = 0, col = "black")
+if(is.list(groupH)){
+    for(groupName in names(groupH)) abline(
+        h = groupH[[groupName]], 
+        col = groupColors[[groupName]], 
+        lwd = lwd
+    )
+}
+if(is.list(groupV)){
+    for(groupName in names(groupV)) abline(
+        v = groupV[[groupName]], 
+        col = groupColors[[groupName]], 
+        lwd = lwd
+    )
+}
 #----------------------------------------------------------------------
 # function to add data to plots
 addAlpha <- function(cols){
@@ -84,7 +101,7 @@ addPoints <- function(dt, col = NULL, typ = NULL) {
     args$col <- addAlpha(if(is.null(col)) dt$color__ else col)
     if(!is.null(typ)) args <- c(args, list(
         typ = typ,
-        lwd = plotSettings$get("Points_and_Lines", "Line_Width")
+        lwd = lwd
     ))
     do.call(plot$addPoints, args)
 }
@@ -136,11 +153,11 @@ addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
     )
     if(points) args <- c(args, list(
         pch    = plotSettings$get("Points_and_Lines", "Point_Type"),  
-        pt.cex = plotSettings$get("Points_and_Lines", "Point_Size") * 1.5
+        pt.cex = max(1, plotSettings$get("Points_and_Lines", "Point_Size") * 1.5)
     ))
     if(lines) args <- c(args, list(
         lty = plotSettings$get("Points_and_Lines", "Line_Type"),
-        lwd = plotSettings$get("Points_and_Lines", "Line_Width")
+        lwd = lwd
     ))
     if(fill) args <- c(args, list(
         fill = colors,

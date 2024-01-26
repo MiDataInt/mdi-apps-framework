@@ -28,25 +28,50 @@ mdiDensityPlotBoxServer <- function(
     vShade = NULL, # vector of two X-axis values between which to shade the plot background, or a list named with trackLabels, or a reactive that returns it
     v = NULL, # X-axis values at which to place line rules, or a list named with trackLabels, or a reactive that returns it
     h = NULL, # Y-axis values at which to place line rules, or a list named with trackLabels, or a reactive that returns it
+    groupV = NULL, # a named list of group-specific X-axis values at which to place line rules, or a list named with trackLabels, or a reactive that returns it
+    groupH = NULL, # a named list of group-specific Y-axis values at which to place line rules, or a list named with trackLabels, or a reactive that returns it
+    vColor = "grey60", # the color(s) used to draw v rules, or a list named with trackLabels, or a reactive that returns it
+    hColor = "grey60", # the color(s) used to draw h rules, or a list named with trackLabels, or a reactive that returns it
     innerMar = c(2.1, 0.1), # the bottom and top plot margins applied between multiple tracks
     linesPerInch = 8.571429, # plotting lines per inch for converting mar to mai
     justification = c("center","left","right"), # where data points are positioned within the span of each bin
+    pregrouped = FALSE, # set to true if data is a pre-calculated list(X_Bin_Size, groupLabels, trackLabels, totalN, dt = data.table(track,group,x,y))
+    ylab = NULL, # override the default Y axis label; required if pregrouped is TRUE
+    trackLabelPosition = "left", # where to place track labels, (left","center","none"), or a reactive that returns a value
     ... # additional options passed to mdiXYPlot()
 ) { 
 #----------------------------------------------------------------------
 # collect anything with the potential to change the plotted data
 pd <- reactive({
-    list(
-        dt              = if(is.data.table(data)) data else data(),
-        trackCols       = if(is.function(trackCols)) trackCols() else trackCols,
-        trackLabels     = if(is.function(trackLabels)) trackLabels() else trackLabels,
-        groupingCols    = if(is.function(groupingCols)) groupingCols() else groupingCols,
-        groupLabels     = if(is.function(groupLabels)) groupLabels() else groupLabels,
-        X_Bin_Size      = plot$settings$get("Density_Plot","X_Bin_Size"),
-        Y_Axis_Value    = plot$settings$get("Density_Plot","Y_Axis_Value"),
-        trackSameXLim   = if(is.function(trackSameXLim)) trackSameXLim() else trackSameXLim,
-        trackSameYLim   = if(is.function(trackSameYLim)) trackSameYLim() else trackSameYLim
-    )
+    if(pregrouped){
+        pgd <- if(is.function(data)) data() else data
+        aggFn  <<- rep
+        aggCol <<- "y"
+        list(
+            dt              = pgd$dt,
+            trackCols       = "track",
+            trackLabels     = pgd$trackLabels,
+            groupingCols    = "group",
+            groupLabels     = pgd$groupLabels,
+            X_Bin_Size      = pgd$X_Bin_Size,
+            Y_Axis_Value    = "pregrouped",
+            trackSameXLim   = if(is.function(trackSameXLim)) trackSameXLim() else trackSameXLim,
+            trackSameYLim   = if(is.function(trackSameYLim)) trackSameYLim() else trackSameYLim,
+            totalN          = pgd$totalN
+        )
+    } else {
+        list(
+            dt              = if(is.data.table(data)) data else data(),
+            trackCols       = if(is.function(trackCols)) trackCols() else trackCols,
+            trackLabels     = if(is.function(trackLabels)) trackLabels() else trackLabels,
+            groupingCols    = if(is.function(groupingCols)) groupingCols() else groupingCols,
+            groupLabels     = if(is.function(groupLabels)) groupLabels() else groupLabels,
+            X_Bin_Size      = plot$settings$get("Density_Plot","X_Bin_Size"),
+            Y_Axis_Value    = plot$settings$get("Density_Plot","Y_Axis_Value"),
+            trackSameXLim   = if(is.function(trackSameXLim)) trackSameXLim() else trackSameXLim,
+            trackSameYLim   = if(is.function(trackSameYLim)) trackSameYLim() else trackSameYLim
+        )        
+    }
 })
 #----------------------------------------------------------------------
 # collect and group the plotted data
@@ -64,6 +89,7 @@ addValueVar <- function(x, pd){
     x
 }
 parseGroupingCols <- function(pd){
+    startSpinner(session, message = "parsing density")
     trackCols     <- collapseGroupingCols(pd$dt, pd$trackCols)
     groupingCols  <- collapseGroupingCols(pd$dt, pd$groupingCols)
     nTrackCols    <- length(trackCols)
@@ -89,8 +115,14 @@ parseGroupingCols <- function(pd){
         ) %>% addValueVar(pd))
     }
     pd$dt[, ":="(
-        track = if(hasTracks) .SD[, apply(.SD, 1, paste, collapse = ", "), .SDcols = trackCols]    else "singleTrack",
-        group = if(hasGroups) .SD[, apply(.SD, 1, paste, collapse = ", "), .SDcols = groupingCols] else "singleGroup"
+        track = if(hasTracks) {
+            if(nTrackCols > 1) .SD[, apply(.SD, 1, paste, collapse = ", "), .SDcols = trackCols]
+            else .SD[[trackCols]]
+        } else "singleTrack",
+        group = if(hasGroups) {
+            if(nGroupingCols > 1) .SD[, apply(.SD, 1, paste, collapse = ", "), .SDcols = groupingCols]
+            else .SD[[groupingCols]]
+        } else "singleGroup"
     )]
     pd$dt[, trackGroup := paste(track, group, sep = "::")]
     tracks <- sort(unique(pd$dt$track))
@@ -135,13 +167,13 @@ fillTrackGroups <- function(dt, pd){
         dt[[tg]] <- dt[[tg]] / sum(dt[[tg]], na.rm = TRUE)
     }
 
-    # while dcasted, fill in any missing X-axis bins with 0 values
-    allBins <- min(dt$x):max(dt$x)
-    missingBins <- allBins[!(allBins %in% dt$x)]    
+    # while dcasted, add any missing X-axis bins and, if requested, fill with 0 values
+    allBins <- min(dt$x):max(dt$x, na.rm = TRUE)
+    missingBins <- allBins[!(allBins %in% dt$x)]
     if(length(missingBins) > 0){
         missingBins <- data.table(x = missingBins)
         dt <- rbind(dt, missingBins, fill = TRUE)
-        dt[is.na(dt)] <- 0
+        if(plot$settings$get("Density_Plot","Missing_Bins_To_Zero")) dt[is.na(dt)] <- 0
         setorderv(dt, "x", order = 1L)
     }
 
@@ -160,7 +192,10 @@ fillTrackGroups <- function(dt, pd){
     )] 
 }
 fillAllTrackGroups <- function(pd, grouping){ # ensure that all groups have a value, even if 0, for all X axis bins
-    grouping$dt[, x := as.integer(floor(
+    startSpinner(session, message = "casting density")
+    if(pregrouped) grouping$dt[, x := as.integer(floor(
+        x / pd$X_Bin_Size
+    ))] else grouping$dt[, x := as.integer(floor(
         switch(
             justification[1],
             left   = x,
@@ -208,12 +243,12 @@ plot <- staticPlotBoxServer(
     margins = is.null(plotFrameReactive),
     title = is.null(defaultSettings$Plot$Title),
     lines = TRUE,
+    points = TRUE,
     settings = defaultSettings, 
     size = "m",
     Plot_Frame = if(is.null(plotFrameReactive)) NULL else reactive(plotFrameReactive()$frame),
     create = function() {
         d <- plotData()
-
         plotTitle <- if(is.null(plotTitle)) {
             pft <- trimws(plot$settings$get("Plot_Frame", "Title", NULL))
             pt  <- trimws(plot$settings$get("Plot",       "Title", NULL))
@@ -225,12 +260,16 @@ plot <- staticPlotBoxServer(
                 if(is.function(titleSuffix)) titleSuffix() else NULL
             ), collapse = ", ") 
         } else plotTitle()
-        totalN <- paste(trimws(commify(sum(d$grouping$groupCounts$N))), eventPlural)
+        totalN <-  paste(trimws(commify(
+            if(is.null(d$pd$totalN)) sum(d$grouping$groupCounts$N) else d$pd$totalN
+        )), eventPlural)
         plotTitle <- if(is.null(plotTitle) || length(plotTitle) == 0 || plotTitle == "") totalN 
                      else paste0(plotTitle, " (", totalN, ")")
 
+        trackLabelPosition <- if(is.function(trackLabelPosition)) trackLabelPosition() else trackLabelPosition
+        yPadding <- if(trackLabelPosition == "center") 1.2 else 1.05
         xlim <- if((!d$grouping$hasTracks || d$pd$trackSameXLim) && is.null(xlim)) getUserXLim(d$dt$x) else NULL
-        ymax <- if(!d$grouping$hasTracks || d$pd$trackSameYLim) ymax <- d$dt[, max(y) * 1.05] else NULL
+        ymax <- if(!d$grouping$hasTracks || d$pd$trackSameYLim) ymax <- d$dt[, max(y, na.rm = TRUE) * yPadding] else NULL
 
         pf <- if(is.null(plotFrameReactive)) list(
             frame = list(
@@ -241,7 +280,6 @@ plot <- staticPlotBoxServer(
             mar = c(4.1, 4.1, 2.1, 0.5),
             insideHeightPerTrack = 1
         ) else plotFrameReactive()
-
         trackMar <- lapply(1:d$grouping$nTracks, function(i){
             mar_ <- pf$mar
             if(i != d$grouping$nTracks) mar_[1] <- innerMar[1]
@@ -258,6 +296,10 @@ plot <- staticPlotBoxServer(
         vShade <- if(is.function(vShade)) vShade() else vShade
         v      <- if(is.function(v))      v()      else v
         h      <- if(is.function(h))      h()      else h
+        groupV <- if(is.function(groupV)) groupV() else groupV
+        groupH <- if(is.function(groupH)) groupH() else groupH
+        vColor <- if(is.function(vColor)) vColor() else vColor
+        hColor <- if(is.function(hColor)) hColor() else hColor
 
         for(i in seq_along(d$grouping$trackLabels)){
             trackLabel <- d$grouping$trackLabels[i]
@@ -271,13 +313,13 @@ plot <- staticPlotBoxServer(
             }
             if(nrow(dt) == 0) next
             xlim_ <- if(is.null(xlim)) getUserXLim(dt$x, trackLabel) else xlim
-            ylim_ <- c(0, if(is.null(ymax)) dt[, max(y) * 1.05] else ymax)
+            ylim_ <- c(0, if(is.null(ymax)) dt[, max(y, na.rm = TRUE) * yPadding] else ymax)
             par(mar = trackMar[[i]], cex = 1)
             plot$initializeFrame(
                 xlim = xlim_,
                 ylim = ylim_,
                 xlab = if(i != d$grouping$nTracks) "" else if(is.function(xlab)) xlab() else xlab,
-                ylab = d$pd$Y_Axis_Value,
+                ylab = if(is.null(ylab)) d$pd$Y_Axis_Value else ylab,
                 xaxs = "i",
                 yaxs = "i",
                 title = if(legendSide[1] == 3) NULL else plotTitle, # plot title is part of the legend if legend is at the top
@@ -299,14 +341,28 @@ plot <- staticPlotBoxServer(
                 showSingleGroupLegend = TRUE,
                 vShade = if(is.list(vShade)) vShade[[trackLabel]] else vShade,
                 v      = if(is.list(v))      v[[trackLabel]]      else v,
-                h      = if(is.list(v))      v[[trackLabel]]      else h,
+                h      = if(is.list(h))      h[[trackLabel]]      else h,
+                groupV = if(is.list(groupV) && !is.null(groupV[[trackLabel]])) groupV[[trackLabel]] else groupV,
+                groupH = if(is.list(groupH) && !is.null(groupH[[trackLabel]])) groupH[[trackLabel]] else groupH,
+                vColor = if(is.list(vColor)) vColor[[trackLabel]] else vColor,
+                hColor = if(is.list(hColor)) hColor[[trackLabel]] else hColor,
                 ...
             )
-            if(d$grouping$hasTracks) text(
-                xlim_[1] + diff(xlim_) * 0.0125, 
-                ylim_[2] * 0.75, 
-                trackLabel, 
-                pos = 4, offset = 0, cex = 0.85
+            if(d$grouping$hasTracks) switch(
+                trackLabelPosition,
+                left = text(
+                    xlim_[1] + diff(xlim_) * 0.0125, 
+                    ylim_[2] * 0.75, 
+                    trackLabel, 
+                    pos = 4, offset = 0, cex = 0.85
+                ),
+                center = text(
+                    mean(xlim_), 
+                    ylim_[2], 
+                    gsub("\n", ", ", trackLabel), 
+                    pos = 1, offset = 0.5, cex = 0.85
+                ),
+                none = NULL
             )
         }
         stopSpinner(session)
