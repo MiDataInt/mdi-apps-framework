@@ -79,3 +79,9 @@ enDash <- function(x) {
 underscoresToSpaces <- function(x) { 
     sapply(x, function(xx) gsub("_", " ", xx))
 } 
+
+# make all strings the same width
+rightPadStrings <- function(x){
+    if(length(x) < 2) return(x)
+    format(x, width = max(nchar(x)))
+}

@@ -1,6 +1,6 @@
 ---
 title: staticPlotBox
-parent: Plots
+parent: General Plots
 grand_parent: Display Widgets
 has_children: false
 nav_order: 10
@@ -24,7 +24,9 @@ A link allows for immediate download of the rendered plot,
 with no guessing as to what it will look like in the png file.
 
 The drawback is that plots are not interactive. 
-If this is important for your app, try the
+If this is important for your app, try 
+[mdiInteractivePlot](/mdi-apps-framework/shiny/shared/session/modules/widgets/plots/mdiInteractivePlot/README.html)
+or the
 [interactivePlots](/mdi-apps-framework/shiny/shared/session/modules/widgets/plots/interactivePlots/README.html)
 family of widgets. Be aware that `staticPlotBox` is an easier
 interface to master as compared to `interactivePlots`.
@@ -100,7 +102,7 @@ where:
 - **url** to **settings** = arguments passed to [activateMdiHeaderLinks()]({{ "/docs/appSteps/header-links" | relative_url }})
 - **...** = additional arguments passed to settingsServer 
 
-### staticPlotBoxServer return values
+### staticPlotBoxServer return value
 
 The module returns a list as follows:
 
@@ -112,7 +114,10 @@ list(
     initializeFrame = initializeFrame,
     addPoints       = addPoints,
     addLines        = addLines,
-    addLegend       = addLegend
+    addBoth         = addBoth,
+    addArea         = addArea,
+    addLegend       = addLegend,
+    addMarginLegend = addMarginLegend
 )
 ```
 
@@ -150,7 +155,7 @@ myPlot <- staticPlotBoxServer(
         # do any preparative work, e.g.:
         d <- myReactive()
         myPlot$initializeFrame(...)
-        myPlot$addPoints( # addLines follows the same pattern
+        myPlot$addPoints( # addLines follows the same pattern, etc.
             x = d$xValue,
             y = d$yValue,
             ...
@@ -180,7 +185,7 @@ properly obey user settings.
 Helpers are all defined with the `...` argument 
 to allow you to pass additional arguments
 to the corresponding graphics functions 
-(`points`, `lines`, `legends`), e.g.:
+(`points`, `lines`, `legend`), e.g.:
 
 ```r
 # <scriptName>_server.R
@@ -204,7 +209,7 @@ between `staticPlotBox` and `interactivePlot` panels.
  
 For more detailed views of the module's code, see:
 
-- [mdi-apps-framework : staticPlotBox](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/staticPlotBox)
+- [mdi-apps-framework : staticPlotBox](https://github.com/MiDataInt/mdi-apps-framework/blob/main/shiny/shared/session/modules/widgets/plots/general/staticPlotBox)
 
 For a complete working example, see:
 

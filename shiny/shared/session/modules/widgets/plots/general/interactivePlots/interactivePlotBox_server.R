@@ -48,7 +48,7 @@ settings <- activateMdiHeaderLinks(
     reload = reload, # reload
     baseDirs = unique(c( # code editor
         baseDirs,
-        getWidgetDir("plots/interactivePlots", framework = TRUE)
+        getWidgetDir("plots/general/interactivePlots", framework = TRUE)
     )),
     envir = envir, # R console
     dir = dir, # terminal emulator

@@ -13,8 +13,14 @@ debugMsg <- function(msg = "", module=NULL){
     if(!isParentProcess) msg <- paste0('CHILD PROCESS', ": ", msg)
     message(msg)
 }
-debugStr <- function(x = "") str(x)
-debugPrint <- function(x = "") print(x) 
+debugStr <- function(x = "") {
+    str(x)
+    x
+}
+debugPrint <- function(x = "") {
+    print(x)
+    x
+}
 dmsg <- debugMsg
 dstr <- debugStr
 dprint <- debugPrint

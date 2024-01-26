@@ -212,9 +212,10 @@ getTabInputs <- function(id, tab){
 toInputs <- function(){
     if(isTabbed){
         fluidRow(do.call(tabBox, c(
-            lapply(names(template), function(tab){
-                nSettings <- length(settings[[tab]])
-                if(nSettings > 0) tabPanel(
+            lapply(names(template), function(tab){            
+                hasSettings <- length(settings[[tab]]) > 0 && 
+                               any(sapply(names(settings[[tab]]), function(id) template[[tab]][[id]]$type != "spacer"))
+                if(hasSettings) tabPanel(
                     fluidRow(lapply(names(settings[[tab]]), getTabInputs, tab)),
                     title = gsub('_', ' ', tab)
                 ) else NULL

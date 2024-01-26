@@ -7,7 +7,7 @@ or load one of the following file types:
 * A bookmark created using Save Your Work, ending in **.mdi**
 <!-- or **.mdi.bookmark.zip** -->
 
-* An comma-delimited data table, ending in **\<appName\>.data.csv**
+<!-- * A comma-delimited data table, ending in **\<appName\>.data.csv** -->
 
 ***
 
