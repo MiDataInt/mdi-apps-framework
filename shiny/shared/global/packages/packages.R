@@ -21,9 +21,9 @@ runServerInitPackages <- c( # packages required prior to calling Shiny:runApp()
 #----------------------------------------------------------------------
 unloadMdiManagerPackages <- function(){
     # clear selected packages loaded by mdi-manager as they may be out of date
-    tryCatch({
-        sapply(c('miniCRAN'), unloadNamespace)
-    }, error = function(e) NULL)
+    # tryCatch({
+    #     sapply(c('miniCRAN'), unloadNamespace)
+    # }, error = function(e) NULL)
 }
 unloadRStudioPackages <- function(){
     # clear an RStudio session of these packages as they may be out of date
