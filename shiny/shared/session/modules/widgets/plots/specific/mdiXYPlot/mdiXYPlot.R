@@ -10,7 +10,7 @@ mdiXYPlot <- function(
     groupColors = NULL, # if provided, a named list of colors per group
     plotAs = c("points","lines","both","area","histogram"), # how to render the XY data series
     legend_ = NULL, # optional function(groups) to modify the automated legend text
-    legendTitle = "", # header for the color legend
+    legendTitle = "", # header for the color legend, as a character string or reactive that returns one
     legendSide = c(4, 3), # side on which to plot the legend
     showLegend = TRUE, # set to FALSE to suppress the legend
     showSingleGroupLegend = FALSE, # set to TRUE to show the legend even if there is only one group plotted
@@ -62,7 +62,11 @@ if(hasGroupingCols){
     groupColors <- list(X = if(is.null(groupColors)) CONSTANTS$plotlyColors$blue else groupColors[1])
     groups <- "X"
 }
-dt[, color__ := unlist(unname(groupColors[group__]))]
+dt[, color__ := {
+    gcs <- groupColors[group__]
+    sapply(gcs, function(gc) if(is.null(gc)) "black" else gc)
+    # unlist(unname(groupColors[group__]))
+}]
 plotGroups <- if(isReversedPlotOrder) rev(groups) else groups # reverse the plot stack order, not the colors
 hasGroups <- length(plotGroups) > 1
 #----------------------------------------------------------------------
@@ -129,7 +133,7 @@ addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
     colors <- unlist(unname(groupColors[groups]))
     if(legendSide[1] == 3){
         x <- mean(xlim)
-        y <- ylim[2]
+        y <- ylim[2] + diff(ylim) * 0.025
         xjust <- 0.5
         yjust <- 0
     } else { # only support top and right-side legends
@@ -148,12 +152,12 @@ addLegend <- function(points = FALSE, lines = FALSE, fill = FALSE){
         col = colors,
         bty = "n",
         cex = if(is.na(legendFont[2])) 0.85 else 0.95,
-        title = legendTitle,
+        title = if(is.reactive(legendTitle)) legendTitle() else legendTitle,
         text.font = if(legendFont[1] == "mono") 2 else 1
     )
     if(points) args <- c(args, list(
         pch    = plotSettings$get("Points_and_Lines", "Point_Type"),  
-        pt.cex = max(1, plotSettings$get("Points_and_Lines", "Point_Size") * 1.5)
+        pt.cex = max(1, plotSettings$get("Points_and_Lines", "Point_Size"))
     ))
     if(lines) args <- c(args, list(
         lty = plotSettings$get("Points_and_Lines", "Line_Type"),

@@ -99,7 +99,7 @@ mdiDensityPlotSettings <- c(list(
         ),
         Y_Axis_Value = list(
             type = "radioButtons",
-            choices = c("Frequency","Count"),
+            choices = c("Frequency","Count","Weighted"),
             value = "Frequency"
         ),
         Plot_As = list(

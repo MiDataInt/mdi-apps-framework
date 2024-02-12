@@ -36,8 +36,9 @@ mdiDensityPlotBoxServer <- function(
     linesPerInch = 8.571429, # plotting lines per inch for converting mar to mai
     justification = c("center","left","right"), # where data points are positioned within the span of each bin
     pregrouped = FALSE, # set to true if data is a pre-calculated list(X_Bin_Size, groupLabels, trackLabels, totalN, dt = data.table(track,group,x,y))
-    ylab = NULL, # override the default Y axis label; required if pregrouped is TRUE
+    ylab = NULL, # override the default Y axis label; required if pregrouped is TRUE; can be function(Y_Axis_Value)
     trackLabelPosition = "left", # where to place track labels, (left","center","none"), or a reactive that returns a value
+    groupWeights = NULL, # named list of weights used as group denominators when Y_Axis_Value == "Weighted", or a reactive that returns it
     ... # additional options passed to mdiXYPlot()
 ) { 
 #----------------------------------------------------------------------
@@ -57,7 +58,8 @@ pd <- reactive({
             Y_Axis_Value    = "pregrouped",
             trackSameXLim   = if(is.function(trackSameXLim)) trackSameXLim() else trackSameXLim,
             trackSameYLim   = if(is.function(trackSameYLim)) trackSameYLim() else trackSameYLim,
-            totalN          = pgd$totalN
+            totalN          = pgd$totalN,
+            groupWeights    = NULL
         )
     } else {
         list(
@@ -69,7 +71,8 @@ pd <- reactive({
             X_Bin_Size      = plot$settings$get("Density_Plot","X_Bin_Size"),
             Y_Axis_Value    = plot$settings$get("Density_Plot","Y_Axis_Value"),
             trackSameXLim   = if(is.function(trackSameXLim)) trackSameXLim() else trackSameXLim,
-            trackSameYLim   = if(is.function(trackSameYLim)) trackSameYLim() else trackSameYLim
+            trackSameYLim   = if(is.function(trackSameYLim)) trackSameYLim() else trackSameYLim,
+            groupWeights    = if(is.function(groupWeights)) groupWeights() else groupWeights
         )        
     }
 })
@@ -165,6 +168,9 @@ fillTrackGroups <- function(dt, pd){
     tgs <- tgs[tgs != "x"]
     if(pd$Y_Axis_Value == "Frequency") for(tg in tgs) {
         dt[[tg]] <- dt[[tg]] / sum(dt[[tg]], na.rm = TRUE)
+    } else if(pd$Y_Axis_Value == "Weighted" && !is.null(pd$groupWeights)) for(tg in tgs) {
+        gl <- strsplit(tg, "::")[[1]][2]
+        dt[[tg]] <- dt[[tg]] / pd$groupWeights[[gl]]
     }
 
     # while dcasted, add any missing X-axis bins and, if requested, fill with 0 values
@@ -319,7 +325,7 @@ plot <- staticPlotBoxServer(
                 xlim = xlim_,
                 ylim = ylim_,
                 xlab = if(i != d$grouping$nTracks) "" else if(is.function(xlab)) xlab() else xlab,
-                ylab = if(is.null(ylab)) d$pd$Y_Axis_Value else ylab,
+                ylab = if(is.null(ylab)) d$pd$Y_Axis_Value else if(is.function(ylab)) ylab(d$pd$Y_Axis_Value) else ylab,
                 xaxs = "i",
                 yaxs = "i",
                 title = if(legendSide[1] == 3) NULL else plotTitle, # plot title is part of the legend if legend is at the top
