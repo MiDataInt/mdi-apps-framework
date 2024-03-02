@@ -378,7 +378,7 @@ assemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNames 
 }
 # a legend describing the plotted groups below the title and above the plot
 getAssemblyPlotGroupsLegend <- function(groupLabels, groupCounts = NULL, eventPlural = NULL, showConditionNames = TRUE){
-    legend <- gsub("^\\.\\.", "", gsub(" \\| ", "  ", prettifyGroupConditions(groupLabels, showConditionNames))) %>% underscoresToSpaces
+    legend <- gsub(" = ", " ", gsub("^\\.\\.", "", gsub(" \\| ", "  ", prettifyGroupConditions(groupLabels, showConditionNames))) %>% underscoresToSpaces)
     if(!is.null(groupCounts)) {
         if(!is.null(eventPlural)) eventPlural <- paste0(" ", eventPlural)
         if(length(groupLabels) == 1) return(paste(sum(groupCounts$N), eventPlural))
@@ -431,6 +431,82 @@ assemblyPlotConditionsGrid <- function(groupingCols, groups, conditionsI){
 }
 
 #----------------------------------------------------------------------
+# intergroup comparison statistics
+#----------------------------------------------------------------------
+assemblyPlot_parseComparisons <- function(plot){ # expects from fromI-toI[-y][,fromI-toI[-y]...]
+    comparisons <- gsub(" ", "", plot$settings$get("Groups","Comparisons"))
+    comparisons <- if(comparisons == "") NULL else {
+        do.call(rbind, lapply(strsplit(strsplit(comparisons, ",")[[1]], "-"), function(x){
+            data.table(
+                fromI = as.integer(x[1]),
+                toI   = as.integer(x[2]),
+                y     = as.double(x[3]) # NA if missing, expect caller to provide default y
+            )
+        }))
+    }
+}
+calculateInterGroupStats <- function(fromGrp, toGrp, comparisonTest, pValueThreshold){
+    ERR <- 666L
+    testResults <- tryCatch({
+        comparisonTest(fromGrp, toGrp) # must return list(p.value[, color])
+    }, error = function(e){
+        print(e)
+        list(
+            p.value = ERR,
+            color = "red3"
+        )
+    })
+    signficanceLevel <- if(testResults$p.value == ERR) "ERR"
+        else if(testResults$p.value <= pValueThreshold / 100) "***"
+        else if(testResults$p.value <= pValueThreshold / 10) "**"
+        else if(testResults$p.value <= pValueThreshold) "*"
+        else "ns"
+    getSampleMax <- function(grp){
+        sd <- grp$sdSampleValue
+        if(is.na(sd)) sd <- grp$meanSampleValue / 10 # add some space for single-sample groups
+        grp$meanSampleValue + 2 * sd
+    }
+    list(
+        isSignificant = testResults$p.value <= pValueThreshold,
+        signficanceLevel = signficanceLevel,
+        defaultY = max(getSampleMax(fromGrp), getSampleMax(toGrp)) * 1.10,
+        color = testResults$color,
+        lty = testResults$lty,
+        from = fromGrp$groupLabel,
+        to   = toGrp$groupLabel,
+        toOverFrom = toGrp$meanSampleValue   / fromGrp$meanSampleValue,
+        fromOverTo = fromGrp$meanSampleValue / toGrp$meanSampleValue,
+        p.value = testResults$p.value
+    )
+}
+assemblyPlot_addComparisons <- function(plot, groups, comparisons, comparisonTest){
+    pValueThreshold <- plot$settings$get("Groups","P_Value_Threshold")
+    comparisons[, {
+        d <- calculateInterGroupStats(groups[fromI], groups[toI], comparisonTest, pValueThreshold)
+        if(is.na(y)) y <- d$defaultY # user can override default y position for plot clarity
+        if(!isTruthy(d$color)) d$color <- "black"
+        if(!isTruthy(d$lty)) d$lty <- 1
+        points(c(fromI, toI), c(y, y), pch = 19, cex = 0.35, col = d$color)
+        lines(c(fromI, toI), c(y, y), lwd = 0.75, lty = d$lty, col = d$color)
+        text(
+            mean(c(fromI, toI)), 
+            y, 
+            d$signficanceLevel, 
+            pos = 3, 
+            offset = if(d$isSignificant) -0.1 else 0.1,
+            cex    = if(d$isSignificant) 1 else 5.5/7,
+            col = d$color
+        )
+        .(
+            toOverFrom  = d$toOverFrom,
+            fromOverTo  = d$fromOverTo,
+            p.value     = d$p.value,
+            signficance = d$signficanceLevel
+        )
+    }, by = .(fromI, toI)] %>% print()
+}
+
+#----------------------------------------------------------------------
 # vertical barplot overplotted with error bars and individual data points
 #----------------------------------------------------------------------
 assemblyBarplotServer <- function(
@@ -442,7 +518,9 @@ assemblyBarplotServer <- function(
     nSD = 2, barHalfWidth = 0.35, jitterHalfWidth = 0.25,
     extraSettings = list(), # settings families, as a list
     splitDataTypes = FALSE,
-    fontSize = CONSTANTS$assemblyPlots$fontSize
+    fontSize = CONSTANTS$assemblyPlots$fontSize,
+    addComparisons = NULL # function(plot, groups, comparisons) NULL, 
+                          # where comparisons = data.table(fromI,toI,y)
 ){
     settings <- c(assemblyPlotFrameSettings, list(
         Groups = list(
@@ -464,6 +542,21 @@ assemblyBarplotServer <- function(
             Split_By_Data_Type = list(
                 type = "checkboxInput",
                 value = FALSE
+            ),
+            H_Lines = list(
+                type = "textInput",
+                value = ""
+            ),
+            Comparisons = list(
+                type = "textInput",
+                value = ""
+            ),
+            Spacer = list(
+                type = "spacer"
+            ),
+            P_Value_Threshold = list(
+                type = "numericInput",
+                value = 0.01
             )
         )
     ), extraSettings)
@@ -519,6 +612,9 @@ assemblyBarplotServer <- function(
                 plotPoints <- assemblyPlot$plot$settings$get("Groups","Plot_Sample_Points")
                 splitDataTypes <- assemblyPlot$plot$settings$get("Groups","Split_By_Data_Type")
                 if(splitDataTypes) plotPoints <- FALSE
+                hLines <- gsub(" ", "", assemblyPlot$plot$settings$get("Groups","H_Lines"))
+                hLines <- if(hLines == "") double() else as.double(strsplit(hLines, ",")[[1]])
+                comparisons <- assemblyPlot_parseComparisons(assemblyPlot$plot)
                 maxY <- (
                     if(splitDataTypes) max(sapply(d$data$dataTypes, function(dataType){
                         groups[[paste("meanSampleValue", dataType, sep = "__")]] + groups[[paste("sdSampleValue", dataType, sep = "__")]] * nSD
@@ -560,6 +656,7 @@ assemblyBarplotServer <- function(
                     lwd = 1,
                     col = "grey80" # TODO: expose argument for bar coloring
                 )
+                abline(h = hLines, lty = 2)
                 for(i in 1:nGroups){ # overplot individual data points on the bar plot
                     if(splitDataTypes) {
                         groupStart <- i - barHalfWidth
@@ -586,6 +683,7 @@ assemblyBarplotServer <- function(
                 }
                 assemblyPlotConditionsGrid(d$data$groupingCols, groups, conditionsI)
                 assemblyPlotTitle(assemblyPlot$plot, sourceId)
+                if(!is.null(comparisons) && !is.null(addComparisons)) addComparisons(assemblyPlot$plot, groups, comparisons)
                 if(splitDataTypes) assemblyPlot$plot$addMarginLegend(
                     x = nGroups + 0.6, 
                     y = maxY, 
