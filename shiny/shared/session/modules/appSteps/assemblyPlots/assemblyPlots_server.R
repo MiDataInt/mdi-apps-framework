@@ -110,13 +110,24 @@ observeEvent(input$savePlotSet, {
         Projects     = input$Projects
     )
     r <- initializeRecordEdit(d, workingId, savedPlotSets$list, 'Plot Set', 'plot set', sendFeedback)
-    d <- c(d, sapply(assemblyPlots, function(assemblyPlot){ # non-definining formatting attributes saved with plot but not displayed on Saved Plots table
-        list(
-            conditions = assemblyPlot$conditionsReactive(), 
-            groups     = assemblyPlot$groupsReactive(),
-            settings   = assemblyPlot$plot$settings$all_() 
-        )
-    }, simplify = FALSE, USE.NAMES = TRUE))
+    d <- c(
+        d, 
+        sapply(assemblyPlots, function(assemblyPlot){ # non-definining formatting attributes saved with plot but not displayed on Saved Plots table
+            list(
+                conditions = assemblyPlot$conditionsReactive(), 
+                groups     = assemblyPlot$groupsReactive(),
+                settings   = assemblyPlot$plot$settings$all_() 
+            )
+        }, simplify = FALSE, USE.NAMES = TRUE)
+        # , 
+        # sapply(assemblyTables, function(assemblyTable){ # non-definining formatting attributes saved with plot but not displayed on Saved Plots table
+        #     list(
+        #         conditions = assemblyTable$conditionsReactive(), 
+        #         groups     = assemblyTable$groupsReactive(),
+        #         settings   = assemblyTable$table$settings$all_() 
+        #     )
+        # }, simplify = FALSE, USE.NAMES = TRUE)
+    )
     saveEditedRecord(d, workingId, savedPlotSets, r)
     workingId <<- NULL
 })
@@ -265,6 +276,7 @@ groupedSamples <- reactive({
         from = "ram",
         create = assemblyOptions$cacheCreateLevel, # 'asNeeded', 'once', 'always'
         keyObject = list(
+            settings = settings$all(),
             samples = samples,
             groupableColumns = groupableColumns,
             groupedColumns = groupedColumns,
@@ -373,7 +385,15 @@ groupsTable <- bufferedTableServer(
 # ----------------------------------------------------------------------
 # output plots, each with its own set of group and condition sortables
 # ----------------------------------------------------------------------
-assemblyPlots <- sapply(names(assemblyOptions$plotTypes), function(id){
+assemblyPlots <- if(is.null(assemblyOptions$plotTypes)) list() else sapply(names(assemblyOptions$plotTypes), function(id){
+    doAssemblyAction(
+        paste0(id, "Server"), options,
+        id, session, input, output, 
+        isProcessingData, assemblyOptions,
+        sourceId, assembly, groupedProjectSamples, groupingCols, groups
+    )
+}, simplify = FALSE, USE.NAMES = TRUE)
+assemblyTables <- if(is.null(assemblyOptions$tableTypes)) list() else sapply(names(assemblyOptions$tableTypes), function(id){
     doAssemblyAction(
         paste0(id, "Server"), options,
         id, session, input, output, 

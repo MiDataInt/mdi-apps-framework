@@ -41,6 +41,37 @@ assemblyPlotsUI <- function(id, options) {
         )
     }
 
+    # bucket and static table box
+    assemblyTableBoxUI <- function(id, title, collapsed = TRUE, tableBoxUI = "bufferedTableUI", settings = NULL){
+        if(is.null(collapsed)) collapsed <- TRUE
+        if(is.null(tableBoxUI)) tableBoxUI <- "bufferedTableUI"
+        fluidRow(
+            box(
+                width = 12,
+                title = title,
+                collapsible = TRUE,
+                collapsed = collapsed,
+                fluidRow(
+                    column(
+                        width = 12,
+                        style = "padding: 0;",
+                        uiOutput(ns(paste("conditions", id, sep = "_"))),
+                        uiOutput(ns(paste("groups", id, sep = "_")))
+                    )
+                ),
+                fluidRow(get(tableBoxUI)(
+                    id = ns(paste0(id, "Table")), 
+                    title = NULL,
+                    downloadable = TRUE,
+                    width = 12,
+                    collapsible = TRUE,
+                    collapsed = collapsed,
+                    settings = settings
+                ))            
+            )
+        )
+    }
+
     # return the UI contents
     standardSequentialTabItem(
 
@@ -183,9 +214,13 @@ assemblyPlotsUI <- function(id, options) {
         ),
 
         # output plots
-        lapply(names(assemblyOptions$plotTypes), function(id){
+        if(is.null(assemblyOptions$plotTypes)) NULL else lapply(names(assemblyOptions$plotTypes), function(id){
             pt <- assemblyOptions$plotTypes[[id]]
             assemblyPlotBoxUI(id, pt$label, collapsed = pt$collapsed, plotBoxUI = pt$plotBoxUI)
+        }),
+        if(is.null(assemblyOptions$tableTypes)) NULL else lapply(names(assemblyOptions$tableTypes), function(id){
+            tt <- assemblyOptions$tableTypes[[id]]
+            assemblyTableBoxUI(id, tt$label, collapsed = tt$collapsed, tableBoxUI = tt$tableBoxUI, settings = tt$settings)
         }),
         NULL
     )

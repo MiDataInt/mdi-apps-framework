@@ -238,7 +238,7 @@ getAssemblyPlotFrame <- function(plot, insideWidth, insideHeight, mar, fontSize 
 }
 
 #----------------------------------------------------------------------
-# contruct a complete plot box, with group and condition buckets
+# contruct a complete plot pr table box, with group and condition buckets
 #----------------------------------------------------------------------
 assemblyPlotBoxServer <- function(
     id, session, input, output, 
@@ -246,7 +246,7 @@ assemblyPlotBoxServer <- function(
     groupingCols, groups,
     dataFn, plotFrameFn, plotFn
 ){
-    condId <- paste("conditions", id, sep = "_")
+    condId <- paste("conditions", id, sep = "_") # can't wrap this in a function (not sure why)
     condChangeId <- paste0(condId, "OnChange")
     conditionsReactive <- reactiveVal()
     output[[condId]] <- renderAssemblyConditionsBucket(session, groupingCols, id, conditionsReactive)
@@ -292,6 +292,44 @@ assemblyPlotBoxServer <- function(
         groupsReactive = groupsReactive
     )   
 }
+assemblyTableBoxServer <- function(
+    id, session, input, output, 
+    isProcessingData,
+    groupingCols, groups,
+    dataFn, tableFn
+){
+    condId <- paste("conditions", id, sep = "_")
+    condChangeId <- paste0(condId, "OnChange")
+    conditionsReactive <- reactiveVal()
+    output[[condId]] <- renderAssemblyConditionsBucket(session, groupingCols, id, conditionsReactive)
+    observeEvent(input[[condChangeId]], { conditionsReactive(input[[condChangeId]]) })
+    #----------------------------------------------------------------------
+    grpId <- paste("groups", id, sep = "_")
+    grpChangeId <- paste0(grpId, "OnChange")
+    groupsReactive <- reactiveVal()
+    output[[grpId]] <- renderAssemblyGroupsBucket(session, groups, id, groupsReactive)
+    observeEvent(input[[grpChangeId]], { groupsReactive(input[[grpChangeId]]) })
+    #----------------------------------------------------------------------
+    dataReactive <- reactive({ 
+        req(isProcessingData())
+        conditions <- conditionsReactive()
+        groupLabels <- groupsReactive()
+        req(groupLabels) # don't require conditions, user may choose to collapse everthing to a single group via buckets
+        list(
+            conditions = conditions,
+            groupLabels = groupLabels, # the complete initial set of group labels in the bucket
+            nConditions = length(conditions),
+            nGroups = length(groupLabels),
+            data = dataFn(conditions, groupLabels) # might carry modified groupLabels if regroupToUserConditions is used
+        )
+    })
+    list(
+        id = id,
+        table = tableFn(paste0(id, "Table"), dataReactive),
+        conditionsReactive = conditionsReactive,
+        groupsReactive = groupsReactive
+    )   
+}
 
 #----------------------------------------------------------------------
 # add elements to plots
@@ -326,7 +364,7 @@ getAssemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNam
     if(length(title) == 0 || title == "") title <- {
         x <- getAssemblyPackageName(sourceId())
         if(!is.null(suffix)) x <- paste(x, prettifyGroupConditions(suffix, showConditionNames), sep = ", ")
-        gsub(" \\| ", ", ", x)
+        gsub("^\\.\\.", "", gsub(" \\| ", ", ", x))
     }
     underscoresToSpaces(title)
 }
@@ -339,8 +377,8 @@ assemblyPlotTitle <- function(plot, sourceId, suffix = NULL, showConditionNames 
     )
 }
 # a legend describing the plotted groups below the title and above the plot
-getAssemblyPlotGroupsLegend <- function(groupLabels, groupCounts, eventPlural, showConditionNames = TRUE){
-    legend <- gsub(" \\| ", "  ", prettifyGroupConditions(groupLabels, showConditionNames)) %>% underscoresToSpaces
+getAssemblyPlotGroupsLegend <- function(groupLabels, groupCounts = NULL, eventPlural = NULL, showConditionNames = TRUE){
+    legend <- gsub(" = ", " ", gsub("^\\.\\.", "", gsub(" \\| ", "  ", prettifyGroupConditions(groupLabels, showConditionNames))) %>% underscoresToSpaces)
     if(!is.null(groupCounts)) {
         if(!is.null(eventPlural)) eventPlural <- paste0(" ", eventPlural)
         if(length(groupLabels) == 1) return(paste(sum(groupCounts$N), eventPlural))
@@ -350,18 +388,22 @@ getAssemblyPlotGroupsLegend <- function(groupLabels, groupCounts, eventPlural, s
     legend
 }
 assemblyPlotGroupsLegend <- function(plot, xlim, maxY, groupLabels_, lwd = 1,  # colored lines by group on top of the plot
-                                     groupCounts = NULL, eventPlural = NULL, showConditionNames = TRUE){
+                                     groupCounts = NULL, eventPlural = NULL, showConditionNames = TRUE,
+                                     groupColors = NULL, lty = 1, pch = NULL, pt.cex = NULL, cex = 0.9, text.font = 1){
     plot$addMarginLegend(
         x = mean(xlim),
         xjust = 0.5,
         y = maxY,
         yjust = 0,
         legend = getAssemblyPlotGroupsLegend(groupLabels_, groupCounts, eventPlural, showConditionNames),
-        col = unlist(CONSTANTS$plotlyColors[1:length(groupLabels_)]),
-        lty = 1,
+        col = if(is.null(groupColors)) unlist(CONSTANTS$plotlyColors[1:length(groupLabels_)]) else groupColors,
+        lty = lty,
         lwd = lwd,
+        pch = pch,
+        pt.cex = pt.cex,
         bty = "n",
-        cex = 0.9
+        cex = cex,
+        text.font = text.font
     )
 }
 # a table of conditions underneath the X axis of a bar chart, etc.
@@ -389,6 +431,82 @@ assemblyPlotConditionsGrid <- function(groupingCols, groups, conditionsI){
 }
 
 #----------------------------------------------------------------------
+# intergroup comparison statistics
+#----------------------------------------------------------------------
+assemblyPlot_parseComparisons <- function(plot){ # expects from fromI-toI[-y][,fromI-toI[-y]...]
+    comparisons <- gsub(" ", "", plot$settings$get("Groups","Comparisons"))
+    comparisons <- if(comparisons == "") NULL else {
+        do.call(rbind, lapply(strsplit(strsplit(comparisons, ",")[[1]], "-"), function(x){
+            data.table(
+                fromI = as.integer(x[1]),
+                toI   = as.integer(x[2]),
+                y     = as.double(x[3]) # NA if missing, expect caller to provide default y
+            )
+        }))
+    }
+}
+calculateInterGroupStats <- function(fromGrp, toGrp, comparisonTest, pValueThreshold){
+    ERR <- 666L
+    testResults <- tryCatch({
+        comparisonTest(fromGrp, toGrp) # must return list(p.value[, color])
+    }, error = function(e){
+        print(e)
+        list(
+            p.value = ERR,
+            color = "red3"
+        )
+    })
+    signficanceLevel <- if(testResults$p.value == ERR) "ERR"
+        else if(testResults$p.value <= pValueThreshold / 100) "***"
+        else if(testResults$p.value <= pValueThreshold / 10) "**"
+        else if(testResults$p.value <= pValueThreshold) "*"
+        else "ns"
+    getSampleMax <- function(grp){
+        sd <- grp$sdSampleValue
+        if(is.na(sd)) sd <- grp$meanSampleValue / 10 # add some space for single-sample groups
+        grp$meanSampleValue + 2 * sd
+    }
+    list(
+        isSignificant = testResults$p.value <= pValueThreshold,
+        signficanceLevel = signficanceLevel,
+        defaultY = max(getSampleMax(fromGrp), getSampleMax(toGrp)) * 1.10,
+        color = testResults$color,
+        lty = testResults$lty,
+        from = fromGrp$groupLabel,
+        to   = toGrp$groupLabel,
+        toOverFrom = toGrp$meanSampleValue   / fromGrp$meanSampleValue,
+        fromOverTo = fromGrp$meanSampleValue / toGrp$meanSampleValue,
+        p.value = testResults$p.value
+    )
+}
+assemblyPlot_addComparisons <- function(plot, groups, comparisons, comparisonTest){
+    pValueThreshold <- plot$settings$get("Groups","P_Value_Threshold")
+    comparisons[, {
+        d <- calculateInterGroupStats(groups[fromI], groups[toI], comparisonTest, pValueThreshold)
+        if(is.na(y)) y <- d$defaultY # user can override default y position for plot clarity
+        if(!isTruthy(d$color)) d$color <- "black"
+        if(!isTruthy(d$lty)) d$lty <- 1
+        points(c(fromI, toI), c(y, y), pch = 19, cex = 0.35, col = d$color)
+        lines(c(fromI, toI), c(y, y), lwd = 0.75, lty = d$lty, col = d$color)
+        text(
+            mean(c(fromI, toI)), 
+            y, 
+            d$signficanceLevel, 
+            pos = 3, 
+            offset = if(d$isSignificant) -0.1 else 0.1,
+            cex    = if(d$isSignificant) 1 else 5.5/7,
+            col = d$color
+        )
+        .(
+            toOverFrom  = d$toOverFrom,
+            fromOverTo  = d$fromOverTo,
+            p.value     = d$p.value,
+            signficance = d$signficanceLevel
+        )
+    }, by = .(fromI, toI)] %>% print()
+}
+
+#----------------------------------------------------------------------
 # vertical barplot overplotted with error bars and individual data points
 #----------------------------------------------------------------------
 assemblyBarplotServer <- function(
@@ -400,7 +518,9 @@ assemblyBarplotServer <- function(
     nSD = 2, barHalfWidth = 0.35, jitterHalfWidth = 0.25,
     extraSettings = list(), # settings families, as a list
     splitDataTypes = FALSE,
-    fontSize = CONSTANTS$assemblyPlots$fontSize
+    fontSize = CONSTANTS$assemblyPlots$fontSize,
+    addComparisons = NULL # function(plot, groups, comparisons) NULL, 
+                          # where comparisons = data.table(fromI,toI,y)
 ){
     settings <- c(assemblyPlotFrameSettings, list(
         Groups = list(
@@ -422,6 +542,21 @@ assemblyBarplotServer <- function(
             Split_By_Data_Type = list(
                 type = "checkboxInput",
                 value = FALSE
+            ),
+            H_Lines = list(
+                type = "textInput",
+                value = ""
+            ),
+            Comparisons = list(
+                type = "textInput",
+                value = ""
+            ),
+            Spacer = list(
+                type = "spacer"
+            ),
+            P_Value_Threshold = list(
+                type = "numericInput",
+                value = 0.01
             )
         )
     ), extraSettings)
@@ -477,6 +612,9 @@ assemblyBarplotServer <- function(
                 plotPoints <- assemblyPlot$plot$settings$get("Groups","Plot_Sample_Points")
                 splitDataTypes <- assemblyPlot$plot$settings$get("Groups","Split_By_Data_Type")
                 if(splitDataTypes) plotPoints <- FALSE
+                hLines <- gsub(" ", "", assemblyPlot$plot$settings$get("Groups","H_Lines"))
+                hLines <- if(hLines == "") double() else as.double(strsplit(hLines, ",")[[1]])
+                comparisons <- assemblyPlot_parseComparisons(assemblyPlot$plot)
                 maxY <- (
                     if(splitDataTypes) max(sapply(d$data$dataTypes, function(dataType){
                         groups[[paste("meanSampleValue", dataType, sep = "__")]] + groups[[paste("sdSampleValue", dataType, sep = "__")]] * nSD
@@ -518,6 +656,7 @@ assemblyBarplotServer <- function(
                     lwd = 1,
                     col = "grey80" # TODO: expose argument for bar coloring
                 )
+                abline(h = hLines, lty = 2)
                 for(i in 1:nGroups){ # overplot individual data points on the bar plot
                     if(splitDataTypes) {
                         groupStart <- i - barHalfWidth
@@ -544,6 +683,7 @@ assemblyBarplotServer <- function(
                 }
                 assemblyPlotConditionsGrid(d$data$groupingCols, groups, conditionsI)
                 assemblyPlotTitle(assemblyPlot$plot, sourceId)
+                if(!is.null(comparisons) && !is.null(addComparisons)) addComparisons(assemblyPlot$plot, groups, comparisons)
                 if(splitDataTypes) assemblyPlot$plot$addMarginLegend(
                     x = nGroups + 0.6, 
                     y = maxY, 
@@ -574,6 +714,8 @@ assemblyDensityPlotServer <- function(
     aggCol = "x",
     fontSize = CONSTANTS$assemblyPlots$fontSize,
     groupV = NULL, groupH = NULL, # or optional function(data) to return group-specific demarcation lines
+    adjustGroupsFn = function(x) x,
+    ylab = NULL,
     ... # additional arguments passed to mdiDensityPlotBoxServer, 
         # especially defaultBinSize, v, x0Line
 ){
@@ -619,6 +761,7 @@ assemblyDensityPlotServer <- function(
             plotFrameReactive = plotFrameReactive,
             data = reactive({ dataReactive()$data$dt }),
             groupingCols = "groupLabel",
+            groupWeights = reactive({ d <- dataReactive()$data$groupWeights }),
             plotTitle = reactive({ 
                 d <- dataReactive()$data
                 getAssemblyPlotTitle(
@@ -635,10 +778,11 @@ assemblyDensityPlotServer <- function(
                     d$groupCounts, 
                     eventPlural, 
                     assemblyPlot$plot$settings$get("Plot","Show_Condition_Names")
-                )
+                ) %>% adjustGroupsFn()
             },
             legendSide = 3,
             xlab = xlab,
+            ylab = ylab,
             eventPlural = eventPlural,
             trackCols = trackCols,
             trackLabels = reactive({ dataReactive()$data$trackLabels }),
@@ -664,12 +808,15 @@ assemblyXYPlotServer <- function(
     dims = list(width = 1.5, height = 1.5), # or a reactive that returns it
     mar = c(4.1, 4.1, 0.1, 0.1), # or a reactive that returns it
     extraSettings = NULL,
-    fontSize = CONSTANTS$assemblyPlots$fontSize
+    fontSize = CONSTANTS$assemblyPlots$fontSize,
+    ... # additional arguments passed to staticPlotBoxServer
 ){
-    getDim <- function(key, option){
+    getDim <- function(key, option, data){
         dim <- trimws(assemblyPlot$plot$settings$get("Plot",option))
         if(!isTruthy(dim) || dim == "" || dim == "auto") {
-            if(is.reactive(dims)) dims()[[key]] else dims[[key]]
+            if(is.reactive(dims)) dims()[[key]] 
+            else if(is.function(dims)) dims(data)[[key]] 
+            else dims[[key]]
         }
         else dim
     }
@@ -679,12 +826,14 @@ assemblyXYPlotServer <- function(
         groupingCols, groups,
         dataFn = function(conditions, groupLabels) dataFn(assemblyPlot$plot, conditions, groupLabels),
         plotFrameFn = function(data) {
-            mar_ <- if(is.reactive(mar)) mar() else mar
+            mar_ <- if(is.reactive(mar)) mar() 
+                    else if(is.function(mar)) mar(data) 
+                    else mar
             list(
                 frame = getAssemblyPlotFrame(
                     plot = assemblyPlot$plot, 
-                    insideWidth  = getDim("width",  "Width_Inches"), 
-                    insideHeight = getDim("height", "Height_Inches"), 
+                    insideWidth  = getDim("width",  "Width_Inches", data), 
+                    insideHeight = getDim("height", "Height_Inches", data), 
                     mar = mar_,
                     fontSize = fontSize
                 ),
@@ -701,8 +850,45 @@ assemblyXYPlotServer <- function(
                 par(mar = plotFrameReactive()$mar)
                 plotFn(assemblyPlot$plot, d)
                 stopSpinner(session)
-            }
+            },
+            ...
         )
     )
     assemblyPlot
+}
+
+#----------------------------------------------------------------------
+# general bufferedTable
+#----------------------------------------------------------------------
+assemblyBufferedTableServer <- function(
+    id, session, input, output, 
+    isProcessingData, assemblyOptions,
+    sourceId, assembly, groupedProjectSamples, groupingCols, groups,
+    settings = NULL,
+    dataFn,
+    ...
+){
+    if(is.list(settings)) settings <- settingsServer(
+        session$ns('settings'), 
+        id, 
+        templates = list(settings), 
+        size = "m",
+        title = "Table Settings",
+        resettable = TRUE
+    )
+    assemblyTable <- assemblyTableBoxServer( 
+        id, session, input, output, 
+        isProcessingData,
+        groupingCols, groups,
+        dataFn = function(conditions, groupLabels) dataFn(conditions, groupLabels, settings),
+        tableFn = function(tableId, dataReactive) bufferedTableServer(
+            id = tableId,
+            parentId = id,
+            parentInput = input,
+            tableData = reactive({ dataReactive()$data }),
+            settings = settings,
+            ...
+        )
+    )
+    assemblyTable
 }
