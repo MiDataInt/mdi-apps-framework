@@ -77,7 +77,7 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
                     y2: boxEnd.y
                 }, 
                 keys: {
-                    ctrl:  event.ctrlKey,
+                    ctrl:  event.ctrlKey || event.metaKey,
                     alt:   event.altKey,
                     shift: event.shiftKey
                 }  
@@ -97,7 +97,7 @@ Shiny.addCustomMessageHandler("mdiInteractivePlotInit", function(opt){
             const data = {
                 coord: relCoord(event, this),
                 keys: {
-                    ctrl:  event.ctrlKey,
+                    ctrl:  event.ctrlKey || event.metaKey,
                     alt:   event.altKey,
                     shift: event.shiftKey
                 }
