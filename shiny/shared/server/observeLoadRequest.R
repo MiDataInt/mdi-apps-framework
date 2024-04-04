@@ -108,6 +108,9 @@ executeLoadRequest <- function(loadRequest){
     userFirstVisit <- is.null(cookie) || is.null(cookie[[app$NAME]]) || cookie[[app$NAME]] != 'true'
     assign('isColdStart', !is.null(loadRequest$coldStart) && loadRequest$coldStart, envir = sessionEnv)
     isBookmarkFile <- !isColdStart && loadRequest$file$type == "bookmark"
+    if(isBookmarkFile && loadRequest$file$name != "bookmark.mdi") {
+        lastLoadedBookmark(paste("last loaded bookmark: ", loadRequest$file$name))
+    }
     showSplashScreen <- !isBookmarkFile && (nAppSteps == 0 || (userFirstVisit && !serverEnv$IS_DEVELOPER))      
     splashScreenName <- 'appName' # the name of the app overview tab
     selectedStep <- if(showSplashScreen) splashScreenName else {

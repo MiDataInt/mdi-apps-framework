@@ -22,6 +22,7 @@ if(serverEnv$IS_DEVELOPER) activateMdiHeaderLinks(
 # define session-level and module-level variables
 #----------------------------------------------------------------------
 sourceFileInput  <- sourceFileInputServer('fileInput', appName = app$config$name)
+output$lastLoadedBookmark <- renderText({ lastLoadedBookmark() })
 cft <- CONSTANTS$contentFileTypes
 manifestFileType <- cft$manifestFile
 qcReportFileType <- cft$qcReport

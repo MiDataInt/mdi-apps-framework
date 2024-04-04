@@ -30,7 +30,8 @@ sourceFileUploadUI <- function(id, options) {
         # enable merging additional sample sources into this one
         tags$div(
             class = "text-block",
-            sourceFileInputUI(ns('fileInput'), appName = appName)
+            sourceFileInputUI(ns('fileInput'), appName = appName),
+            verbatimTextOutput(ns("lastLoadedBookmark"))
         ),
 
         # tables of the sample sources and samples that are uploaded and ready
