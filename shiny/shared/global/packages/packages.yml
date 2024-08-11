@@ -49,6 +49,7 @@ R:
         - git2r # has function name conflicts with simple names like 'tags'
         - R.utils
         - data.tree
+        - RCurl
 #----------------------------------------------------------------------
     # prefer NOT to attach developer packages, but some don't work unless you do
     developer:
