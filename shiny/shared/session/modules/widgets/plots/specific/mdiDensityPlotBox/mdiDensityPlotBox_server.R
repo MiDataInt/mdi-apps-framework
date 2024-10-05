@@ -39,6 +39,7 @@ mdiDensityPlotBoxServer <- function(
     ylab = NULL, # override the default Y axis label; required if pregrouped is TRUE; can be function(Y_Axis_Value)
     trackLabelPosition = "left", # where to place track labels, (left","center","none"), or a reactive that returns a value
     groupWeights = NULL, # named list of weights used as group denominators when Y_Axis_Value == "Weighted", or a reactive that returns it
+    dataSourceFn = function(...) NULL, # for caller to write a properly parsed dataSourceTable
     ... # additional options passed to mdiXYPlot()
 ) { 
 #----------------------------------------------------------------------
@@ -253,6 +254,7 @@ plot <- staticPlotBoxServer(
     settings = defaultSettings, 
     size = "m",
     Plot_Frame = if(is.null(plotFrameReactive)) NULL else reactive(plotFrameReactive()$frame),
+    data = TRUE,
     create = function() {
         d <- plotData()
         plotTitle <- if(is.null(plotTitle)) {
@@ -371,6 +373,7 @@ plot <- staticPlotBoxServer(
                 none = NULL
             )
         }
+        dataSourceFn(plot, d$dt)
         stopSpinner(session)
     }
 )

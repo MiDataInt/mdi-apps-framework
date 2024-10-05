@@ -10,7 +10,8 @@ staticPlotBoxUI <- function(
     documentation = serverEnv$IS_DEVELOPER,
     code = serverEnv$IS_DEVELOPER,
     console = serverEnv$IS_DEVELOPER,
-    terminal = FALSE
+    terminal = FALSE,
+    data = FALSE
 ){
     ns <- NS(id)
     mdiBox(
@@ -19,9 +20,10 @@ staticPlotBoxUI <- function(
         documentation = documentation, 
         reload = TRUE,
         code = code,
-        console = console,                    
+        console = console,
         terminal = terminal, 
         download = TRUE,
+        data = data,
         settings = TRUE,
         ...,
         plotOutput(ns('plot'), inline = TRUE)
