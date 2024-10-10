@@ -889,7 +889,7 @@ assemblyXYPlotServer <- function(
                 d <- dataReactive()
                 par(mar = plotFrameReactive()$mar)
                 plotFn(assemblyPlot$plot, d)
-                # dataSourceFn(assemblyPlot$plot, d$data$groupingCols[conditionsI], groups, splitDataTypes, d$data$dataTypes)
+                dataSourceFn(assemblyPlot$plot, d)
                 stopSpinner(session)
             },
             ...
