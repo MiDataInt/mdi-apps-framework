@@ -129,6 +129,10 @@ addAlphaToColor <- function(color, alpha) { # expects a single color and a vecto
         alpha = pmin(1, pmax(0, alpha)) * 255
     )
 }
+addAlphaToColors <- function(cols, alpha = 0.5){ # expects multiple colors and a single alpha
+    if(alpha >= 0 && alpha < 1) sapply(cols, addAlphaToColor, alpha)
+    else cols
+}
 
 #----------------------------------------------------------------
 # plotting helpers

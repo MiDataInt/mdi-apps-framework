@@ -195,7 +195,7 @@ assembly <- reactive({
     cols <- names(assembly$samples)
     req("sample_id"  %in% cols || "sample" %in% cols)
     if(!("project"   %in% cols)) assembly$samples[, project := getAssemblyPackageName(sourceId)]
-    if(!("sample"    %in% cols))  assembly$samples[, sample := "sample_id"]
+    if(!("sample"    %in% cols)) assembly$samples[, sample := "sample_id"]
     if(!("sample_id" %in% cols)) assembly$samples[, sample_id := "sample"]
     if(!("sampleKey" %in% cols)) assembly$samples[, sampleKey := paste(project, sample_id, sep = "::")]
     assembly

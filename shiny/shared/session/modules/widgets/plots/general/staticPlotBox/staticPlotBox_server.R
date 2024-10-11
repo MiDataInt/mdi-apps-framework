@@ -23,6 +23,7 @@ staticPlotBoxServer <- function(
     baseDirs = NULL, # in addition to plots/staticPlotBox
     envir = parent.frame(),
     dir = NULL,
+    data = FALSE,
     settings = NULL, # an additional settings template as a list()
     template = settings, # for legacy support
     Plot_Frame = NULL, # a reactive that provides overrides that take precedence over settings$Plot_Frame, e.g., reactive(list(Width_Inches = 7))
@@ -36,7 +37,9 @@ staticPlotBoxServer <- function(
 module <- 'staticPlotBox' # for reportProgress tracing
 plotId <- session$ns('plot')
 pngFileName <- paste(plotId, "png", sep = ".")
+txtFileName <- paste(plotId, "txt", sep = ".")
 pngFile <- file.path(sessionDirectory, pngFileName)
+txtFile <- file.path(sessionDirectory, txtFileName)
 
 #----------------------------------------------------------------------
 # parse requested plot options
@@ -96,6 +99,11 @@ settings <- activateMdiHeaderLinks(
         content = function(tmpFile) file.copy(pngFile, tmpFile),
         contentType = "image/png"
     ),
+    data = if(data) downloadHandler( # data table download
+        filename = txtFile,
+        content = function(tmpFile) file.copy(txtFile, tmpFile),
+        contentType = "text/plain"
+    ) else NULL,
     #----------------------------
     settings = module, # plot settings
     templates = list(template),
@@ -123,7 +131,7 @@ output$plot <- renderImage({
         type = "cairo"
     )
 
-    # let caller create the plot
+    # let caller create the plot and save the source data table
     tryCatch({
         create()
         graphics.off()
@@ -231,7 +239,19 @@ list(
     addBoth         = addBoth,
     addArea         = addArea,
     addLegend       = addLegend,
-    addMarginLegend = addMarginLegend
+    addMarginLegend = addMarginLegend,
+    txtFile         = txtFile,
+    write.table = function(table, colnames = NULL){
+        if(!is.null(colnames)) colnames(table) <- colnames
+        write.table(
+            table,
+            file = txtFile,
+            quote = FALSE,
+            sep = "\t",
+            row.names = FALSE,
+            col.names = TRUE
+        )
+    }
 )
 
 #----------------------------------------------------------------------

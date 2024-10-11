@@ -120,4 +120,8 @@ text( # legend title
 )
 par(xpd = FALSE)
 #----------------------------------------------------------------------
+
+# return the depth table for addition processing by caller
+dt
+
 }

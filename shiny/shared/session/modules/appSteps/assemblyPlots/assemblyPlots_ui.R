@@ -34,7 +34,8 @@ assemblyPlotsUI <- function(id, options) {
                         title = "",
                         width = 6,
                         collapsible = TRUE,
-                        collapsed = collapsed
+                        collapsed = collapsed,
+                        data = TRUE
                     )
                 )
             )

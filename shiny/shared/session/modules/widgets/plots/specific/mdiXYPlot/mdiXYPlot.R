@@ -75,8 +75,8 @@ if(!is.null(hShade)) rect(xlim[1], hShade[1], xlim[2], hShade[2], col = shadeCol
 if(!is.null(vShade)) rect(vShade[1], ylim[1], vShade[2], ylim[2] * 0.975, col = shadeColor, border = NA)
 if(!is.null(h)) abline(h = h, col = hColor)
 if(!is.null(v)) abline(v = v, col = vColor)
-if(!is.null(x0Line)) abline(v = 0, col = "black")
-if(!is.null(y0Line)) abline(h = 0, col = "black")
+if(!is.null(x0Line) && x0Line) abline(v = 0, col = "black")
+if(!is.null(y0Line) && y0Line) abline(h = 0, col = "black")
 if(is.list(groupH)){
     for(groupName in names(groupH)) abline(
         h = groupH[[groupName]], 

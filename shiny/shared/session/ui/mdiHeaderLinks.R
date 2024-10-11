@@ -12,7 +12,8 @@ mdiHeaderLinks <- function(
     console = FALSE,   # include a link to open a context-specific R console
     terminal = FALSE, # include a link to open a context-specific terminal emulator
     download = FALSE, # include a link to download the module contents
-    settings = FALSE  # include a link to open a settings panel
+    settings = FALSE,  # include a link to open a settings panel
+    data = FALSE # include a link to download the source data table for the module contents
 ){
     if(is.null(id)) return("")
     ns <- NS(id)
@@ -24,6 +25,7 @@ mdiHeaderLinks <- function(
         if(!serverEnv$IS_SERVER && console) rConsoleLink(ns('console'), class = class) else "",
         if(!serverEnv$IS_SERVER && terminal) commandTerminalLink(ns('terminal'), class = class) else "",
         if(download) downloadLink(ns("download"), label = icon("download"), class = class) else "",
+        if(data) downloadLink(ns("data"), label = icon("table-list"), class = class) else "",
         if(settings) settingsUI(ns('settings'), class = class) else ""
     ))
 }
@@ -38,7 +40,8 @@ activateMdiHeaderLinks <- function(
     envir = NULL,  # include a link to open a context-specific R console
     dir = NULL, # include a link to open a context-specific terminal emulator
     download = NULL, # download handler for the download link, created with shiny::downloadHandler()
-    settings = NULL # the value passed as parentId to settingsServer()
+    settings = NULL, # the value passed as parentId to settingsServer()
+    data = NULL # download handler for the data table download link, created with shiny::downloadHandler()
 ){
     if(!is.null(url)) documentationLinkServer('documentation', url = url)
     if(!is.null(reload)) {
@@ -81,6 +84,10 @@ activateMdiHeaderLinks <- function(
         session$output$download <- download
         addMdiTooltip(session, "download", title = "Download the contents")
     }
+    if(!is.null(data)) {
+        session$output$data <- data
+        addMdiTooltip(session, "data", title = "Download the source data table")
+    }
     if(!is.null(settings)){
         settings <- settingsServer('settings', settings, ...)
         addMdiTooltip(session, "settings-gearIcon", title = "Change the settings")
@@ -104,7 +111,8 @@ mdiBox <- function(
     console = FALSE,    
     terminal = FALSE,
     download = FALSE,
-    settings = FALSE
+    settings = FALSE,
+    data = FALSE
 ){
     box(
         title = tagList(
@@ -118,7 +126,8 @@ mdiBox <- function(
                 console = console,                    
                 terminal = terminal, 
                 download = download,
-                settings = settings
+                settings = settings,
+                data = data
             )
         ),
         ...

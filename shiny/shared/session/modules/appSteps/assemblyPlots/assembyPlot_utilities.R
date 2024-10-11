@@ -1,6 +1,7 @@
 #----------------------------------------------------------------------
 # utility functions used to create assembly data objects and plots
 #----------------------------------------------------------------------
+logDividingLine <- paste0(rep("=", 80), collapse = "")
 
 #----------------------------------------------------------------------
 # load and act on assembly type options and actions
@@ -71,13 +72,15 @@ aggegrateGroupSampleValues <- function(groupedProjectSamples, groupingCols, valu
         meanSampleValue = round(mean(.SD[[valueColumn]]), nSigDigits),
         sdSampleValue = round(sd(.SD[[valueColumn]]), nSigDigits),
         sampleValues = list(.SD[[valueColumn]]), # plural, since can be more than one value per sample
-        projects = list(project)
+        projects = list(project),
+        samples = list(sample)
     ), by = groupingCols]
     if(!is.null(input$Data_Types) && length(input$Data_Types) > 0) for(dataType in input$Data_Types){
         dtvc <- paste(valueColumn, dataType, sep = "__") # aggregate each data type individual for splittin in barplots, etc.
         if(is.null(groupedProjectSamples[[dtvc]])) next
         x[[paste("meanSampleValue", dataType, sep = "__")]] <- groupedProjectSamples[, .(VAL_ = round(mean(.SD[[dtvc]]), nSigDigits)), by = groupingCols]$VAL_
         x[[paste("sdSampleValue",   dataType, sep = "__")]] <- groupedProjectSamples[, .(VAL_ = round(sd(.SD[[dtvc]]),   nSigDigits)), by = groupingCols]$VAL_
+        x[[paste("sampleValues",    dataType, sep = "__")]] <- groupedProjectSamples[, .(VAL_ = .(.SD[[dtvc]])), by = groupingCols]$VAL_
     }
     x
 }
@@ -447,7 +450,8 @@ assemblyPlot_parseComparisons <- function(plot){ # expects from fromI-toI[-y][,f
 }
 calculateInterGroupStats <- function(fromGrp, toGrp, comparisonTest, pValueThreshold){
     ERR <- 666L
-    testResults <- tryCatch({
+    testResults <- tryCatch({ 
+        req(fromGrp$nSamples > 1 && toGrp$nSamples > 1)
         comparisonTest(fromGrp, toGrp) # must return list(p.value[, color])
     }, error = function(e){
         print(e)
@@ -481,28 +485,32 @@ calculateInterGroupStats <- function(fromGrp, toGrp, comparisonTest, pValueThres
 }
 assemblyPlot_addComparisons <- function(plot, groups, comparisons, comparisonTest){
     pValueThreshold <- plot$settings$get("Groups","P_Value_Threshold")
+    message(logDividingLine)
+    message("assemblyPlot_addComparisons p values")
     comparisons[, {
         d <- calculateInterGroupStats(groups[fromI], groups[toI], comparisonTest, pValueThreshold)
-        if(is.na(y)) y <- d$defaultY # user can override default y position for plot clarity
-        if(!isTruthy(d$color)) d$color <- "black"
-        if(!isTruthy(d$lty)) d$lty <- 1
-        points(c(fromI, toI), c(y, y), pch = 19, cex = 0.35, col = d$color)
-        lines(c(fromI, toI), c(y, y), lwd = 0.75, lty = d$lty, col = d$color)
-        text(
-            mean(c(fromI, toI)), 
-            y, 
-            d$signficanceLevel, 
-            pos = 3, 
-            offset = if(d$isSignificant) -0.1 else 0.1,
-            cex    = if(d$isSignificant) 1 else 5.5/7,
-            col = d$color
-        )
-        .(
-            toOverFrom  = d$toOverFrom,
-            fromOverTo  = d$fromOverTo,
-            p.value     = d$p.value,
-            signficance = d$signficanceLevel
-        )
+        if(d$signficanceLevel != "ERR"){
+            if(is.na(y)) y <- d$defaultY # user can override default y position for plot clarity
+            if(!isTruthy(d$color)) d$color <- "black"
+            if(!isTruthy(d$lty)) d$lty <- 1
+            points(c(fromI, toI), c(y, y), pch = 19, cex = 0.35, col = d$color)
+            lines(c(fromI, toI), c(y, y), lwd = 0.75, lty = d$lty, col = d$color)
+            text(
+                mean(c(fromI, toI)), 
+                y, 
+                d$signficanceLevel, 
+                pos = 3, 
+                offset = if(d$isSignificant) -0.1 else 0.1,
+                cex    = if(d$isSignificant) 1 else 5.5/7,
+                col = d$color
+            )
+            .(
+                toOverFrom  = d$toOverFrom,
+                fromOverTo  = d$fromOverTo,
+                p.value     = signif(d$p.value, 3),
+                signficance = d$signficanceLevel
+            )
+        }
     }, by = .(fromI, toI)] %>% print()
 }
 
@@ -519,8 +527,8 @@ assemblyBarplotServer <- function(
     extraSettings = list(), # settings families, as a list
     splitDataTypes = FALSE,
     fontSize = CONSTANTS$assemblyPlots$fontSize,
-    addComparisons = NULL # function(plot, groups, comparisons) NULL, 
-                          # where comparisons = data.table(fromI,toI,y)
+    addComparisons = NULL, # function(plot, groups, comparisons) NULL, where comparisons = data.table(fromI,toI,y)
+    dataSourceFn = function(...) NULL # for caller to write a properly parsed dataSourceTable
 ){
     settings <- c(assemblyPlotFrameSettings, list(
         Groups = list(
@@ -598,6 +606,7 @@ assemblyBarplotServer <- function(
             settings = settings, 
             size = "m",
             Plot_Frame = reactive({ plotFrameReactive()$frame }),
+            data = TRUE,
             create = function() {
                 d <- dataReactive()
                 req(d)
@@ -669,6 +678,20 @@ assemblyBarplotServer <- function(
                                 m + sd * c(-nSD, nSD)
                             )
                         }
+                        jwh <- barWidth * 0.9
+                        for(j in seq_along(d$data$dataTypes)){
+                            vals <- unlist(groups[i][[paste("sampleValues", d$data$dataTypes[j], sep = "__")]])
+                            x <-  groupStart + (j - 1) * barWidth + barWidth / 2
+
+                            assemblyPlot$plot$addPoints(
+                                x = jitter2(vals, x - jwh, x + jwh),
+                                y = vals,
+                                pch = 21,
+                                col = "black",
+                                bg  = addAlphaToColors(CONSTANTS$plotlyColors[[j]], 0.75),
+                                cex = 0.75
+                            )
+                        }
                     } else {
                         lines(rep(i, 2), groups[i, meanSampleValue + sdSampleValue * c(-nSD, nSD)])
                     }
@@ -692,6 +715,7 @@ assemblyBarplotServer <- function(
                     bty = "n",
                     x.intersp = 0
                 )
+                dataSourceFn(assemblyPlot$plot, d$data$groupingCols[conditionsI], groups, splitDataTypes, d$data$dataTypes)
                 stopSpinner(session)
             }
         )
@@ -716,6 +740,7 @@ assemblyDensityPlotServer <- function(
     groupV = NULL, groupH = NULL, # or optional function(data) to return group-specific demarcation lines
     adjustGroupsFn = function(x) x,
     ylab = NULL,
+    dataSourceFn = function(...) NULL,
     ... # additional arguments passed to mdiDensityPlotBoxServer, 
         # especially defaultBinSize, v, x0Line
 ){
@@ -792,9 +817,22 @@ assemblyDensityPlotServer <- function(
             aggCol = aggCol,
             groupV = if(is.function(groupV)) reactive({ groupV(dataReactive()$data) }) else NULL,
             groupH = if(is.function(groupH)) reactive({ groupH(dataReactive()$data) }) else NULL,
+            dataSourceFn = dataSourceFn,
             ...
         )
     )
+}
+assemblyDensityPlot_dataSourceFn <- function(plot, dt, xlab){
+    formula <- if(dt$track[1] == "singleTrack") x ~ group 
+          else if(dt$group[1] == "singleGroup") x ~ track
+          else x ~ trackGroup
+    dt <- dcast(dt, formula, value.var = "y", fun.aggregate = function(y) round(y[1], 4))
+    x <- colnames(dt)
+    dataCols <- 2:length(x)
+    colnames(dt) <- c(xlab, x[dataCols])
+    colnames(dt) <- gsub("\n", "", colnames(dt))
+    hasData <- apply(dt[, ..dataCols], 1, function(x) any(!is.na(x) & x > 0))
+    plot$write.table(dt[hasData])
 }
 
 #----------------------------------------------------------------------
@@ -809,6 +847,7 @@ assemblyXYPlotServer <- function(
     mar = c(4.1, 4.1, 0.1, 0.1), # or a reactive that returns it
     extraSettings = NULL,
     fontSize = CONSTANTS$assemblyPlots$fontSize,
+    dataSourceFn = function(...) NULL,
     ... # additional arguments passed to staticPlotBoxServer
 ){
     getDim <- function(key, option, data){
@@ -845,10 +884,12 @@ assemblyXYPlotServer <- function(
             settings = c(assemblyPlotFrameSettings, extraSettings), 
             size = "m",
             Plot_Frame = reactive({ plotFrameReactive()$frame }),
+            data = TRUE,
             create = function() {
                 d <- dataReactive()
                 par(mar = plotFrameReactive()$mar)
                 plotFn(assemblyPlot$plot, d)
+                dataSourceFn(assemblyPlot$plot, d)
                 stopSpinner(session)
             },
             ...
