@@ -54,3 +54,6 @@ keyedViterbi <- function(x, ...) {
 cumprob <- function(x, ...) {
     UseMethod("cumprob", x)
 }
+zScore <- function(x, ...) {
+    UseMethod("zScore", x)
+}
