@@ -65,12 +65,12 @@ serverEnv$HOST <- if(serverEnv$IS_LOCAL || serverEnv$IS_REMOTE || serverEnv$IS_O
 # set properties based on whether server is publicly accessible or restricted access
 if(serverEnv$IS_SERVER) { # public web server mode
     serverEnv$LAUNCH_BROWSER <- FALSE
-    setServerEnv('MAX_MB_RAM_BEFORE_START', 1e3, as.integer)
-    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
+    setServerEnv('MAX_MB_RAM_BEFORE_START', 6e3, as.integer)
+    setServerEnv('MAX_MB_RAM_AFTER_END', 6e3, as.integer)
     serverEnv$CALLBACK_URL <- serverEnv$SERVER_URL
 } else { # web server has highly restricted (often single-user) access
     setServerEnv('MAX_MB_RAM_BEFORE_START', 1e6, as.integer) # i.e. don't limit local start RAM
-    setServerEnv('MAX_MB_RAM_AFTER_END', 1e3, as.integer)
+    setServerEnv('MAX_MB_RAM_AFTER_END', 6e3, as.integer)
     # serverEnv$SERVER_URL   <- paste0("http://localhost:", serverEnv$SERVER_PORT, "/") # cannot be 127.0.0.1 for Globus OAuth2 callback # nolint
     # serverEnv$CALLBACK_URL <- paste0("http://127.0.0.1:", serverEnv$SERVER_PORT, "/") # cannot be localhost for endpoint helper page action # nolint
 } 
