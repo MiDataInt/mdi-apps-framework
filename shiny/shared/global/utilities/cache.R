@@ -25,11 +25,12 @@ cleanPersistentCache <- function(excludedKeys = "__NO_EXCLUSIONS__"){
     })
 
     # even if TTL not exceeded delete the oldest items until max cache size is honored
+    if(serverConfig$max_cache_bytes == 0) return(NULL)
     cacheSize <- object.size(persistentCache)
     if(cacheSize < serverConfig$max_cache_bytes) return(NULL)
     mostOutOfDate <- order(deltas)
     i <- length(mostOutOfDate)
-    while(cacheSize > serverConfig$max_cache_bytes){       
+    while(cacheSize > serverConfig$max_cache_bytes){
         j <- mostOutOfDate[i]
         key <- keys[j]
         persistentCache[[key]] <<- NULL
@@ -63,7 +64,6 @@ loadPersistentFile <- function(
     #-----------------------
     ... # additional argument passed to fread
 ){
-
     # adjust call parameters
     if(is.null(ttl)) ttl <- serverConfig$default_ttl 
     if(ttl > serverConfig$max_ttl) ttl <- serverConfig$max_ttl 
@@ -71,8 +71,8 @@ loadPersistentFile <- function(
     if(is.null(file) || length(file) == 0) {
         if(!silent) stop("load cache error, missing file")   
         return(NULL) 
-    }    
-
+    }
+ 
     # check the cache for the requested file
     cleanPersistentCache(file)  
     if(!force && !is.null(persistentCache[[file]])) return(touchPersistentCache(file))
