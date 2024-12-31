@@ -14,31 +14,52 @@ mdiLevelPlot <- function(
     h = NULL, # Y-axis values at which to place line rules
     v = NULL, # X-axis values at which to place line rules
     border = NA, # passed to rect, suppresses border by default
+    maxQuantile = 0.9, # the quantile of z to use for the automatic color scale maximum
+    dt2 = NULL, # a second data.table like dt1; if not NULL, plot the difference of dt2 - dt1
     ... # additional arguments passed to rect()
 ){ 
 #----------------------------------------------------------------------
+
+# initialize options
 if(!is.null(settings$all_)) settings <- settings$all()
 if(!is.null(settings$Level_Plot)) settings <- settings$Level_Plot
 palettes <- mdiLevelPalettes()
 levelPalette <- strsplit(settings$Level_Palette$value, " ")[[1]]
+if(!is.null(dt2) && levelPalette[1] == "seq") levelPalette <- c("div", "PuOr")
 nColors <- palettes[paletteName == levelPalette[2], maxcolors]
 palette <- brewer.pal(nColors, levelPalette[2])
 nColorsPerSide <- if(levelPalette[1] == "seq") 9 else 6
-dt <- as.data.table(dt)[
-    x >= xlim[1] & x <= xlim[2] &
-    y >= ylim[1] & y <= ylim[2], 
-    .( 
-        z = switch(
-            z.column, 
-            x = z.fn(rep(x, .N)), 
-            y = z.fn(rep(y, .N)),
-            z.fn(.SD[[z.column]])
-        )
-    ), 
-    keyby = .(x, y)
-]
+
+# collect the primary data in dt
+aggregateDt <- function(dt){
+    as.data.table(dt)[
+        x >= xlim[1] & x <= xlim[2] &
+        y >= ylim[1] & y <= ylim[2], 
+        .( 
+            z = switch(
+                z.column, 
+                x = z.fn(rep(x, .N)), 
+                y = z.fn(rep(y, .N)),
+                z.fn(.SD[[z.column]])
+            )
+        ), 
+        keyby = .(x, y)
+    ]
+}
+dt <- aggregateDt(dt)
+
+# as needed, calculate the difference as dt2 - dt
+if(!is.null(dt2)){
+    dt2 <- aggregateDt(dt2)
+    dt <- merge(dt, dt2, by = c("x", "y"), all = TRUE)
+    dt[is.na(z.x), z.x := 0]
+    dt[is.na(z.y), z.y := 0]
+    dt[, z := z.y - z.x]
+}
+
+# set the color for each grid spot on a linear scale
 maxZ <- trimws(settings$Max_Z_Value$value)
-if(maxZ == "auto" || maxZ == "") maxZ <- dt[, max(z)]
+if(maxZ == "auto" || maxZ == "") maxZ <- quantile(dt$z, maxQuantile)
 maxZ <- as.numeric(maxZ)
 map <- dt[, .(
     x = x,
@@ -53,6 +74,8 @@ map <- dt[, .(
         )
     ))
 )]
+
+# render the grid
 rect(
     map$x - xinc / 2, 
     map$y - yinc / 2, 
