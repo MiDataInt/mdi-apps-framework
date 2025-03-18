@@ -156,9 +156,6 @@ setAllSettings <- function(preset = NULL){
 if(resettable) observeEvent(sessionInput[[resetAllSettingsId]], { 
     setAllSettings() 
 })
-if(isPresets) for(i in 1:nPresets) observeEvent(sessionInput[[presetIds[i]]], {
-    setAllSettings(presets[[i]]) 
-})
 
 #----------------------------------------------------------------------
 # getter and setter functions
@@ -296,6 +293,14 @@ retval$get <- function(tab, id, default = NULL){
 }
 retval$set <- function(tab, id, value){
     settings[[tab]][[id]]$value <- value
+}
+retval$setFromList <- function(x){
+    initializeSettings(template)
+    for(tab in names(x)){
+        for(id in names(x[[tab]])){
+            settings[[tab]][[id]]$value <- x[[tab]][[id]]
+        }
+    }
 }
 retval$setChoices <- function(tab, id, choices){
     template[[tab]][[id]]$choices <<- choices

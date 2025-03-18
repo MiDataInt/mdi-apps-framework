@@ -1,0 +1,80 @@
+Plot_Frame:
+    Width_Inches:
+        type:   numericInput
+        value:  3
+        min:    1
+        max:    8
+        step:   0.5 
+    Height_Inches:
+        type:   numericInput
+        value:  2
+        min:    1
+        max:    10
+        step:   0.5 
+    Font_Size:
+        type:   numericInput
+        value:  7
+        min:    5
+        max:    16
+        step:   1
+    Legend_Placement:
+        type:   selectInput
+        value:  topleft
+        choices:
+            - topleft
+            - topright
+            - bottomleft
+            - bottomright
+            - none
+    Bottom_Margin:
+        type:   numericInput
+        value:  4.1
+        min:    0.1
+        max:    100
+        step:   1
+    Top_Margin:
+        type:   numericInput
+        value:  2.1
+        min:    0.1
+        max:    100
+        step:   1
+    Left_Margin:
+        type:   numericInput
+        value:  4.1
+        min:    0.1
+        max:    100
+        step:   1
+    Right_Margin:
+        type:   numericInput
+        value:  0.1
+        min:    0.1
+        max:    100
+        step:   1
+    Title:      
+        type:   textInput
+        value:  null
+Points_and_Lines:
+    Point_Size:
+        type:   numericInput
+        value:  1
+        min:    0.25
+        max:    10
+        step:   0.25
+    Point_Type:
+        type:   numericInput
+        value:  19
+        min:    0
+        max:    25
+        step:   1 
+    Line_Width:
+        type:   numericInput
+        value:  1
+        min:    0.25
+        max:    10
+        step:   0.25
+    Line_Type:
+        type:   numericInput
+        value:  1
+        min:    0
+        max:    6
+        step:   1
