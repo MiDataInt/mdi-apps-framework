@@ -121,7 +121,13 @@ plot <- mdiInteractivePlotServer(
     contents = reactive({ 
         list(
             pngFile = pngFile, 
-            layout = create(settings)
+            layout = tryCatch(
+                create(settings),
+                error = function(e){
+                    unlink(pngFile)
+                    NULL
+                }
+            )
         ) 
     })
 )

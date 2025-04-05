@@ -91,7 +91,11 @@ observe({
         })
         d$pngFile <- pngFile
     }
-    png <- RCurl::base64Encode(readBin(d$pngFile, "raw", file.info(d$pngFile)[1, "size"]), "txt")
+    png <- if(file.exists(d$pngFile)){
+        RCurl::base64Encode(readBin(d$pngFile, "raw", file.info(d$pngFile)[1, "size"]), "txt")
+    } else {
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=" # 1x1 transparent pixel
+    }
     session$sendCustomMessage("mdiInteractivePlotUpdate", list(
         prefix = idPrefix,
         src = sprintf('data:image/png;base64,%s', png),
