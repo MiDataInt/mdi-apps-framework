@@ -57,6 +57,7 @@ loadPersistentFile <- function(
     #-----------------------
     create = NULL, # a function(file) called to create a non-existent file prior to RAM caching
     postProcess = NULL, # a function applied to data after loading and before caching
+    cacheAsRds = TRUE, # set to FALSE to skip saving the data as an RDS file, which can be slow to write (but faster to reload)
     #-----------------------
     session = NULL, # optional control over the spinner shown only for files not already in cache
     spinnerMessage = NULL,
@@ -118,7 +119,7 @@ loadPersistentFile <- function(
             if(is.function(colClasses)) colClasses <- colClasses()
             fread(
                 file,
-                sep = sep,        
+                sep = sep,
                 header = header,
                 colClasses = colClasses,
                 ...
@@ -131,7 +132,7 @@ loadPersistentFile <- function(
     if(!is.null(postProcess)) persistentCache[[file]]$data <<- postProcess(persistentCache[[file]]$data)
 
     # store the RDS version of the loaded file for faster future loads
-    saveRDS(persistentCache[[file]], rdsFile)
+    if(cacheAsRds) saveRDS(persistentCache[[file]], rdsFile)
     if(!is.null(spinnerMessage)) stopSpinner(session)
     touchPersistentCache(file)
 }
