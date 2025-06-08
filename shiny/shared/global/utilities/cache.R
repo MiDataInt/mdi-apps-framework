@@ -81,7 +81,7 @@ loadPersistentFile <- function(
         reportProgress("loading persistent cache")
         reportProgress(file) 
     } 
-    if(!is.null(spinnerMessage)) startSpinner(session, message = spinnerMessage)
+    # if(!is.null(spinnerMessage)) startSpinner(session, message = spinnerMessage)
 
     # force a full reload of the file too, not just the RAM cache
     if(unlink && file.exists(file)) unlink(file)
@@ -96,7 +96,7 @@ loadPersistentFile <- function(
             data = if(!is.null(postProcess)) postProcess(persistentCache[[file]]) else persistentCache[[file]],
             ttl  = ttl
         )
-        if(!is.null(spinnerMessage)) stopSpinner(session)
+        # if(!is.null(spinnerMessage)) stopSpinner(session)
         touchPersistentCache(file)
     }
     if(file.exists(rdsFile) && (isRdsFile || !force)) return( loadRdsFile() )
@@ -105,7 +105,7 @@ loadPersistentFile <- function(
     if(!file.exists(file)) {
         if(is.null(create)){
             if(!silent) stop("load cache error, non-existent file") 
-            if(!is.null(spinnerMessage)) stopSpinner(session)  
+            # if(!is.null(spinnerMessage)) stopSpinner(session)  
             return(NULL) 
         } else {
             create(file)
@@ -133,6 +133,6 @@ loadPersistentFile <- function(
 
     # store the RDS version of the loaded file for faster future loads
     if(cacheAsRds) saveRDS(persistentCache[[file]], rdsFile)
-    if(!is.null(spinnerMessage)) stopSpinner(session)
+    # if(!is.null(spinnerMessage)) stopSpinner(session)
     touchPersistentCache(file)
 }
