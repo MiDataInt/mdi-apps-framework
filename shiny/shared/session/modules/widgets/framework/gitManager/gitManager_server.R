@@ -77,7 +77,7 @@ output$statusTable <- renderDT(
 # update the extended status of a clicked repository
 repoObserver <- rowSelectionObserver("statusTable", input)
 setRepoStatus <- function(showStatus = TRUE){
-    show(selector = spinnerSelector) 
+    shinyjs::show(selector = spinnerSelector) 
     dir <- repo()$dir
 
     # collect various bits of status and other metadata on the selected repo
@@ -144,7 +144,7 @@ setRepoStatus <- function(showStatus = TRUE){
         x$remoteBranches,        
         names(repo()$versions)
     ), selected = getGitHeadDisplay(repo()$head))
-    hide(selector = spinnerSelector) 
+    shinyjs::hide(selector = spinnerSelector) 
     status(x)
     if(showStatus) invalidateStatus( invalidateStatus() + 1 )
 }
@@ -177,7 +177,7 @@ observers$repoSelected <- observeEvent(repoObserver(), {
     isRepoSelected <- type != "app"
 
     # set the associated repository (if any)
-    toggle(selector = ".isRepoSelected", condition = isRepoSelected)
+    shinyjs::toggle(selector = ".isRepoSelected", condition = isRepoSelected)
     repo(switch(
         type,
         framework  = gitFrameworkStatus,
@@ -187,7 +187,7 @@ observers$repoSelected <- observeEvent(repoObserver(), {
     )) 
 
     # reset the repo status and UI
-    hide("messagePanel")
+    shinyjs::hide("messagePanel")
     pendingAction(NULL)
     if(isRepoSelected) setRepoStatus(TRUE) else {
         status(list(type = "app"))
@@ -236,7 +236,7 @@ output$warn <- renderText({
     pendingAction()$prompt
 })
 observers$message <- observeEvent(pendingAction(), {
-    toggle(
+    shinyjs::toggle(
         'messagePanel', 
         condition = !is.null(pendingAction()) && pendingAction()$message
     )
@@ -255,7 +255,7 @@ doMessageAction <- function(action, type, prompt, expr){
     } else {
         req(input$message)
         pendingAction(NULL)
-        hide("messagePanel")
+        shinyjs::hide("messagePanel")
         gitExpr(expr)
     }
 }
@@ -332,13 +332,13 @@ observers$checkout <- observeEvent(input$checkout, {
 output$output <- renderUI({
     expr <- gitExpr()    
     req(expr)
-    show(selector = spinnerSelector) 
+    shinyjs::show(selector = spinnerSelector) 
     output <- tryCatch(
         capture.output(eval(expr)),
         warning = function(w) w, 
         error = function(e) e
     ) 
-    hide(selector = spinnerSelector)  
+    shinyjs::hide(selector = spinnerSelector)  
     tags$pre(
         style = "max-height: 400px; overflow: auto;",
         paste(collapse = "\n", output)

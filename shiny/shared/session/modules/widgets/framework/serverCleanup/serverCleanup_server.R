@@ -30,12 +30,12 @@ handleSelectDelete <- function(d){
 }
 observers$deleteSelectedPackages <- observeEvent(input$deleteSelectedPackages, {
     req(selectedPackages)
-    show(selector = spinnerSelector)
+    shinyjs::show(selector = spinnerSelector)
     x <- dataPackages()
     packageDirs <- x[selectedPackages, packageDir]
     unlink(packageDirs, recursive = TRUE)
     dataPackages(x[!(packageDir %in% packageDirs)])
-    hide(selector = spinnerSelector)
+    shinyjs::hide(selector = spinnerSelector)
 })
 
 #----------------------------------------------------------------------

@@ -49,7 +49,7 @@ invalidateTree <- reactiveVal(0)
 output$tree <- shinyTree::renderTree({
     req(input$baseDir)
     invalidateTree()
-    show(selector = spinnerSelector)
+    shinyjs::show(selector = spinnerSelector)
     relPaths <- if(isSingleFile) basename(showFile)
                 else list.files(input$baseDir, include.dirs = TRUE, recursive = TRUE)   
     paths <- file.path(input$baseDir, relPaths)
@@ -60,7 +60,7 @@ output$tree <- shinyTree::renderTree({
     x <- as.list(tree)
     x$name <- NULL
     if(isSingleFile) isolate({ setActiveTab(paths) })
-    hide(selector = spinnerSelector)
+    shinyjs::hide(selector = spinnerSelector)
     x
 })
 # respond to a file tree click
@@ -92,14 +92,14 @@ tabs <- reactiveVal(if(is.null(tabs)) data.table(
     message = character()
 ) else tabs)
 setActiveTab <- function(activePath, closingPath = NULL, deselect = FALSE){
-    show(selector = spinnerSelector)
+    shinyjs::show(selector = spinnerSelector)
     tabs <- tabs()
     if(deselect){ # no selected tab, working in a directory
         tabs[, active := FALSE]
         tabs(tabs) 
         invalidateTabs( invalidateTabs() + 1 )
         clearAceSession(editorId)
-        hide(selector = spinnerSelector) 
+        shinyjs::hide(selector = spinnerSelector) 
         return()
     }   
     if(!is.null(activePath)){
@@ -117,7 +117,7 @@ setActiveTab <- function(activePath, closingPath = NULL, deselect = FALSE){
         terminateAceSession(editorId, closingPath, activePath)
     }
     tabs(tabs) 
-    hide(selector = spinnerSelector) 
+    shinyjs::hide(selector = spinnerSelector) 
     checkCodeSyntax(activePath, contents)     
 }
 invalidateTabs <- reactiveVal(0)
@@ -224,23 +224,23 @@ output$file <- renderText({
     directory <- directory()
     path <- if(is.null(directory)) tabs()[active == TRUE, path] else directory
     path <- gsub(paste0(serverEnv$MDI_DIR, '/'), '', path)
-    hide(selector = '.ace-file-option')
+    shinyjs::hide(selector = '.ace-file-option')
     if(state == states$waiting){
-        show("fileMenu")
-        hide("path-edit-wrapper")
+        shinyjs::show("fileMenu")
+        shinyjs::hide("path-edit-wrapper")
         path
     } else if (state == states$choosing){
-        show("fileMenu")
-        show(selector = if(is.null(directory) && nrow(tabs()) > 0) ".ace-file-action" else ".ace-dir-action")
-        hide("path-edit-wrapper")
+        shinyjs::show("fileMenu")
+        shinyjs::show(selector = if(is.null(directory) && nrow(tabs()) > 0) ".ace-file-action" else ".ace-dir-action")
+        shinyjs::hide("path-edit-wrapper")
         path
     } else {
         freezeReactiveValue(input, "confirmAction")
         updateActionButton(session, "confirmAction", label = action$name)
-        show("confirmAction")
-        show("cancelAction")
+        shinyjs::show("confirmAction")
+        shinyjs::show("cancelAction")
         if(!is.null(action$editPath)) {
-            show("path-edit-wrapper")
+            shinyjs::show("path-edit-wrapper")
             freezeReactiveValue(input, "pathEdit")
             updateTextInput(session, "pathEdit", 
                             value = if(action$editPath) path else "")
@@ -286,11 +286,11 @@ observers$fileMenu <- observeEvent(input$fileMenu, {
     setTimeout(toggleFileMenu, states$waiting)
 })
 observers$confirmAction <- observeEvent(input$confirmAction, {
-    show(selector = spinnerSelector)
+    shinyjs::show(selector = spinnerSelector)
     action <- pendingFileAction()
     action$do(action$path)
     invalidateTree( invalidateTree() + 1 )
-    hide(selector = spinnerSelector)
+    shinyjs::hide(selector = spinnerSelector)
     toggleFileMenu(NULL, states$waiting)
     pendingFileAction(list())
     if(!is.null(action$close) && action$close) closeTab(action$path)

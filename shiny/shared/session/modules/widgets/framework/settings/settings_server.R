@@ -75,7 +75,7 @@ initializeTemplate <- function(t){
                else if(nTabs >= 6 || maxTabSize > 16) 'l' 
                else if(nTabs >= 3 || maxTabSize > 8) 'm' else 's'
     inputWidth <<- if(workingSize == "l") 4 else if(workingSize == "m") 6 else 12
-    toggle(
+    shinyjs::toggle(
         id = fullGearId, 
         asis = TRUE, # does not work consistently to let shinyjs handle id resolution (not sure why)
         condition = nTabs > 0
