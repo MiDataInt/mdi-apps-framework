@@ -24,7 +24,7 @@ observeEvent(input$keyedLoginButton, {
 
 # show help on the login page about external authorization sources
 observeEvent(input$showLoginHelp, {
-    show('login-help')
+    shinyjs::show('login-help')
 })
 
 # determine whether session has an authorized user

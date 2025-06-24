@@ -89,7 +89,7 @@ observeEvent({
         selected = actions,
         inline = TRUE
     )   
-    toggle('actionSelectors', condition = length(config$actions) > 1)  
+    shinyjs::toggle('actionSelectors', condition = length(config$actions) > 1)  
 })
 
 #----------------------------------------------------------------------
@@ -228,9 +228,9 @@ output$optionFamilies <- renderUI({
 requiredOnly <- reactiveVal(FALSE)
 observeEvent(requiredOnly(), { 
     reqOnly <- requiredOnly()
-    toggle('showRequiredOnly', condition = !reqOnly)
-    toggle('showAllOptions',   condition =  reqOnly)
-    toggle(selector = ".pr-optional-input", condition = !reqOnly)
+    shinyjs::toggle('showRequiredOnly', condition = !reqOnly)
+    shinyjs::toggle('showAllOptions',   condition =  reqOnly)
+    shinyjs::toggle(selector = ".pr-optional-input", condition = !reqOnly)
 })
 observeEvent(input$showRequiredOnly, { requiredOnly(TRUE) })
 observeEvent(input$showAllOptions,   { requiredOnly(FALSE) })

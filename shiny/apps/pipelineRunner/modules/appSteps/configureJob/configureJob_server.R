@@ -152,11 +152,11 @@ activeJobFile <- reactive({
 observeEvent(jobFiles$selected(), {
     selectedRow <- jobFiles$selected()
     isSelection <- !is.null(selectedRow) && !is.na(selectedRow)
-    toggle(
+    shinyjs::toggle(
         selector = "span.requiresJobFile", 
         condition = isSelection
     )
-    toggle(
+    shinyjs::toggle(
         selector = "div.requiresJobFileMessage", 
         condition = !isSelection
     )
@@ -192,8 +192,8 @@ observeEvent({
         settings$set("Job_Files", "Job_File_Edit_Mode", if(isInputs) "Script Editor" else "User Inputs")
         return(NULL)
     }
-    toggle(id = "uiBasedJobEditing",   condition =  isInputs)
-    toggle(id = "textBasedJobEditing", condition = !isInputs)
+    shinyjs::toggle(id = "uiBasedJobEditing",   condition =  isInputs)
+    shinyjs::toggle(id = "textBasedJobEditing", condition = !isInputs)
     editMode(
         if(is.null(activeJobFile())) editModes$none 
         else if(isInputs) editModes$inputs 

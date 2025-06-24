@@ -52,13 +52,13 @@ observeEvent(input$sampleSet, {
     mapply(function(id, i){
         cssId <- paste0('#', parentNs(id))
         x <- sourceOptions$categories[[id]]
-        if(is.null(x)) return( hide(selector = cssId) ) 
+        if(is.null(x)) return( shinyjs::hide(selector = cssId) ) 
         y <- categories[[i]]
-        if(length(y) <= 1) return( hide(selector = cssId) ) 
+        if(length(y) <= 1) return( shinyjs::hide(selector = cssId) ) 
         z <- seq_along(y)
         names(z) <- y
         updateSelectInput(session, id, choices = z, selected = values[[id]])
-        show(selector = cssId)
+        shinyjs::show(selector = cssId)
     }, c('group', 'type'), 1:2)
 })
 
