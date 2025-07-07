@@ -141,7 +141,7 @@ setMargins <- function() par(mar = c(
     settings$get("Plot_Frame", "Top_Margin"), 
     settings$get("Plot_Frame", "Right_Margin")
 ))
-initializePng <- function(){
+initializePng <- function(mar = NULL){
     dpi           <- 96 # resolution optimized for screen display
     width_inches  <- settings$get("Plot_Frame","Width_Inches")
     height_inches <- settings$get("Plot_Frame","Height_Inches")
@@ -150,7 +150,7 @@ initializePng <- function(){
     pointsize     <- settings$get("Plot_Frame","Font_Size") 
     png(file = pngFile, width = width_pixels, height = height_pixels, units = "px", 
         pointsize = pointsize, res = dpi, type = "cairo")
-    if(margins) setMargins()
+    if(margins) setMargins() else if(!is.null(mar)) par(mar = mar)
     list(
         width     = width_pixels,
         height    = height_pixels,
@@ -158,7 +158,7 @@ initializePng <- function(){
         dpi       = dpi
     )
 }
-initializeFrame <- function(layout, xlim, ylim, title = NULL, ...){
+initializeFrame <- function(layout, xlim, ylim, title = NULL, cex.main = 0.9, ...){
     layout$xlim <- xlim
     layout$ylim <- ylim
     plot(
@@ -176,7 +176,7 @@ initializeFrame <- function(layout, xlim, ylim, title = NULL, ...){
         text = title,
         side = 3,
         line = 0.5,
-        cex  = 0.9
+        cex  = cex.main
     )
     layout$mai <- par("mai")
     layout
@@ -246,6 +246,7 @@ finishPng <- function(layout){
 # set return values as reactives that will be assigned to app$data[[stepName]]
 #----------------------------------------------------------------------
 list(
+    pngFile         = pngFile,
     plot            = plot,
     settings        = settings,
     get             = settings$get,
