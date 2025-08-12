@@ -78,10 +78,10 @@ getPackageFileConfig <- function(packageFile, sendFeedback){
         ymlFile <- unzip(packageFile, files = "package.yml", exdir = sessionDirectory)    
         config <- read_yaml(ymlFile)
         unlink(ymlFile)
-        config        
+        config
     }, error = function(e) {
-        # print(e)
-        sendFeedback("missing file 'package.yml' in pipeline package", isError = TRUE)
+        print(e)
+        sendFeedback("missing or corrupted 'package.yml' in pipeline package", isError = TRUE)
     })
 }
 
