@@ -13,7 +13,7 @@ mdiInteractivePlotServer <- function(
     brush = TRUE,
     delay = 500,
     #------------------------------
-    contents = NULL # a reactive that returns:
+    contents = NULL, # a reactive that returns:
     # contents = reactive({ list(
     #     pngFile = path, # OR plotArgs
     #     plotArgs = list(
@@ -31,7 +31,8 @@ mdiInteractivePlotServer <- function(
     #     abline = list(), # optional named arguments passed to abline() after calling plot(plotArgs)
     #     parseLayout = function(x, y) list(x, y, layout) # to convert to plot space in a multi-plot layout
     # ) })
-){ moduleServer(id, function(input, output, session) {   
+    session = getDefaultReactiveDomain()
+){ moduleServer(id, session = session, function(input, output, session) {   
 #----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
@@ -41,7 +42,7 @@ module <- 'mdiInteractivePlot' # for reportProgress tracing
 fileName <- paste0(app$NAME, "-", id, "-mdiInteractivePlot.png")     
 pngFile <- file.path(sessionDirectory, fileName)
 idPrefix <- session$ns("")
-mdiInteractivePlotInit <- observe({
+activateJavaScript <- function(){
     session$sendCustomMessage("mdiInteractivePlotInit", list(
         prefix = idPrefix,
         hover  = hover,    
@@ -49,6 +50,9 @@ mdiInteractivePlotInit <- observe({
         brush  = brush,
         delay  = delay
     ))
+}
+mdiInteractivePlotInit <- observe({
+    activateJavaScript()
     mdiInteractivePlotInit$destroy()
 })
 
@@ -196,7 +200,8 @@ list(
     click = click,
     brush = brush,
     pixelToAxes = pixelToAxes,
-    pixelToAxis = pixelToAxis
+    pixelToAxis = pixelToAxis,
+    activateJavaScript = activateJavaScript
 )
 
 #----------------------------------------------------------------------

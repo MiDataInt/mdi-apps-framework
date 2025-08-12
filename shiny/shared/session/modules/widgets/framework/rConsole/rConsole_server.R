@@ -58,8 +58,8 @@ executeCode <- function(mode){
 }
 fillReactive <- function(id, expr){
     reactives[[id]](NULL)
-    hide(selector = ".r-console-pane")
-    show(id)        
+    shinyjs::hide(selector = ".r-console-pane")
+    shinyjs::show(id)        
     reactives[[id]](expr)
 }
 observers$codeEditorContentsId <- observeEvent(input[[codeEditorContentsId]], {
@@ -93,16 +93,16 @@ observeEvent(input$ls_sessionEnv, {
 # ... to generate one of several types of user-intended output
 #----------------------------------------------------------------------
 evalExpr <- function(target){
-    show(selector = spinnerSelector)
+    shinyjs::show(selector = spinnerSelector)
     tryCatch({
         x <- eval(reactives[[target]](), envir)
-        hide(selector = spinnerSelector)
+        shinyjs::hide(selector = spinnerSelector)
         x
     }, warning = function(warning){
-        hide(selector = spinnerSelector)
+        shinyjs::hide(selector = spinnerSelector)
         paste(collapse = "\n", warning)
     }, error = function(error){
-        hide(selector = spinnerSelector)
+        shinyjs::hide(selector = spinnerSelector)
         paste(collapse = "\n", error)
     }) 
 }

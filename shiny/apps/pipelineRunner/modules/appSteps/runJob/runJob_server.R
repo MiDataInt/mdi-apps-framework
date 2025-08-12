@@ -32,11 +32,11 @@ activeJobFile <- reactive({
 observe({
     selectedRow <- jobFiles$selected()
     isSelection <- !is.null(selectedRow) && !is.na(selectedRow)
-    toggle(
+    shinyjs::toggle(
         selector = "span.requiresJobFile", 
         condition = isSelection
     )
-    toggle(
+    shinyjs::toggle(
         selector = "div.requiresJobFileMessage", 
         condition = !isSelection
     )
@@ -363,7 +363,7 @@ fillPre <- function(mdiOutputData){
     x <- mdiOutputData$data
     if(x$success && mdiOutputData$invalidateStatus) 
         invalidateStatus(isolate({ invalidateStatus() }) + 1)
-    toggle(session$ns("refreshOutput"), asis = TRUE, condition = mdiOutputData$refreshable)
+    shinyjs::toggle(session$ns("refreshOutput"), asis = TRUE, condition = mdiOutputData$refreshable)
     tags$pre( 
         class = if(x$success) "" else "command-output-error",
         paste(x$results, collapse = "\n") 

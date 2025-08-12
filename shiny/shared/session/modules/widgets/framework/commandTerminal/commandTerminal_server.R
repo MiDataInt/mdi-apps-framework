@@ -99,7 +99,7 @@ observers$doCommand <- observeEvent(doCommand(), {
     command <- interceptTerminalCommands(input$command, workingDir = workingDir, 
                                          prefix = prefix, onExit = onExit)
     req(command)
-    show(selector = spinnerSelector)  
+    shinyjs::show(selector = spinnerSelector)  
     systemCommand <- if(is.null(host)) { # enable terminal to work on login host (the default) or a node
         paste0(                "cd '", dir, "'; ", runtimeCommand, command, " 2>&1")
     } else {
@@ -131,7 +131,7 @@ observers$doCommand <- observeEvent(doCommand(), {
             )
         }) 
     )
-    hide(selector = spinnerSelector)
+    shinyjs::hide(selector = spinnerSelector)
     addCommandToHistory(prefix)
     results(x)
 })
