@@ -211,6 +211,7 @@ appUploadTypes <- getAppUploadTypes(appDirs) # uploadTypes recognized by install
 # launch the Shiny app, a blocking action until/unless stopApp() is called
 Sys.setenv(SHINY_SERVER_VERSION = '999.999.999') # suppress a baseless Shiny Server upgrade warning: https://rdrr.io/cran/shiny/src/R/runapp.R # nolint
 # message('--------- CALLING run_server.R::runApp() ---------')
+options(shiny.error = browser) # in non-interactive mode, prints extended error descriptions to console
 runApp(
     appDir = '.',
     host = serverEnv$HOST,   
