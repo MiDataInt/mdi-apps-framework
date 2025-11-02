@@ -106,10 +106,10 @@ if(!restricted){
     })
 
     # enable the appChooser dialog and Pipeline Runner app from cold start links, i.e., with no uploaded input file
-    observeEvent(input$chooseAnApp, {
+    observeEvent(input$chooseAnAppClick, {
         showAppChooser(session)
     })
-    observeEvent(input$launchPipelineRunner, {
+    observeEvent(input$launchPipelineRunnerClick, {
         loadRequest(list(
             app = "pipelineRunner",
             file = list(
