@@ -282,10 +282,19 @@ let setDTColumnFilter = function(tableId, columnI, type, filter){
     }
     table.draw();
 }
+/*  ------------------------------------------------------------------------
+    Choose an App dialog
+    ------------------------------------------------------------------------*/
+$(document).on('click', '#chooseAnApp', function() {
+    Shiny.setInputValue('chooseAnAppClick', Math.random());
+});
 
 /*  ------------------------------------------------------------------------
     Pipeline Runner, functions to simplify the number of required input observers in R
     ------------------------------------------------------------------------*/
+$(document).on('click', '#launchPipelineRunner', function() {
+    Shiny.setInputValue('launchPipelineRunnerClick', Math.random());
+});
 Shiny.addCustomMessageHandler('initializePRCodeEditor', function(editorId) {
     initializeAceCodeEditor(editorId, false, "yaml");
     window[editorId].session.on('change', function(delta) {
