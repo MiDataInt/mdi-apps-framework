@@ -17,7 +17,7 @@ CONSTANTS <- list(
 
     # definitions of the file types we accept for upload
     sourceFileTypes = list(
-        jobFile   = 'jobFile',   # a previously constructed Stage 1 pipeline job configuration file
+        jobFile   = 'jobFile',   # a previously constructed Stage 1 pipeline job file
         manifest  = 'manifest',  # DEPRECATED: metadata on a collection of samples suitable for a Stage 1 pipeline
         package   = 'package',   # the output of a Stage 1 pipeline suitable for loading into a Stage 2 app
         dataTable = 'dataTable', # a flat file of data to load directly into an app (bypassing any Stage 1 pipeline)
