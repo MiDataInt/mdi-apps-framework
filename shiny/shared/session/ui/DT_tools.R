@@ -233,7 +233,7 @@ insertColumnFilters <- function(session, tableId, tableData, rownames = TRUE){
         tags$td(
             tags$input(
                 "",
-                id = paste0(tableId, "-filter-", i),
+                id = paste0(tableId, "-filter-", i - j),
                 placeholder = type,
                 onkeyup = paste0('setDTColumnFilter("', tableId, '", ', i - j, ', "', type, '", $(this).val())'),
                 style = "width: 100%;"
