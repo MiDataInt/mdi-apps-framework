@@ -60,7 +60,11 @@ mdiInteractivePlotInit <- observe({
 # function for reactively updating the plot or image
 #----------------------------------------------------------------------
 observe({
-    d <- contents()
+    d <- tryCatch({
+        contents()
+    }, error = function(e){
+        NULL
+    })
     if(is.null(d)){
         session$sendCustomMessage("mdiInteractivePlotUpdate", list(
             prefix = idPrefix,
