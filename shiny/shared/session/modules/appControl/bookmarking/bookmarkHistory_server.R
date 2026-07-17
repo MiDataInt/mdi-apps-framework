@@ -41,7 +41,7 @@ set <- function(json=NULL, file=NULL, name=NULL){
             json <- getBookmarkJson()
         } else {
             json <- loadResourceText(file)  
-            name <- unserializeJSON(json)$outcomes[[firstStepName]]$analysisSetName
+            name <- bookmark_df_to_dt(unserializeJSON(json))$outcomes[[firstStepName]]$analysisSetName
         }
     }
     if(is.null(json)) return(NULL)
