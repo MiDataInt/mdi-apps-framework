@@ -11,6 +11,30 @@ bookmarkInput <- function(type, id, ...){
     get(type)(id, ...)
 }
 
+# sanitize data.table to data.frame and back again when saving/loading bookmarks
+# for unknown reasons, data.tables have 
+# "attributes":{".internal.selfref":{"type":"externalptr","attributes":{},"value":{}}}
+# which causes unserializeJSON() to fail ONLY when working in a singularity container
+bookmark_dt_to_df <- function(x) { # used when saving bookmarks
+    if (inherits(x, "data.table")) {
+        x <- as.data.frame(x)
+    }
+    attr(x, ".internal.selfref") <- NULL
+    if (is.list(x)) {
+        x[] <- lapply(x, bookmark_dt_to_df)
+    }
+    x
+}
+bookmark_df_to_dt <- function(x) { # used when loading bookmarks
+    if (inherits(x, "data.frame")) {
+        x <- as.data.table(x)
+    }
+    if (is.list(x)) {
+        x[] <- lapply(x, bookmark_df_to_dt)
+    }
+    x
+}
+
 # create a bookmark for the current state of the app as serialized json
 getBookmarkJson <- function(){
     reportProgress('getBookmarkJson')
@@ -58,12 +82,13 @@ getBookmarkJson <- function(){
         # remember record locking
         bookmark$locks[[stepName]] <- reactiveValuesToList(locks[[stepName]])
     }
-    serializeJSON(bookmark) # bookmarks stored as a JSON document    
+    serializeJSON(bookmark_dt_to_df(bookmark)) # bookmarks stored as a JSON document    
 }
 
 # extract the app that owns a bookmark
 getTargetAppFromBookmark <- function(serializedJson){
-    unserializeJSON(serializedJson)[c('app', 'step')]
+    bookmark <- unserializeJSON(serializedJson)
+    bookmark_df_to_dt(bookmark)[c('app', 'step')]
 }
 getTargetAppFromBookmarkFile <- function(file, sendFeedback){
     tryCatch({
